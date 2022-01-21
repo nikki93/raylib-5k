@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <!-- Meta ----------------------------------------------------------------------------->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="@PROJECT_NAME@" />
+    <meta name="viewport" content="width=device-width, user-scalable=no" />
+
+    <!-- Dependencies --------------------------------------------------------------------->
+    <script src="https://unpkg.com/incremental-dom@0.7.0/dist/incremental-dom.js"></script>
+
+    <!-- Styles --------------------------------------------------------------------------->
+    <link rel="stylesheet" href="https://necolas.github.io/normalize.css/8.0.1/normalize.css" />
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+    <link
+      rel="stylesheet"
+      href="https://kit-free.fontawesome.com/releases/latest/css/free-v4-font-face.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://kit-free.fontawesome.com/releases/latest/css/free-v4-shims.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://kit-free.fontawesome.com/releases/latest/css/free.min.css"
+    />
+    <link rel="stylesheet" href="index.css" />
+  </head>
+
+  <!-- Body ------------------------------------------------------------------------------->
+  <body>
+    <!-- Root -->
+    <div class="root-container">
+      <!-- Main -->
+      <div class="main-container">
+        <!-- Top -->
+        <div class="top-container">
+          <div class="top-panel" id="top"></div>
+        </div>
+
+        <!-- Scene -->
+        <div class="scene-container">
+          <div class="scene-aspect-ratio">
+            <canvas class="scene mode-select" id="canvas" oncontextmenu="event.preventDefault()" />
+          </div>
+        </div>
+
+        <!-- Bottom -->
+        <div class="bottom-container">
+          <div class="bottom-panel" id="bottom"></div>
+        </div>
+      </div>
+
+      <!-- Side -->
+      <div class="side-container">
+        <div class="side-panel" id="side"></div>
+      </div>
+    </div>
+
+    <!-- JS ------------------------------------------------------------------------------->
+    <script src="index.js"></script>
+  </body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "dream-hotel-editor",
+  "productName": "dream hotel editor",
+  "version": "1.0.0",
+  "description": "Editor for the Dream Hotel project",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^13.1.6",
+    "electron-packager": "^15.2.0"
+  },
+  "dependencies": {
+    "electron-devtools-installer": "^3.2.0"
+  }
+}

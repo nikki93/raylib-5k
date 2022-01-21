@@ -1,0 +1,44 @@
+---
+Checks: "-*,\
+  clang-diagnostic-*,\
+  -clang-diagnostic-pragma-pack,\
+  clang-analyzer-*,\
+  performance-*,\
+  -performance-no-int-to-ptr,\
+  -performance-noexcept-move-constructor,\
+  portability-*,\
+  bugprone-*,\
+  -bugprone-easily-swappable-parameters,\
+  -bugprone-exception-escape,\
+  -bugprone-infinite-loop,\
+  -bugprone-integer-division,\
+  -bugprone-macro-parentheses,\
+  -bugprone-reserved-identifier,\
+  -bugprone-suspicious-include,\
+  misc-*,\
+  -misc-non-private-member-variables-in-classes,\
+  -misc-unused-parameters,\
+  cppcoreguidelines-*,\
+  -cppcoreguidelines-avoid-c-arrays,\
+  -cppcoreguidelines-avoid-magic-numbers,\
+  -cppcoreguidelines-avoid-non-const-global-variables,\
+  -cppcoreguidelines-macro-usage,\
+  -cppcoreguidelines-no-malloc,\
+  -cppcoreguidelines-non-private-member-variables-in-classes,\
+  -cppcoreguidelines-owning-memory,\
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,\
+  -cppcoreguidelines-pro-bounds-constant-array-index,\
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,\
+  -cppcoreguidelines-pro-type-const-cast,\
+  -cppcoreguidelines-pro-type-cstyle-cast,\
+  -cppcoreguidelines-pro-type-member-init,\
+  -cppcoreguidelines-pro-type-vararg,\
+  -cppcoreguidelines-special-member-functions,\
+  google-explicit-constructor,\
+  modernize-*,\
+  -modernize-avoid-c-arrays,\
+  -modernize-deprecated-headers,\
+  -modernize-use-nodiscard,\
+  -modernize-use-trailing-return-type"
+...
+
