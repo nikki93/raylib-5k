@@ -3,6 +3,7 @@
 package game
 
 import (
+	"github.com/nikki93/dream-hotel/core/edit"
 	. "github.com/nikki93/dream-hotel/core/entity"
 	. "github.com/nikki93/dream-hotel/core/geom"
 	"github.com/nikki93/dream-hotel/core/rl"
@@ -28,12 +29,15 @@ type Circle struct {
 //
 
 func initGame() {
-	CreateEntity(
-		Circle{
-			Pos:    Vec2{100, 200},
-			Radius: 20,
-		},
-	)
+	if !edit.LoadSession() {
+		CreateEntity(
+			Circle{
+				Pos:    Vec2{100, 200},
+				Radius: 20,
+			},
+		)
+		edit.SaveSnapshot("initialize scene")
+	}
 }
 
 //
@@ -57,6 +61,4 @@ func drawGame() {
 	Each(func(ent Entity, circle *Circle) {
 		rl.DrawCircleV(circle.Pos, circle.Radius, rl.Red)
 	})
-
-	rl.DrawRectangleLines(0, 0, 864, 486, rl.Red)
 }
