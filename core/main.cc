@@ -10,8 +10,6 @@
 // Game-defined
 //
 
-extern Vec2 gameCameraSize;
-extern rl::Camera2D gameCamera;
 void initGame();
 void updateGame(float dt);
 void drawGame();

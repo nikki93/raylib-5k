@@ -337,7 +337,7 @@ void openSceneEdit(const char *sceneName) {
   resetEditHistory();
   readScene(sceneName);
   saveEditSnapshot("load scene");
-  edit.camera.target = editInitialCameraPos;
+  edit.camera.target = { 0, 0 };
   copy(edit.sceneName, sceneName);
 }
 

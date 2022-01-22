@@ -6,8 +6,6 @@
 // State
 //
 
-constexpr Vec2 editInitialCameraPos { 0.5 * 864, 0.5 * 486 };
-
 inline struct EditState {
   Prop(bool, enabled) = []() {
 #ifdef __EMSCRIPTEN__
@@ -21,7 +19,7 @@ inline struct EditState {
   Prop(char[64], inspectedComponentTitle) = "";
 
   Prop(rl::Camera2D, camera) {
-    .target = editInitialCameraPos,
+    .target { 0, 0 },
   };
   Prop(float, zoomLevel) = 0;
 
@@ -148,6 +146,8 @@ void uiEdit();
 // Game-defined
 //
 
+extern Vec2 gameCameraSize;
+extern rl::Camera2D gameCamera;
 void applyGameEditMoves();
 void mergeGameEditBoxes();
 void inputGameEdit();
