@@ -586,7 +586,7 @@ static void uiEditInspector() {
       if (has<T>(ent)) {
         auto title = titleify(getTypeName<T>());
         auto open = !std::strcmp(edit.inspectedComponentTitle, title);
-        ui("details", title)(title)("open", open)([&]() {
+        ui("details", title)(title)("open", true)([&]() {
           // Title
           ui("summary")("click", [&]() {
             if (open) {
