@@ -22,9 +22,11 @@ var deltaTime = 0.0
 func initGame() {
 	if !edit.LoadSession() {
 		CreateEntity(
-			Circle{
-				Pos:    Vec2{100, 200},
-				Radius: 20,
+			Position{
+				Pos: Vec2{400, 680},
+			},
+			Planet{
+				Radius: 400,
 			},
 		)
 		edit.SaveSnapshot("initialize scene")
@@ -38,10 +40,6 @@ func initGame() {
 func updateGame(dt float64) {
 	gameTime += dt
 	deltaTime = dt
-
-	Each(func(ent Entity, circle *Circle) {
-		circle.Pos.Y += 80 * Sin(3*rl.GetTime()) * dt
-	})
 }
 
 //
@@ -51,7 +49,7 @@ func updateGame(dt float64) {
 func drawGame() {
 	rl.ClearBackground(rl.Color{0x10, 0x14, 0x1f, 0xff})
 
-	Each(func(ent Entity, circle *Circle) {
-		rl.DrawCircleV(circle.Pos, circle.Radius, rl.Red)
+	Each(func(ent Entity, planet *Planet, pos *Position) {
+		rl.DrawCircleV(pos.Pos, planet.Radius, rl.Color{0x7a, 0x36, 0x7b, 0xff})
 	})
 }

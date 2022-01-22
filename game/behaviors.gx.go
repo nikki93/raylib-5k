@@ -7,9 +7,14 @@ import (
 	. "github.com/nikki93/raylib-5k/core/geom"
 )
 
-type Circle struct {
+type Position struct {
 	Behavior
 
-	Pos    Vec2
+	Pos Vec2
+}
+
+type Planet struct {
+	Behavior
+
 	Radius float64
 }
