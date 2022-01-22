@@ -13,6 +13,12 @@ type Position struct {
 	Pos Vec2
 }
 
+type Velocity struct {
+	Behavior
+
+	Vel Vec2
+}
+
 type Planet struct {
 	Behavior
 
@@ -23,8 +29,12 @@ type Gravity struct {
 	Behavior
 
 	Strength float64
+}
 
-	vel Vec2
+type Up struct {
+	Behavior
+
+	Up Vec2
 }
 
 type Player struct {

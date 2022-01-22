@@ -47,6 +47,7 @@ func initGame() {
 			Position{
 				Pos: Vec2{0, planetPos.Y - planetRadius - 3 - 0.5*playerSize.Y},
 			},
+			Velocity{},
 			Gravity{
 				Strength: 9,
 			},
@@ -65,8 +66,21 @@ func updateGame(dt float64) {
 	gameTime += dt
 	deltaTime = dt
 
+	// Up direction
+	Each(func(ent Entity, up *Up, pos *Position) {
+		Each(func(ent Entity, planet *Planet, planetPos *Position) {
+		})
+	})
+
+	// Jumping
+	Each(func(ent Entity, player *Player, vel *Velocity) {
+		if rl.IsKeyPressed(rl.KEY_W) {
+		}
+	})
+
 	// Gravity toward planets
-	Each(func(ent Entity, grav *Gravity, pos *Position) {
+	Each(func(ent Entity, grav *Gravity, vel *Velocity, pos *Position) {
+		// Add to velocity
 		Each(func(ent Entity, planet *Planet, planetPos *Position) {
 			delta := planetPos.Pos.Subtract(pos.Pos)
 			sqDist := delta.LengthSqr()
@@ -75,11 +89,36 @@ func updateGame(dt float64) {
 				dist := Sqrt(sqDist)
 				dir := delta.Scale(1 / dist)
 
-				grav.vel = grav.vel.Add(dir.Scale(grav.Strength * dt))
+				vel.Vel = vel.Vel.Add(dir.Scale(grav.Strength * dt))
 			}
 		})
+	})
 
-		pos.Pos = pos.Pos.Add(grav.vel.Scale(dt))
+	// Apply velocity
+	Each(func(ent Entity, vel *Velocity, pos *Position) {
+		// Apply velocity
+		pos.Pos = pos.Pos.Add(vel.Vel.Scale(dt))
+
+		// Handle collisions with planets
+		Each(func(ent Entity, planet *Planet, planetPos *Position) {
+			// Calculate intersection
+			circ := Circle{Pos: planetPos.Pos, Radius: planet.Radius}
+			poly := Polygon{}
+			poly.Count = 4
+			poly.Verts[0] = Vec2{-0.5 * playerSize.X, -0.5 * playerSize.Y}
+			poly.Verts[1] = Vec2{0.5 * playerSize.X, -0.5 * playerSize.Y}
+			poly.Verts[2] = Vec2{0.5 * playerSize.X, 0.5 * playerSize.Y}
+			poly.Verts[3] = Vec2{-0.5 * playerSize.X, 0.5 * playerSize.Y}
+			poly.CalculateNormals()
+			in := IntersectCirclePolygon(circ, &poly, pos.Pos)
+			if in.Count > 0 {
+				// Push position out by intersection
+				pos.Pos = pos.Pos.Add(in.Normal.Scale(in.Depths[0]))
+
+				// Remove component of vector along normal
+				vel.Vel = vel.Vel.Subtract(in.Normal.Scale(vel.Vel.DotProduct(in.Normal)))
+			}
+		})
 	})
 }
 
