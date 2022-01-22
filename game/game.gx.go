@@ -152,7 +152,7 @@ func updateGame(dt float64) {
 				// Push position out by intersection
 				lay.Pos = lay.Pos.Add(in.Normal.Scale(in.Depths[0]))
 
-				// Remove component of vector along normal
+				// Remove component of velocity along normal
 				vel.Vel = vel.Vel.Subtract(in.Normal.Scale(vel.Vel.DotProduct(in.Normal)))
 			}
 		})
