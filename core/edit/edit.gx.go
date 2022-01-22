@@ -92,5 +92,8 @@ type InspectContext struct {
 //gx:extern saveEditSnapshot
 func SaveSnapshot(desc string)
 
+//gx:extern loadEditSession
+func LoadSession() bool
+
 //gx:extern openSceneEdit
 func OpenScene(assetName string)
