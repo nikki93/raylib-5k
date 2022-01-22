@@ -21,6 +21,8 @@ var deltaTime = 0.0
 //
 
 var playerSize = Vec2{1, 1}
+var playerJumpStrength = 6.0
+var playerGravityStrength = 9.0
 
 const planetGravRadiusMultiplier = 1.38
 
@@ -48,8 +50,9 @@ func initGame() {
 				Pos: Vec2{0, planetPos.Y - planetRadius - 3 - 0.5*playerSize.Y},
 			},
 			Velocity{},
+			Up{},
 			Gravity{
-				Strength: 9,
+				Strength: playerGravityStrength,
 			},
 			Player{},
 		)
@@ -68,13 +71,29 @@ func updateGame(dt float64) {
 
 	// Up direction
 	Each(func(ent Entity, up *Up, pos *Position) {
+		minSqDist := -1.0
+		minDelta := Vec2{0, 0}
 		Each(func(ent Entity, planet *Planet, planetPos *Position) {
+			delta := planetPos.Pos.Subtract(pos.Pos)
+			sqDist := delta.LengthSqr()
+			if minSqDist < 0 || sqDist < minSqDist {
+				gravRadius := planetGravRadiusMultiplier * planet.Radius
+				if sqDist < gravRadius*gravRadius {
+					minSqDist = sqDist
+					minDelta = delta
+				}
+			}
 		})
+		if minSqDist > 0 {
+			dir := minDelta.Scale(1 / Sqrt(minSqDist))
+			up.Up = dir.Negate().Normalize()
+		}
 	})
 
 	// Jumping
-	Each(func(ent Entity, player *Player, vel *Velocity) {
+	Each(func(ent Entity, player *Player, up *Up, vel *Velocity) {
 		if rl.IsKeyPressed(rl.KEY_W) {
+			vel.Vel = vel.Vel.Add(up.Up.Scale(playerJumpStrength))
 		}
 	})
 

@@ -25,16 +25,16 @@ type Planet struct {
 	Radius float64
 }
 
-type Gravity struct {
-	Behavior
-
-	Strength float64
-}
-
 type Up struct {
 	Behavior
 
 	Up Vec2
+}
+
+type Gravity struct {
+	Behavior
+
+	Strength float64
 }
 
 type Player struct {
