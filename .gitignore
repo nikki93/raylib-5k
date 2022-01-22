@@ -7,4 +7,4 @@ compile_commands.json
 
 app/node_modules
 app/package-lock.json
-app/dream\ hotel\ editor*
+app/*\ editor*
