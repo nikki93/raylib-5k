@@ -6,7 +6,7 @@
 // State
 //
 
-constexpr Vec2 editInitialCameraPos { 0.5 * 960, 0.5 * 540 };
+constexpr Vec2 editInitialCameraPos { 0.5 * 864, 0.5 * 486 };
 
 inline struct EditState {
   Prop(bool, enabled) = []() {

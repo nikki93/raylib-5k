@@ -134,7 +134,7 @@ inline struct Init {
       }))),
     };
 #else
-    auto windowSize = 1.5 * Vec2 { 960, 540 };
+    auto windowSize = 1.5 * Vec2 { 864, 486 };
 #endif
     __lsan::DisableInThisThread(); // Some Emscripten initialization things leak memory...
     InitWindow(int(windowSize.x), int(windowSize.y), "");

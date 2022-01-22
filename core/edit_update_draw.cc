@@ -64,7 +64,7 @@ void updateEdit() {
       }
       wheelMove = 0;
     }
-    auto baseZoom = float(rl::GetScreenWidth()) / 960;
+    auto baseZoom = float(rl::GetScreenWidth()) / 864;
     edit.camera.zoom = float(baseZoom * std::pow(1.5, edit.zoomLevel));
     edit.camera.offset = 0.5 * Vec2 { float(rl::GetScreenWidth()), float(rl::GetScreenHeight()) };
   }

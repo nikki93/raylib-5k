@@ -7,7 +7,7 @@ import (
 	"github.com/nikki93/dream-hotel/core/rl"
 )
 
-var gameCameraSize = Vec2{960, 540}
+var gameCameraSize = Vec2{864, 486}
 var gameCamera = rl.Camera2D{
 	Target: gameCameraSize.Scale(0.5),
 }
