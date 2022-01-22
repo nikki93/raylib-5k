@@ -7,9 +7,10 @@ import (
 	"github.com/nikki93/raylib-5k/core/rl"
 )
 
-var gameCameraSize = Vec2{864, 486}
+var gameCameraSize = Vec2{36, 20.25}
+
 var gameCamera = rl.Camera2D{
-	Target: gameCameraSize.Scale(0.5),
+	Target: Vec2{0, 0},
 }
 
 var gameTime = 0.0
@@ -19,7 +20,9 @@ var deltaTime = 0.0
 // Settings
 //
 
-var playerSize = Vec2{24, 32}
+var playerSize = Vec2{1, 1}
+
+const planetGravRadiusMultiplier = 1.38
 
 //
 // Init
@@ -27,20 +30,25 @@ var playerSize = Vec2{24, 32}
 
 func initGame() {
 	if !edit.LoadSession() {
-		// Test planet
+		// Test planet and player
+
+		planetPos := Vec2{0, 24}
+		planetRadius := 21.0
 		CreateEntity(
 			Position{
-				Pos: Vec2{400, 700},
+				Pos: planetPos,
 			},
 			Planet{
-				Radius: 400,
+				Radius: planetRadius,
 			},
 		)
 
-		// Player
 		CreateEntity(
 			Position{
-				Pos: Vec2{400, 300 - 0.5*playerSize.Y},
+				Pos: Vec2{0, planetPos.Y - planetRadius - 3 - 0.5*playerSize.Y},
+			},
+			Gravity{
+				Strength: 9,
 			},
 			Player{},
 		)
@@ -56,6 +64,23 @@ func initGame() {
 func updateGame(dt float64) {
 	gameTime += dt
 	deltaTime = dt
+
+	// Gravity toward planets
+	Each(func(ent Entity, grav *Gravity, pos *Position) {
+		Each(func(ent Entity, planet *Planet, planetPos *Position) {
+			delta := planetPos.Pos.Subtract(pos.Pos)
+			sqDist := delta.LengthSqr()
+			gravRadius := planetGravRadiusMultiplier * planet.Radius
+			if sqDist < gravRadius*gravRadius {
+				dist := Sqrt(sqDist)
+				dir := delta.Scale(1 / dist)
+
+				grav.vel = grav.vel.Add(dir.Scale(grav.Strength * dt))
+			}
+		})
+
+		pos.Pos = pos.Pos.Add(grav.vel.Scale(dt))
+	})
 }
 
 //
@@ -67,7 +92,9 @@ func drawGame() {
 
 	// Planets
 	Each(func(ent Entity, planet *Planet, pos *Position) {
-		rl.DrawCircleV(pos.Pos, planet.Radius, rl.Color{0x7a, 0x36, 0x7b, 0xff})
+		rl.DrawCircleSector(pos.Pos, planet.Radius, 0, 360, 128, rl.Color{0x7a, 0x36, 0x7b, 0xff})
+		gravRadius := planetGravRadiusMultiplier * planet.Radius
+		rl.DrawCircleSectorLines(pos.Pos, gravRadius, 0, 360, 32, rl.Color{0x7a, 0x36, 0x7b, 0xff})
 	})
 
 	// Player
