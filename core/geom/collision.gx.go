@@ -13,6 +13,12 @@ type BoundingBox struct {
 	Min, Max Vec2
 }
 
+//gx:extern c2Circle
+type Circle struct {
+	Pos    Vec2    //gx:extern p
+	Radius float64 //gx:extern r
+}
+
 //gx:extern c2Poly
 type Polygon struct {
 	Count   int
@@ -22,6 +28,13 @@ type Polygon struct {
 
 //gx:extern c2MakePoly
 func (p *Polygon) ConvexHull()
+
+//gx:extern c2Norms
+func c2Norms(verts *Vec2, norms *Vec2, count int)
+
+func (p *Polygon) CalculateNormals() {
+	c2Norms(&p.Verts[0], &p.Normals[0], p.Count)
+}
 
 //
 // Intersect
@@ -54,6 +67,16 @@ func IntersectPolygons(a *Polygon, aPos Vec2, b *Polygon, bPos Vec2) IntersectRe
 	ax := c2x{aPos, c2r{1, 0}}
 	bx := c2x{bPos, c2r{1, 0}}
 	c2PolytoPolyManifold(a, &ax, b, &bx, &result)
+	return result
+}
+
+//gx:extern c2CircletoPolyManifold
+func c2CircletoPolyManifold(a Circle, b *Polygon, bx *c2x, m *IntersectResult)
+
+func IntersectCirclePolygon(a Circle, b *Polygon, bPos Vec2) IntersectResult {
+	result := IntersectResult{}
+	bx := c2x{bPos, c2r{1, 0}}
+	c2CircletoPolyManifold(a, b, &bx, &result)
 	return result
 }
 
