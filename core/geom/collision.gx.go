@@ -62,10 +62,10 @@ type c2x struct { // Transform
 //gx:extern c2PolytoPolyManifold
 func c2PolytoPolyManifold(a *Polygon, ax *c2x, b *Polygon, bx *c2x, m *IntersectResult)
 
-func IntersectPolygons(a *Polygon, aPos Vec2, b *Polygon, bPos Vec2) IntersectResult {
+func IntersectPolygons(a *Polygon, aPos Vec2, aAng float64, b *Polygon, bPos Vec2, bAng float64) IntersectResult {
 	result := IntersectResult{}
-	ax := c2x{aPos, c2r{1, 0}}
-	bx := c2x{bPos, c2r{1, 0}}
+	ax := c2x{aPos, c2r{Cos(aAng), Sin(aAng)}}
+	bx := c2x{bPos, c2r{Cos(bAng), Sin(bAng)}}
 	c2PolytoPolyManifold(a, &ax, b, &bx, &result)
 	return result
 }
@@ -73,9 +73,9 @@ func IntersectPolygons(a *Polygon, aPos Vec2, b *Polygon, bPos Vec2) IntersectRe
 //gx:extern c2CircletoPolyManifold
 func c2CircletoPolyManifold(a Circle, b *Polygon, bx *c2x, m *IntersectResult)
 
-func IntersectCirclePolygon(a Circle, b *Polygon, bPos Vec2) IntersectResult {
+func IntersectCirclePolygon(a Circle, b *Polygon, bPos Vec2, bAng float64) IntersectResult {
 	result := IntersectResult{}
-	bx := c2x{bPos, c2r{1, 0}}
+	bx := c2x{bPos, c2r{Cos(bAng), Sin(bAng)}}
 	c2CircletoPolyManifold(a, b, &bx, &result)
 	return result
 }
