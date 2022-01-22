@@ -65,10 +65,12 @@ func updateGame(dt float64) {
 func drawGame() {
 	rl.ClearBackground(rl.Color{0x10, 0x14, 0x1f, 0xff})
 
+	// Planets
 	Each(func(ent Entity, planet *Planet, pos *Position) {
 		rl.DrawCircleV(pos.Pos, planet.Radius, rl.Color{0x7a, 0x36, 0x7b, 0xff})
 	})
 
+	// Player
 	Each(func(ent Entity, player *Player, pos *Position) {
 		rl.DrawRectangleRec(rl.Rectangle{
 			X:      pos.Pos.X - 0.5*playerSize.X,

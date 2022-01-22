@@ -35,7 +35,7 @@ func inputGameEdit() {
 //
 
 func mergeGameEditBoxes() {
-	// Planet
+	// Planets
 	Each(func(ent Entity, planet *Planet, pos *Position) {
 		edit.MergeBox(ent, rl.Rectangle{
 			X:      pos.Pos.X - planet.Radius,
