@@ -58,6 +58,8 @@ func updateGame(dt float64) {
 //
 
 func drawGame() {
+	rl.ClearBackground(rl.Color{0x10, 0x14, 0x1f, 0xff})
+
 	Each(func(ent Entity, circle *Circle) {
 		rl.DrawCircleV(circle.Pos, circle.Radius, rl.Red)
 	})
