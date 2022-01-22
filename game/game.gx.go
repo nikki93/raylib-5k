@@ -7,7 +7,7 @@ import (
 	"github.com/nikki93/raylib-5k/core/rl"
 )
 
-var gameCameraSize = Vec2{36, 20.25}
+var gameCameraSize = Vec2{36, 20.25}.Scale(3)
 
 var gameCamera = rl.Camera2D{
 	Target: Vec2{0, 0},
@@ -21,8 +21,9 @@ var deltaTime = 0.0
 //
 
 var playerSize = Vec2{1, 1}
-var playerJumpStrength = 6.0
-var playerGravityStrength = 9.0
+var playerJumpStrength = 9.0
+var playerGravityStrength = 17.0
+var playerHorizontalControlsAccel = 17.0
 
 const planetGravRadiusMultiplier = 1.38
 
@@ -95,7 +96,19 @@ func updateGame(dt float64) {
 		lay.Rot = Atan2(up.Up.Y, up.Up.X)
 	})
 
-	// Jumping
+	// Horizontal controls
+	Each(func(ent Entity, player *Player, up *Up, vel *Velocity) {
+		if rl.IsKeyDown(rl.KEY_A) {
+			dir := Vec2{up.Up.Y, -up.Up.X}
+			vel.Vel = vel.Vel.Add(dir.Scale(playerHorizontalControlsAccel * dt))
+		}
+		if rl.IsKeyDown(rl.KEY_D) {
+			dir := Vec2{-up.Up.Y, up.Up.X}
+			vel.Vel = vel.Vel.Add(dir.Scale(playerHorizontalControlsAccel * dt))
+		}
+	})
+
+	// Jump controls
 	Each(func(ent Entity, player *Player, up *Up, vel *Velocity) {
 		if rl.IsKeyPressed(rl.KEY_W) {
 			vel.Vel = vel.Vel.Add(up.Up.Scale(playerJumpStrength))
