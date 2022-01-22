@@ -18,3 +18,7 @@ type Planet struct {
 
 	Radius float64
 }
+
+type Player struct {
+	Behavior
+}

@@ -16,19 +16,35 @@ var gameTime = 0.0
 var deltaTime = 0.0
 
 //
+// Settings
+//
+
+var playerSize = Vec2{24, 32}
+
+//
 // Init
 //
 
 func initGame() {
 	if !edit.LoadSession() {
+		// Test planet
 		CreateEntity(
 			Position{
-				Pos: Vec2{400, 680},
+				Pos: Vec2{400, 700},
 			},
 			Planet{
 				Radius: 400,
 			},
 		)
+
+		// Player
+		CreateEntity(
+			Position{
+				Pos: Vec2{400, 300 - 0.5*playerSize.Y},
+			},
+			Player{},
+		)
+
 		edit.SaveSnapshot("initialize scene")
 	}
 }
@@ -51,5 +67,14 @@ func drawGame() {
 
 	Each(func(ent Entity, planet *Planet, pos *Position) {
 		rl.DrawCircleV(pos.Pos, planet.Radius, rl.Color{0x7a, 0x36, 0x7b, 0xff})
+	})
+
+	Each(func(ent Entity, player *Player, pos *Position) {
+		rl.DrawRectangleRec(rl.Rectangle{
+			X:      pos.Pos.X - 0.5*playerSize.X,
+			Y:      pos.Pos.Y - 0.5*playerSize.Y,
+			Width:  playerSize.X,
+			Height: playerSize.Y,
+		}, rl.Color{0xbe, 0x77, 0x2b, 0xff})
 	})
 }

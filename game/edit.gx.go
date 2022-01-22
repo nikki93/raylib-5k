@@ -35,12 +35,23 @@ func inputGameEdit() {
 //
 
 func mergeGameEditBoxes() {
+	// Planet
 	Each(func(ent Entity, planet *Planet, pos *Position) {
 		edit.MergeBox(ent, rl.Rectangle{
 			X:      pos.Pos.X - planet.Radius,
 			Y:      pos.Pos.Y - planet.Radius,
 			Width:  2 * planet.Radius,
 			Height: 2 * planet.Radius,
+		})
+	})
+
+	// Player
+	Each(func(ent Entity, player *Player, pos *Position) {
+		edit.MergeBox(ent, rl.Rectangle{
+			X:      pos.Pos.X - 0.5*playerSize.X,
+			Y:      pos.Pos.Y - 0.5*playerSize.Y,
+			Width:  playerSize.X,
+			Height: playerSize.Y,
 		})
 	})
 }
