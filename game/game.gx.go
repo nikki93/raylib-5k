@@ -1,5 +1,3 @@
-//gx:include "core/core.hh"
-
 package game
 
 import (
@@ -16,13 +14,6 @@ var gameCamera = rl.Camera2D{
 
 var gameTime = 0.0
 var deltaTime = 0.0
-
-type Circle struct {
-	Behavior
-
-	Pos    Vec2
-	Radius float64
-}
 
 //
 // Init
