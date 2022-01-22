@@ -17,7 +17,7 @@ window.initElectronFS = () => {
     const repoPath = electron.remote.app
       .getAppPath()
       .replace(/\\/g, '/')
-      .replace(/\/dream-hotel\/.*?$/, '/dream-hotel');
+      .replace(/\/raylib-5k\/.*?$/, '/raylib-5k');
     window.assetsPath = repoPath + '/assets';
     try {
       FS.rename('assets', 'assets-orig');

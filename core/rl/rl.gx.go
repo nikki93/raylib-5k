@@ -6,7 +6,7 @@
 package rl
 
 import (
-	. "github.com/nikki93/dream-hotel/core/geom"
+	. "github.com/nikki93/raylib-5k/core/geom"
 )
 
 //

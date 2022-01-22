@@ -53,7 +53,7 @@ app.whenReady().then(() => {
     const repoPath = app
       .getAppPath()
       .replace(/\\/g, '/')
-      .replace(/\/dream-hotel\/.*?$/, '/dream-hotel');
+      .replace(/\/raylib-5k\/.*?$/, '/raylib-5k');
     win.loadFile(repoPath + '/app/web-release-fast/index.html');
   };
   const loadLocalhost = () => {

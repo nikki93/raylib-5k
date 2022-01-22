@@ -1,9 +1,9 @@
 package game
 
 import (
-	"github.com/nikki93/dream-hotel/core/edit"
-	. "github.com/nikki93/dream-hotel/core/entity"
-	"github.com/nikki93/dream-hotel/core/rl"
+	"github.com/nikki93/raylib-5k/core/edit"
+	. "github.com/nikki93/raylib-5k/core/entity"
+	"github.com/nikki93/raylib-5k/core/rl"
 )
 
 //

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export PROJECT_NAME="dream-hotel"
+export PROJECT_NAME="raylib-5k"
 export WSLENV="PROJECT_NAME"
 
 set -e
@@ -189,8 +189,8 @@ case "$1" in
     fi
     $CMAKE --build build/web-release-fast
     cp build/web-release-fast/{index.*,$PROJECT_NAME.*} app/web-release-fast
-    rm app/web-release-fast/dream-hotel.data
-    touch app/web-release-fast/dream-hotel.data
+    rm app/web-release-fast/raylib-5k.data
+    touch app/web-release-fast/raylib-5k.data
     ;;
   web-watch-release)
     find CMakeLists.txt core game assets web -type f | entr $TIME_TOTAL ./run.sh web-release

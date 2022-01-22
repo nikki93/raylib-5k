@@ -138,7 +138,7 @@ func main() {
 	fmt.Fprintf(buf, "package rl\n\n")
 
 	// Write imports
-	fmt.Fprintf(buf, "import (\n\t. \"github.com/nikki93/dream-hotel/core/geom\"\n)\n\n")
+	fmt.Fprintf(buf, "import (\n\t. \"github.com/nikki93/raylib-5k/core/geom\"\n)\n\n")
 
 	// Write structs
 	for _, s := range parsed.Structs {

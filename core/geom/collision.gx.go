@@ -1,7 +1,7 @@
 package geom
 
 import (
-	. "github.com/nikki93/dream-hotel/core/entity"
+	. "github.com/nikki93/raylib-5k/core/entity"
 )
 
 //

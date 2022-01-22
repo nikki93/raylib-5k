@@ -1,9 +1,9 @@
 package edit
 
 import (
-	. "github.com/nikki93/dream-hotel/core/entity"
-	. "github.com/nikki93/dream-hotel/core/geom"
-	"github.com/nikki93/dream-hotel/core/rl"
+	. "github.com/nikki93/raylib-5k/core/entity"
+	. "github.com/nikki93/raylib-5k/core/geom"
+	"github.com/nikki93/raylib-5k/core/rl"
 )
 
 //

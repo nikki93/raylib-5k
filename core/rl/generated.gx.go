@@ -4,7 +4,7 @@
 package rl
 
 import (
-	. "github.com/nikki93/dream-hotel/core/geom"
+	. "github.com/nikki93/raylib-5k/core/geom"
 )
 
 // Color, 4 components, R8G8B8A8 (32bit)
