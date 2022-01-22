@@ -5,7 +5,7 @@ const { default: installExtension } = require('electron-devtools-installer');
 Menu.setApplicationMenu(
   Menu.buildFromTemplate([
     {
-      label: 'dream hotel editor',
+      label: 'raylib 5k editor',
       submenu: [{ role: 'quit' }],
     },
     {

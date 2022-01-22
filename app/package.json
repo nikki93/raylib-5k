@@ -1,6 +1,6 @@
 {
   "name": "raylib-5k-editor",
-  "productName": "dream hotel editor",
+  "productName": "raylib 5k editor",
   "version": "1.0.0",
   "description": "Editor for the Dream Hotel project",
   "main": "main.js",
