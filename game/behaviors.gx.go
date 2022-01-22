@@ -11,6 +11,7 @@ type Layout struct {
 	Behavior
 
 	Pos Vec2
+	Rot float64
 }
 
 type Velocity struct {

@@ -7,6 +7,9 @@ package geom
 //gx:extern INFINITY
 const Infinity = 0
 
+//gx:extern PI
+const Pi = 0
+
 //gx:extern std::abs
 func Abs(f float64) float64
 
@@ -25,6 +28,9 @@ func Sin(f float64) float64
 
 //gx:extern std::cosf
 func Cos(f float64) float64
+
+//gx:extern std::atan2
+func Atan2(y, x float64) float64
 
 //gx:extern std::sqrtf
 func Sqrt(f float64) float64

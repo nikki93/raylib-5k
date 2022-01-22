@@ -69,7 +69,7 @@ func updateGame(dt float64) {
 	gameTime += dt
 	deltaTime = dt
 
-	// Up direction
+	// Update up direction
 	Each(func(ent Entity, up *Up, lay *Layout) {
 		minSqDist := -1.0
 		minDelta := Vec2{0, 0}
@@ -88,6 +88,11 @@ func updateGame(dt float64) {
 			dir := minDelta.Scale(1 / Sqrt(minSqDist))
 			up.Up = dir.Negate().Normalize()
 		}
+	})
+
+	// Rotate toward up direction
+	Each(func(ent Entity, up *Up, lay *Layout) {
+		lay.Rot = Atan2(up.Up.Y, up.Up.X)
 	})
 
 	// Jumping
@@ -129,7 +134,7 @@ func updateGame(dt float64) {
 			poly.Verts[2] = Vec2{0.5 * playerSize.X, 0.5 * playerSize.Y}
 			poly.Verts[3] = Vec2{-0.5 * playerSize.X, 0.5 * playerSize.Y}
 			poly.CalculateNormals()
-			in := IntersectCirclePolygon(circ, &poly, lay.Pos)
+			in := IntersectCirclePolygon(circ, &poly, lay.Pos, lay.Rot)
 			if in.Count > 0 {
 				// Push position out by intersection
 				lay.Pos = lay.Pos.Add(in.Normal.Scale(in.Depths[0]))
@@ -157,11 +162,15 @@ func drawGame() {
 
 	// Player
 	Each(func(ent Entity, player *Player, lay *Layout) {
+		rl.PushMatrix()
+		rl.Translatef(lay.Pos.X, lay.Pos.Y, 0)
+		rl.Rotatef(lay.Rot*180/Pi, 0, 0, 1)
 		rl.DrawRectangleRec(rl.Rectangle{
-			X:      lay.Pos.X - 0.5*playerSize.X,
-			Y:      lay.Pos.Y - 0.5*playerSize.Y,
+			X:      -0.5 * playerSize.X,
+			Y:      -0.5 * playerSize.Y,
 			Width:  playerSize.X,
 			Height: playerSize.Y,
 		}, rl.Color{0xbe, 0x77, 0x2b, 0xff})
+		rl.PopMatrix()
 	})
 }
