@@ -7,7 +7,7 @@ import (
 	. "github.com/nikki93/raylib-5k/core/geom"
 )
 
-type Position struct {
+type Layout struct {
 	Behavior
 
 	Pos Vec2

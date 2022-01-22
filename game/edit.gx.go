@@ -18,8 +18,8 @@ func validateGameEdit() {
 //
 
 func applyGameEditMoves() {
-	Each(func(ent Entity, move *edit.Move, pos *Position) {
-		pos.Pos = pos.Pos.Add(move.Delta)
+	Each(func(ent Entity, move *edit.Move, lay *Layout) {
+		lay.Pos = lay.Pos.Add(move.Delta)
 	})
 }
 
@@ -36,20 +36,20 @@ func inputGameEdit() {
 
 func mergeGameEditBoxes() {
 	// Planets
-	Each(func(ent Entity, planet *Planet, pos *Position) {
+	Each(func(ent Entity, planet *Planet, lay *Layout) {
 		edit.MergeBox(ent, rl.Rectangle{
-			X:      pos.Pos.X - planet.Radius,
-			Y:      pos.Pos.Y - planet.Radius,
+			X:      lay.Pos.X - planet.Radius,
+			Y:      lay.Pos.Y - planet.Radius,
 			Width:  2 * planet.Radius,
 			Height: 2 * planet.Radius,
 		})
 	})
 
 	// Player
-	Each(func(ent Entity, player *Player, pos *Position) {
+	Each(func(ent Entity, player *Player, lay *Layout) {
 		edit.MergeBox(ent, rl.Rectangle{
-			X:      pos.Pos.X - 0.5*playerSize.X,
-			Y:      pos.Pos.Y - 0.5*playerSize.Y,
+			X:      lay.Pos.X - 0.5*playerSize.X,
+			Y:      lay.Pos.Y - 0.5*playerSize.Y,
 			Width:  playerSize.X,
 			Height: playerSize.Y,
 		})
