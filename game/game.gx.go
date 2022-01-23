@@ -20,7 +20,7 @@ var deltaTime = 0.0
 // Settings
 //
 
-var playerSize = Vec2{1, 1}
+var playerSize = Vec2{1.5, 1}
 var playerJumpStrength = 9.0
 var playerGravityStrength = 17.0
 var playerHorizontalControlsAccel = 17.0
@@ -66,7 +66,7 @@ func updateGame(dt float64) {
 
 	// Rotate toward up direction
 	Each(func(ent Entity, up *Up, lay *Layout) {
-		lay.Rot = Atan2(up.Up.Y, up.Up.X)
+		lay.Rot = Atan2(up.Up.Y, up.Up.X) - Pi/2
 	})
 
 	// Horizontal controls
