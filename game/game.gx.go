@@ -98,11 +98,11 @@ func updateGame(dt float64) {
 
 	// Horizontal controls
 	Each(func(ent Entity, player *Player, up *Up, vel *Velocity) {
-		if rl.IsKeyDown(rl.KEY_A) {
+		if rl.IsKeyDown(rl.KEY_A) || rl.IsKeyDown(rl.KEY_LEFT) {
 			dir := Vec2{up.Up.Y, -up.Up.X}
 			vel.Vel = vel.Vel.Add(dir.Scale(playerHorizontalControlsAccel * dt))
 		}
-		if rl.IsKeyDown(rl.KEY_D) {
+		if rl.IsKeyDown(rl.KEY_D) || rl.IsKeyDown(rl.KEY_RIGHT) {
 			dir := Vec2{-up.Up.Y, up.Up.X}
 			vel.Vel = vel.Vel.Add(dir.Scale(playerHorizontalControlsAccel * dt))
 		}
@@ -110,7 +110,7 @@ func updateGame(dt float64) {
 
 	// Jump controls
 	Each(func(ent Entity, player *Player, up *Up, vel *Velocity) {
-		if rl.IsKeyPressed(rl.KEY_W) {
+		if rl.IsKeyPressed(rl.KEY_W) || rl.IsKeyPressed(rl.KEY_UP) {
 			vel.Vel = vel.Vel.Add(up.Up.Scale(playerJumpStrength))
 		}
 	})
@@ -156,6 +156,12 @@ func updateGame(dt float64) {
 				vel.Vel = vel.Vel.Subtract(in.Normal.Scale(vel.Vel.DotProduct(in.Normal)))
 			}
 		})
+	})
+
+	// Update camera
+
+	Each(func(ent Entity, player *Player, lay *Layout, vel *Velocity) {
+		gameCamera.Target.Lerp(lay.Pos.Add(vel.Vel.Scale(0.5)), 0.1)
 	})
 }
 
