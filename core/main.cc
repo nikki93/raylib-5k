@@ -92,7 +92,7 @@ void frame() {
     }
     rl::EndMode2D();
 
-    rl::DrawText(debugDisplayBuffer, 18, 18, 30, rl::BLACK);
+    rl::DrawText(debugDisplayBuffer, 18, 18, 30, rl::WHITE);
   }
   rl::EndDrawing();
 
