@@ -133,11 +133,18 @@ func updateGame(dt float64) {
 
 	// Update camera
 	Each(func(ent Entity, player *Player, lay *Layout, vel *Velocity) {
-		lookAtDelta := vel.Vel.Scale(0.2)
-		lookAt := lay.Pos.Add(lookAtDelta)
-		rate := 14.0
-		smoothing := 1 - Pow(2, -rate*deltaTime)
-		gameCamera.Target = gameCamera.Target.Lerp(lookAt, smoothing)
+		if !player.CameraInitialized {
+			player.CameraPos = lay.Pos
+			player.CameraInitialized = true
+		} else {
+			lookAtDelta := vel.Vel.Scale(0.2)
+			lookAt := lay.Pos.Add(lookAtDelta)
+			rate := 14.0
+			smoothing := 1 - Pow(2, -rate*deltaTime)
+			player.CameraPos = player.CameraPos.Lerp(lookAt, smoothing)
+			player.CameraInitialized = true
+		}
+		gameCamera.Target = player.CameraPos
 	})
 }
 

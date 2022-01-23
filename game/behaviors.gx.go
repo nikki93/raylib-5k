@@ -40,4 +40,7 @@ type Gravity struct {
 
 type Player struct {
 	Behavior
+
+	CameraInitialized bool
+	CameraPos         Vec2
 }
