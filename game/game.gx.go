@@ -5,7 +5,6 @@ import (
 	. "github.com/nikki93/raylib-5k/core/entity"
 	. "github.com/nikki93/raylib-5k/core/geom"
 	"github.com/nikki93/raylib-5k/core/rl"
-	"github.com/nikki93/raylib-5k/core/str"
 )
 
 var gameCameraSize = Vec2{36, 20.25}.Scale(1.2)
@@ -138,7 +137,6 @@ func updateGame(dt float64) {
 		lookAt := lay.Pos.Add(lookAtDelta)
 		rate := 14.0
 		smoothing := 1 - Pow(2, -rate*deltaTime)
-		str.Display("%f", smoothing)
 		gameCamera.Target = gameCamera.Target.Lerp(lookAt, smoothing)
 	})
 }
