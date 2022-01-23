@@ -134,7 +134,7 @@ func (v Vec2) Normalize() Vec2
 
 // Calculate linear interpolation between two vectors
 //gx:extern rl::Vector2Lerp
-func (v Vec2) Lerp(u Vec2, amount float64)
+func (v Vec2) Lerp(u Vec2, amount float64) Vec2
 
 // Calculate reflected vector to normal
 //gx:extern rl::Vector2Reflect

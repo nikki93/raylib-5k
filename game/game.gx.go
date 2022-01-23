@@ -5,9 +5,10 @@ import (
 	. "github.com/nikki93/raylib-5k/core/entity"
 	. "github.com/nikki93/raylib-5k/core/geom"
 	"github.com/nikki93/raylib-5k/core/rl"
+	"github.com/nikki93/raylib-5k/core/str"
 )
 
-var gameCameraSize = Vec2{36, 20.25}.Scale(3)
+var gameCameraSize = Vec2{36, 20.25}.Scale(1.2)
 
 var gameCamera = rl.Camera2D{
 	Target: Vec2{0, 0},
@@ -32,34 +33,7 @@ const planetGravRadiusMultiplier = 1.38
 //
 
 func initGame() {
-	if !edit.LoadSession() {
-		// Test planet and player
-
-		planetLay := Vec2{0, 24}
-		planetRadius := 21.0
-		CreateEntity(
-			Layout{
-				Pos: planetLay,
-			},
-			Planet{
-				Radius: planetRadius,
-			},
-		)
-
-		CreateEntity(
-			Layout{
-				Pos: Vec2{0, planetLay.Y - planetRadius - 3 - 0.5*playerSize.Y},
-			},
-			Velocity{},
-			Up{},
-			Gravity{
-				Strength: playerGravityStrength,
-			},
-			Player{},
-		)
-
-		edit.SaveSnapshot("initialize scene")
-	}
+	edit.OpenScene("test-1.scn")
 }
 
 //
@@ -100,11 +74,11 @@ func updateGame(dt float64) {
 	Each(func(ent Entity, player *Player, up *Up, vel *Velocity) {
 		if rl.IsKeyDown(rl.KEY_A) || rl.IsKeyDown(rl.KEY_LEFT) {
 			dir := Vec2{up.Up.Y, -up.Up.X}
-			vel.Vel = vel.Vel.Add(dir.Scale(playerHorizontalControlsAccel * dt))
+			vel.Vel = vel.Vel.Add(dir.Scale(playerHorizontalControlsAccel * deltaTime))
 		}
 		if rl.IsKeyDown(rl.KEY_D) || rl.IsKeyDown(rl.KEY_RIGHT) {
 			dir := Vec2{-up.Up.Y, up.Up.X}
-			vel.Vel = vel.Vel.Add(dir.Scale(playerHorizontalControlsAccel * dt))
+			vel.Vel = vel.Vel.Add(dir.Scale(playerHorizontalControlsAccel * deltaTime))
 		}
 	})
 
@@ -126,7 +100,7 @@ func updateGame(dt float64) {
 				dist := Sqrt(sqDist)
 				dir := delta.Scale(1 / dist)
 
-				vel.Vel = vel.Vel.Add(dir.Scale(grav.Strength * dt))
+				vel.Vel = vel.Vel.Add(dir.Scale(grav.Strength * deltaTime))
 			}
 		})
 	})
@@ -134,7 +108,7 @@ func updateGame(dt float64) {
 	// Apply velocity
 	Each(func(ent Entity, vel *Velocity, lay *Layout) {
 		// Apply velocity
-		lay.Pos = lay.Pos.Add(vel.Vel.Scale(dt))
+		lay.Pos = lay.Pos.Add(vel.Vel.Scale(deltaTime))
 
 		// Handle collisions with planets
 		Each(func(ent Entity, planet *Planet, planetLay *Layout) {
@@ -159,9 +133,13 @@ func updateGame(dt float64) {
 	})
 
 	// Update camera
-
 	Each(func(ent Entity, player *Player, lay *Layout, vel *Velocity) {
-		gameCamera.Target.Lerp(lay.Pos.Add(vel.Vel.Scale(0.5)), 0.1)
+		lookAtDelta := vel.Vel.Scale(0.2)
+		lookAt := lay.Pos.Add(lookAtDelta)
+		rate := 14.0
+		smoothing := 1 - Pow(2, -rate*deltaTime)
+		str.Display("%f", smoothing)
+		gameCamera.Target = gameCamera.Target.Lerp(lookAt, smoothing)
 	})
 }
 
