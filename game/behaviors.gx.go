@@ -25,7 +25,7 @@ type ApplySurfaceFriction struct{}
 
 type PlanetTerrain struct {
 	heights []float64
-	polys   []Polygon
+	verts   []Vec2
 }
 
 type Planet struct {

@@ -19,6 +19,12 @@ type Circle struct {
 	Radius float64 //gx:extern r
 }
 
+//gx:extern c2Capsule
+type Capsule struct {
+	A, B   Vec2
+	Radius float64 //gx:extern r
+}
+
 //gx:extern c2Poly
 type Polygon struct {
 	Count   int
@@ -59,6 +65,26 @@ type c2x struct { // Transform
 	r c2r
 }
 
+//gx:extern c2CircletoPolyManifold
+func c2CircletoPolyManifold(a Circle, b *Polygon, bx *c2x, m *IntersectResult)
+
+func IntersectCirclePolygon(a Circle, b *Polygon, bPos Vec2, bAng float64) IntersectResult {
+	result := IntersectResult{}
+	bx := c2x{bPos, c2r{Cos(bAng), Sin(bAng)}}
+	c2CircletoPolyManifold(a, b, &bx, &result)
+	return result
+}
+
+//gx:extern c2CapsuletoPolyManifold
+func c2CapsuletoPolyManifold(a Capsule, b *Polygon, bx *c2x, m *IntersectResult)
+
+func IntersectCapsulePolygon(a Capsule, b *Polygon, bPos Vec2, bAng float64) IntersectResult {
+	result := IntersectResult{}
+	bx := c2x{bPos, c2r{Cos(bAng), Sin(bAng)}}
+	c2CapsuletoPolyManifold(a, b, &bx, &result)
+	return result
+}
+
 //gx:extern c2PolytoPolyManifold
 func c2PolytoPolyManifold(a *Polygon, ax *c2x, b *Polygon, bx *c2x, m *IntersectResult)
 
@@ -67,16 +93,6 @@ func IntersectPolygons(a *Polygon, aPos Vec2, aAng float64, b *Polygon, bPos Vec
 	ax := c2x{aPos, c2r{Cos(aAng), Sin(aAng)}}
 	bx := c2x{bPos, c2r{Cos(bAng), Sin(bAng)}}
 	c2PolytoPolyManifold(a, &ax, b, &bx, &result)
-	return result
-}
-
-//gx:extern c2CircletoPolyManifold
-func c2CircletoPolyManifold(a Circle, b *Polygon, bx *c2x, m *IntersectResult)
-
-func IntersectCirclePolygon(a Circle, b *Polygon, bPos Vec2, bAng float64) IntersectResult {
-	result := IntersectResult{}
-	bx := c2x{bPos, c2r{Cos(bAng), Sin(bAng)}}
-	c2CircletoPolyManifold(a, b, &bx, &result)
 	return result
 }
 

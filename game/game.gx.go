@@ -63,10 +63,8 @@ func createPlanet(pos Vec2, radius float64) Entity {
 		{Frequency: 0.015, Amplitude: 1.0},
 	}
 
-	// Generate heights and polygons
+	// Generate heights and vertices
 	angleStep := 2 * Pi / resolution
-	prevInner := Vec2{0, 0}
-	prevOuter := Vec2{0, 0}
 	for angle := 0.0; angle < 2*Pi; angle += angleStep {
 		// Height
 		height := radius
@@ -75,24 +73,9 @@ func createPlanet(pos Vec2, radius float64) Entity {
 		}
 		planet.terrain.heights = append(planet.terrain.heights, height)
 
-		// Polygon vertices -- stitch with previous
-		vertexAtHeight := func(height float64) Vec2 {
-			return Vec2{Cos(angle), Sin(angle)}.Scale(height)
-		}
-		outer := vertexAtHeight(height)
-		inner := vertexAtHeight(height - thickness)
-		if angle > 0 {
-			poly := Polygon{}
-			poly.Count = 4
-			poly.Verts[0] = prevInner
-			poly.Verts[1] = prevOuter
-			poly.Verts[2] = outer
-			poly.Verts[3] = inner
-			poly.CalculateNormals()
-			planet.terrain.polys = append(planet.terrain.polys, poly)
-		}
-		prevOuter = outer
-		prevInner = inner
+		// Vertex
+		vert := Vec2{Cos(angle), Sin(angle)}.Scale(height)
+		planet.terrain.verts = append(planet.terrain.verts, vert)
 	}
 
 	return ent
@@ -220,27 +203,35 @@ func updateGame(dt float64) {
 		// Apply velocity
 		lay.Pos = lay.Pos.Add(vel.Vel.Scale(deltaTime))
 
-		// Handle collisions with planets
+		// Handle collisons
+		thickness := 0.4
+		poly := Polygon{}
+		poly.Count = 4
+		reducedPlayerSize := playerSize.SubtractValue(2 * thickness)
+		poly.Verts[0] = Vec2{-0.5 * reducedPlayerSize.X, -0.5 * reducedPlayerSize.Y}
+		poly.Verts[1] = Vec2{0.5 * reducedPlayerSize.X, -0.5 * reducedPlayerSize.Y}
+		poly.Verts[2] = Vec2{0.5 * reducedPlayerSize.X, 0.5 * reducedPlayerSize.Y}
+		poly.Verts[3] = Vec2{-0.5 * reducedPlayerSize.X, 0.5 * reducedPlayerSize.Y}
+		poly.CalculateNormals()
 		Each(func(planetEnt Entity, planet *Planet, planetLay *Layout) {
-			// Calculate intersection
-			circ := Circle{Pos: planetLay.Pos, Radius: planet.Radius}
-			poly := Polygon{}
-			poly.Count = 4
-			poly.Verts[0] = Vec2{-0.5 * playerSize.X, -0.5 * playerSize.Y}
-			poly.Verts[1] = Vec2{0.5 * playerSize.X, -0.5 * playerSize.Y}
-			poly.Verts[2] = Vec2{0.5 * playerSize.X, 0.5 * playerSize.Y}
-			poly.Verts[3] = Vec2{-0.5 * playerSize.X, 0.5 * playerSize.Y}
-			poly.CalculateNormals()
-			in := IntersectCirclePolygon(circ, &poly, lay.Pos, lay.Rot)
-			if in.Count > 0 {
-				// Push position out by intersection
-				lay.Pos = lay.Pos.Add(in.Normal.Scale(in.Depths[0]))
+			nVerts := len(planet.terrain.verts)
+			for i := 1; i < nVerts; i++ {
+				a := planetLay.Pos.Add(planet.terrain.verts[i-1])
+				b := planetLay.Pos.Add(planet.terrain.verts[i])
+				capsule := Capsule{A: a, B: b, Radius: thickness}
 
-				// Remove component of velocity along normal
-				vel.Vel = vel.Vel.Subtract(in.Normal.Scale(vel.Vel.DotProduct(in.Normal)))
+				// Calculate intersection
+				in := IntersectCapsulePolygon(capsule, &poly, lay.Pos, lay.Rot)
+				if in.Count > 0 {
+					// Push position out by intersection
+					lay.Pos = lay.Pos.Add(in.Normal.Scale(in.Depths[0]))
 
-				// Mark for friction application
-				AddComponent(ent, ApplySurfaceFriction{})
+					// Remove component of velocity along normal
+					vel.Vel = vel.Vel.Subtract(in.Normal.Scale(vel.Vel.DotProduct(in.Normal)))
+
+					// Mark for friction application
+					AddComponent(ent, ApplySurfaceFriction{})
+				}
 			}
 		})
 	})
@@ -326,21 +317,19 @@ func drawGame() {
 		// Base radius / sea level
 		rl.DrawCircleSector(lay.Pos, planet.Radius, 0, 360, 128, rl.Color{0x7a, 0x36, 0x7b, 0xff})
 
-		// Polygons
+		// Terrain
 		rl.PushMatrix()
 		rl.Translatef(lay.Pos.X, lay.Pos.Y, 0)
-		rl.CheckRenderBatchLimit(2 * 4 * len(planet.terrain.polys))
+		nVerts := len(planet.terrain.verts)
+		rl.CheckRenderBatchLimit(2 * nVerts)
 		rl.Begin(rl.Lines)
-		for _, poly := range planet.terrain.polys {
+		for i := 1; i < nVerts; i++ {
 			drawLine := func(a, b Vec2) {
 				rl.Color4ub(0xff, 0xff, 0xff, 0xff)
 				rl.Vertex2f(a.X, a.Y)
 				rl.Vertex2f(b.X, b.Y)
 			}
-			drawLine(poly.Verts[0], poly.Verts[1])
-			drawLine(poly.Verts[1], poly.Verts[2])
-			drawLine(poly.Verts[2], poly.Verts[3])
-			drawLine(poly.Verts[3], poly.Verts[0])
+			drawLine(planet.terrain.verts[i-1], planet.terrain.verts[i])
 		}
 		rl.End()
 		rl.PopMatrix()
