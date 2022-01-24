@@ -23,10 +23,17 @@ type Velocity struct {
 type DisableFriction struct{}
 type ApplySurfaceFriction struct{}
 
+type PlanetTerrain struct {
+	heights []float64
+	polys   []Polygon
+}
+
 type Planet struct {
 	Behavior
 
 	Radius float64
+
+	terrain PlanetTerrain
 }
 
 type Up struct {

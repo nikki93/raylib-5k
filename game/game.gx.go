@@ -5,6 +5,7 @@ import (
 	. "github.com/nikki93/raylib-5k/core/entity"
 	. "github.com/nikki93/raylib-5k/core/geom"
 	"github.com/nikki93/raylib-5k/core/rl"
+	"github.com/nikki93/raylib-5k/core/str"
 )
 
 var gameCameraSize = Vec2{36, 20.25}
@@ -36,24 +37,79 @@ var planetGravRadiusMultiplier = 1.38
 // Init
 //
 
+type PlanetNoiseBand struct {
+	Frequency, Amplitude float64
+}
+
+func createPlanet(pos Vec2, radius float64) Entity {
+	ent := CreateEntity(
+		Layout{
+			Pos: pos,
+		},
+		Planet{
+			Radius: radius,
+		},
+	)
+	planet := GetComponent[Planet](ent)
+	if planet == nil {
+		str.Print("planet generation failed?")
+	}
+
+	// Generation parameters
+	thickness := 1.0
+	resolution := 2 * Pi * radius / thickness
+	noiseBands := [...]PlanetNoiseBand{
+		{Frequency: 0.003, Amplitude: 9.0},
+		{Frequency: 0.015, Amplitude: 1.0},
+	}
+
+	// Generate heights and polygons
+	angleStep := 2 * Pi / resolution
+	prevInner := Vec2{0, 0}
+	prevOuter := Vec2{0, 0}
+	for angle := 0.0; angle < 2*Pi; angle += angleStep {
+		// Height
+		height := radius
+		for _, band := range noiseBands {
+			height += band.Amplitude * Noise1(resolution*band.Frequency*angle)
+		}
+		planet.terrain.heights = append(planet.terrain.heights, height)
+
+		// Polygon vertices -- stitch with previous
+		vertexAtHeight := func(height float64) Vec2 {
+			return Vec2{Cos(angle), Sin(angle)}.Scale(height)
+		}
+		outer := vertexAtHeight(height)
+		inner := vertexAtHeight(height - thickness)
+		if angle > 0 {
+			poly := Polygon{}
+			poly.Count = 4
+			poly.Verts[0] = prevInner
+			poly.Verts[1] = prevOuter
+			poly.Verts[2] = outer
+			poly.Verts[3] = inner
+			poly.CalculateNormals()
+			planet.terrain.polys = append(planet.terrain.polys, poly)
+		}
+		prevOuter = outer
+		prevInner = inner
+	}
+
+	return ent
+}
+
 func initGame() {
 	if !edit.LoadSession() {
 		// Home planet
 		homePlanetPos := Vec2{0, 24}
 		homePlanetRadius := 64.0
-		CreateEntity(
-			Layout{
-				Pos: homePlanetPos,
-			},
-			Planet{
-				Radius: homePlanetRadius,
-			},
-		)
+		createPlanet(homePlanetPos, homePlanetRadius)
 
 		// Player
+		playerPos := Vec2{0, homePlanetPos.Y - homePlanetRadius - 3 - 0.5*playerSize.Y}
 		CreateEntity(
 			Layout{
-				Pos: Vec2{0, homePlanetPos.Y - homePlanetRadius - 3 - 0.5*playerSize.Y},
+				Pos: playerPos,
 			},
 			Velocity{},
 			Up{},
@@ -62,16 +118,13 @@ func initGame() {
 			},
 			Player{},
 		)
+		edit.Camera().Target = playerPos
 
 		// Smaller planet
 		mediumPlanetRadius := 0.4 * homePlanetRadius
-		CreateEntity(
-			Layout{
-				Pos: Vec2{0, homePlanetPos.Y - 1.3*homePlanetRadius - 1.3*mediumPlanetRadius},
-			},
-			Planet{
-				Radius: mediumPlanetRadius,
-			},
+		createPlanet(
+			Vec2{0, homePlanetPos.Y - 1.3*homePlanetRadius - 1.3*mediumPlanetRadius},
+			mediumPlanetRadius,
 		)
 
 		edit.SaveSnapshot("initialize scene")
@@ -270,8 +323,29 @@ func drawGame() {
 
 	// Planets
 	Each(func(ent Entity, planet *Planet, lay *Layout) {
+		// Base radius / sea level
 		rl.DrawCircleSector(lay.Pos, planet.Radius, 0, 360, 128, rl.Color{0x7a, 0x36, 0x7b, 0xff})
-		rl.DrawCircleSectorLines(lay.Pos, planet.Radius+1, 0, 360, 28, rl.White)
+
+		// Polygons
+		rl.PushMatrix()
+		rl.Translatef(lay.Pos.X, lay.Pos.Y, 0)
+		rl.CheckRenderBatchLimit(2 * 4 * len(planet.terrain.polys))
+		rl.Begin(rl.Lines)
+		for _, poly := range planet.terrain.polys {
+			drawLine := func(a, b Vec2) {
+				rl.Color4ub(0xff, 0xff, 0xff, 0xff)
+				rl.Vertex2f(a.X, a.Y)
+				rl.Vertex2f(b.X, b.Y)
+			}
+			drawLine(poly.Verts[0], poly.Verts[1])
+			drawLine(poly.Verts[1], poly.Verts[2])
+			drawLine(poly.Verts[2], poly.Verts[3])
+			drawLine(poly.Verts[3], poly.Verts[0])
+		}
+		rl.End()
+		rl.PopMatrix()
+
+		// Gravity radius
 		gravRadius := planetGravRadiusMultiplier * planet.Radius
 		rl.DrawCircleSectorLines(lay.Pos, gravRadius, 0, 360, 32, rl.Color{0x7a, 0x36, 0x7b, 0xff})
 	})
