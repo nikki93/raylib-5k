@@ -30,7 +30,7 @@ var playerHorizontalControlsAccel = 17.0
 
 var playerMinimumHorizontalSpeedForFriction = 12.0
 
-const planetGravRadiusMultiplier = 1.38
+var planetGravRadiusMultiplier = 1.38
 
 //
 // Init
@@ -38,22 +38,22 @@ const planetGravRadiusMultiplier = 1.38
 
 func initGame() {
 	if !edit.LoadSession() {
-		// Test planet and player
-
-		planetLay := Vec2{0, 24}
-		planetRadius := 64.0
+		// Home planet
+		homePlanetPos := Vec2{0, 24}
+		homePlanetRadius := 64.0
 		CreateEntity(
 			Layout{
-				Pos: planetLay,
+				Pos: homePlanetPos,
 			},
 			Planet{
-				Radius: planetRadius,
+				Radius: homePlanetRadius,
 			},
 		)
 
+		// Player
 		CreateEntity(
 			Layout{
-				Pos: Vec2{0, planetLay.Y - planetRadius - 3 - 0.5*playerSize.Y},
+				Pos: Vec2{0, homePlanetPos.Y - homePlanetRadius - 3 - 0.5*playerSize.Y},
 			},
 			Velocity{},
 			Up{},
@@ -61,6 +61,17 @@ func initGame() {
 				Strength: playerGravityStrength,
 			},
 			Player{},
+		)
+
+		// Smaller planet
+		mediumPlanetRadius := 0.4 * homePlanetRadius
+		CreateEntity(
+			Layout{
+				Pos: Vec2{0, homePlanetPos.Y - 1.3*homePlanetRadius - 1.3*mediumPlanetRadius},
+			},
+			Planet{
+				Radius: mediumPlanetRadius,
+			},
 		)
 
 		edit.SaveSnapshot("initialize scene")
@@ -76,7 +87,7 @@ func updateGame(dt float64) {
 	deltaTime = dt
 
 	// Update up direction
-	Each(func(ent Entity, up *Up, lay *Layout) {
+	Each(func(ent Entity, lay *Layout) {
 		minSqDist := -1.0
 		minDelta := Vec2{0, 0}
 		Each(func(ent Entity, planet *Planet, planetLay *Layout) {
@@ -92,7 +103,10 @@ func updateGame(dt float64) {
 		})
 		if minSqDist > 0 {
 			dir := minDelta.Scale(1 / Sqrt(minSqDist))
+			up := AddComponent(ent, Up{})
 			up.Up = dir.Negate().Normalize()
+		} else {
+			RemoveComponent[Up](ent)
 		}
 	})
 
@@ -244,13 +258,18 @@ func updateGame(dt float64) {
 // Draw
 //
 
+//gx:extern getAssetPath
+func getAssetPath(assetName string) string
+
+var playerTexture = rl.LoadTexture(getAssetPath("player.png"))
+
 func drawGame() {
 	rl.ClearBackground(rl.Color{0x10, 0x14, 0x1f, 0xff})
 
 	// Planets
 	Each(func(ent Entity, planet *Planet, lay *Layout) {
 		rl.DrawCircleSector(lay.Pos, planet.Radius, 0, 360, 128, rl.Color{0x7a, 0x36, 0x7b, 0xff})
-		rl.DrawCircleSectorLines(lay.Pos, planet.Radius+1, 0, 360, 28, rl.White)
+		//rl.DrawCircleSectorLines(lay.Pos, planet.Radius+1, 0, 360, 28, rl.White)
 		gravRadius := planetGravRadiusMultiplier * planet.Radius
 		rl.DrawCircleSectorLines(lay.Pos, gravRadius, 0, 360, 32, rl.Color{0x7a, 0x36, 0x7b, 0xff})
 	})
@@ -260,12 +279,31 @@ func drawGame() {
 		rl.PushMatrix()
 		rl.Translatef(lay.Pos.X, lay.Pos.Y, 0)
 		rl.Rotatef(lay.Rot*180/Pi, 0, 0, 1)
-		rl.DrawRectangleRec(rl.Rectangle{
+
+		//rl.DrawRectangleRec(rl.Rectangle{
+		//  X:      -0.5 * playerSize.X,
+		//  Y:      -0.5 * playerSize.Y,
+		//  Width:  playerSize.X,
+		//  Height: playerSize.Y,
+		//}, rl.Color{0xbe, 0x77, 0x2b, 0xff})
+
+		texWidth := float64(playerTexture.Width)
+		texHeight := float64(playerTexture.Height)
+		texSource := rl.Rectangle{
+			X:      0,
+			Y:      0,
+			Width:  texWidth,
+			Height: texHeight,
+		}
+		destHeight := texHeight * playerSize.X / texWidth
+		texDest := rl.Rectangle{
 			X:      -0.5 * playerSize.X,
-			Y:      -0.5 * playerSize.Y,
+			Y:      0.5*playerSize.Y - destHeight,
 			Width:  playerSize.X,
-			Height: playerSize.Y,
-		}, rl.Color{0xbe, 0x77, 0x2b, 0xff})
+			Height: destHeight,
+		}
+		rl.DrawTexturePro(playerTexture, texSource, texDest, Vec2{0, 0}, 0, rl.White)
+
 		rl.PopMatrix()
 	})
 }
