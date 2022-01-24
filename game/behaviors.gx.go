@@ -20,6 +20,9 @@ type Velocity struct {
 	Vel Vec2
 }
 
+type DisableFriction struct{}
+type ApplyFriction struct{}
+
 type Planet struct {
 	Behavior
 

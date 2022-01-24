@@ -20,10 +20,14 @@ var deltaTime = 0.0
 // Settings
 //
 
+var frictionDecel = 25.0
+
 var playerSize = Vec2{1.5, 1}
-var playerJumpStrength = 9.0
-var playerGravityStrength = 17.0
+var playerJumpStrength = 14.0
+var playerGravityStrength = 28.0
 var playerHorizontalControlsAccel = 17.0
+
+var playerMinimumHorizontalSpeedForFriction = 12.0
 
 const planetGravRadiusMultiplier = 1.38
 
@@ -36,7 +40,7 @@ func initGame() {
 		// Test planet and player
 
 		planetLay := Vec2{0, 24}
-		planetRadius := 21.0
+		planetRadius := 64.0
 		CreateEntity(
 			Layout{
 				Pos: planetLay,
@@ -98,13 +102,23 @@ func updateGame(dt float64) {
 
 	// Horizontal controls
 	Each(func(ent Entity, player *Player, up *Up, vel *Velocity) {
+		appliedControls := false
 		if rl.IsKeyDown(rl.KEY_A) || rl.IsKeyDown(rl.KEY_LEFT) {
 			dir := Vec2{up.Up.Y, -up.Up.X}
 			vel.Vel = vel.Vel.Add(dir.Scale(playerHorizontalControlsAccel * deltaTime))
+			appliedControls = true
 		}
 		if rl.IsKeyDown(rl.KEY_D) || rl.IsKeyDown(rl.KEY_RIGHT) {
 			dir := Vec2{-up.Up.Y, up.Up.X}
 			vel.Vel = vel.Vel.Add(dir.Scale(playerHorizontalControlsAccel * deltaTime))
+			appliedControls = true
+		}
+		if appliedControls {
+			upVel := up.Up.Scale(vel.Vel.DotProduct(up.Up))
+			tangentVel := vel.Vel.Subtract(upVel)
+			if tangentSpeed := tangentVel.Length(); tangentSpeed <= playerMinimumHorizontalSpeedForFriction {
+				AddComponent(ent, DisableFriction{})
+			}
 		}
 	})
 
@@ -137,7 +151,7 @@ func updateGame(dt float64) {
 		lay.Pos = lay.Pos.Add(vel.Vel.Scale(deltaTime))
 
 		// Handle collisions with planets
-		Each(func(ent Entity, planet *Planet, planetLay *Layout) {
+		Each(func(planetEnt Entity, planet *Planet, planetLay *Layout) {
 			// Calculate intersection
 			circ := Circle{Pos: planetLay.Pos, Radius: planet.Radius}
 			poly := Polygon{}
@@ -154,9 +168,27 @@ func updateGame(dt float64) {
 
 				// Remove component of velocity along normal
 				vel.Vel = vel.Vel.Subtract(in.Normal.Scale(vel.Vel.DotProduct(in.Normal)))
+
+				// Mark for friction application
+				AddComponent(ent, ApplyFriction{})
 			}
 		})
 	})
+
+	// Apply friction
+	Each(func(ent Entity, applyFric *ApplyFriction, up *Up, vel *Velocity) {
+		if !HasComponent[DisableFriction](ent) {
+			upVel := up.Up.Scale(vel.Vel.DotProduct(up.Up))
+			tangentVel := vel.Vel.Subtract(upVel)
+			if tangentSpeed := tangentVel.Length(); tangentSpeed > 0 {
+				tangentDir := tangentVel.Scale(1 / tangentSpeed)
+				tangentSpeed = Max(0, tangentSpeed-frictionDecel*deltaTime)
+				vel.Vel = upVel.Add(tangentDir.Scale(tangentSpeed))
+			}
+		}
+	})
+	ClearComponent[DisableFriction]()
+	ClearComponent[ApplyFriction]()
 
 	// Update camera
 	Each(func(ent Entity, player *Player, lay *Layout, vel *Velocity) {
@@ -211,6 +243,7 @@ func drawGame() {
 	// Planets
 	Each(func(ent Entity, planet *Planet, lay *Layout) {
 		rl.DrawCircleSector(lay.Pos, planet.Radius, 0, 360, 128, rl.Color{0x7a, 0x36, 0x7b, 0xff})
+		rl.DrawCircleSectorLines(lay.Pos, planet.Radius+1, 0, 360, 28, rl.White)
 		gravRadius := planetGravRadiusMultiplier * planet.Radius
 		rl.DrawCircleSectorLines(lay.Pos, gravRadius, 0, 360, 32, rl.Color{0x7a, 0x36, 0x7b, 0xff})
 	})
