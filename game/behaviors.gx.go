@@ -21,7 +21,7 @@ type Velocity struct {
 }
 
 type DisableFriction struct{}
-type ApplyFriction struct{}
+type ApplySurfaceFriction struct{}
 
 type Planet struct {
 	Behavior

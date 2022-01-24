@@ -20,7 +20,8 @@ var deltaTime = 0.0
 // Settings
 //
 
-var frictionDecel = 25.0
+var surfaceFrictionDecel = 25.0
+var atmosphereFrictionDecel = 12.0
 
 var playerSize = Vec2{1.5, 1}
 var playerJumpStrength = 14.0
@@ -170,25 +171,31 @@ func updateGame(dt float64) {
 				vel.Vel = vel.Vel.Subtract(in.Normal.Scale(vel.Vel.DotProduct(in.Normal)))
 
 				// Mark for friction application
-				AddComponent(ent, ApplyFriction{})
+				AddComponent(ent, ApplySurfaceFriction{})
 			}
 		})
 	})
 
 	// Apply friction
-	Each(func(ent Entity, applyFric *ApplyFriction, up *Up, vel *Velocity) {
+	Each(func(ent Entity, up *Up, vel *Velocity) {
 		if !HasComponent[DisableFriction](ent) {
 			upVel := up.Up.Scale(vel.Vel.DotProduct(up.Up))
 			tangentVel := vel.Vel.Subtract(upVel)
 			if tangentSpeed := tangentVel.Length(); tangentSpeed > 0 {
 				tangentDir := tangentVel.Scale(1 / tangentSpeed)
-				tangentSpeed = Max(0, tangentSpeed-frictionDecel*deltaTime)
+				decel := 0.0
+				if HasComponent[ApplySurfaceFriction](ent) {
+					decel = surfaceFrictionDecel
+				} else {
+					decel = atmosphereFrictionDecel
+				}
+				tangentSpeed = Max(0, tangentSpeed-decel*deltaTime)
 				vel.Vel = upVel.Add(tangentDir.Scale(tangentSpeed))
 			}
 		}
 	})
 	ClearComponent[DisableFriction]()
-	ClearComponent[ApplyFriction]()
+	ClearComponent[ApplySurfaceFriction]()
 
 	// Update camera
 	Each(func(ent Entity, player *Player, lay *Layout, vel *Velocity) {
