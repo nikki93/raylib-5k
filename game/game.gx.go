@@ -22,7 +22,7 @@ var deltaTime = 0.0
 
 var playerSize = Vec2{1.5, 1}
 var playerJumpStrength = 9.0
-var playerGravityStrength = 17.0
+var playerGravityStrength = 80.0
 var playerHorizontalControlsAccel = 17.0
 
 const planetGravRadiusMultiplier = 1.38
@@ -32,7 +32,34 @@ const planetGravRadiusMultiplier = 1.38
 //
 
 func initGame() {
-	edit.OpenScene("test-1.scn")
+	if !edit.LoadSession() {
+		// Test planet and player
+
+		planetLay := Vec2{0, 24}
+		planetRadius := 21.0
+		CreateEntity(
+			Layout{
+				Pos: planetLay,
+			},
+			Planet{
+				Radius: planetRadius,
+			},
+		)
+
+		CreateEntity(
+			Layout{
+				Pos: Vec2{0, planetLay.Y - planetRadius - 3 - 0.5*playerSize.Y},
+			},
+			Velocity{},
+			Up{},
+			Gravity{
+				Strength: playerGravityStrength,
+			},
+			Player{},
+		)
+
+		edit.SaveSnapshot("initialize scene")
+	}
 }
 
 //
@@ -66,7 +93,7 @@ func updateGame(dt float64) {
 
 	// Rotate toward up direction
 	Each(func(ent Entity, up *Up, lay *Layout) {
-		lay.Rot = Atan2(up.Up.Y, up.Up.X) - Pi/2
+		lay.Rot = Atan2(up.Up.Y, up.Up.X) + Pi/2
 	})
 
 	// Horizontal controls
@@ -135,16 +162,36 @@ func updateGame(dt float64) {
 	Each(func(ent Entity, player *Player, lay *Layout, vel *Velocity) {
 		if !player.CameraInitialized {
 			player.CameraPos = lay.Pos
+			player.CameraRot = lay.Rot
 			player.CameraInitialized = true
 		} else {
-			lookAtDelta := vel.Vel.Scale(0.2)
-			lookAt := lay.Pos.Add(lookAtDelta)
-			rate := 14.0
-			smoothing := 1 - Pow(2, -rate*deltaTime)
-			player.CameraPos = player.CameraPos.Lerp(lookAt, smoothing)
+			// Position
+			{
+				lookAtDelta := vel.Vel.Scale(0.2)
+				lookAt := lay.Pos.Add(lookAtDelta)
+				rate := 14.0
+				smoothing := 1 - Pow(2, -rate*deltaTime)
+				player.CameraPos = player.CameraPos.Lerp(lookAt, smoothing)
+			}
+
+			// Rotation
+			{
+				targetRot := lay.Rot
+				currRot := player.CameraRot
+				if targetRotAbove := targetRot + 2*Pi; Abs(targetRotAbove-currRot) < Abs(targetRot-currRot) {
+					targetRot = targetRotAbove
+				}
+				if targetRotBelow := targetRot - 2*Pi; Abs(targetRotBelow-currRot) < Abs(targetRot-currRot) {
+					targetRot = targetRotBelow
+				}
+				rate := 5.0
+				smoothing := 1 - Pow(2, -rate*deltaTime)
+				player.CameraRot = player.CameraRot + smoothing*(targetRot-currRot)
+			}
 			player.CameraInitialized = true
 		}
 		gameCamera.Target = player.CameraPos
+		gameCamera.Rotation = -player.CameraRot * 180 / Pi
 	})
 }
 
