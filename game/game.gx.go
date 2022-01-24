@@ -7,7 +7,7 @@ import (
 	"github.com/nikki93/raylib-5k/core/rl"
 )
 
-var gameCameraSize = Vec2{36, 20.25}.Scale(1.2)
+var gameCameraSize = Vec2{36, 20.25}
 
 var gameCamera = rl.Camera2D{
 	Target: Vec2{0, 0},
@@ -21,7 +21,7 @@ var deltaTime = 0.0
 //
 
 var surfaceFrictionDecel = 25.0
-var atmosphereFrictionDecel = 12.0
+var atmosphereFrictionDecel = 18.0
 
 var playerSize = Vec2{1.5, 1}
 var playerJumpStrength = 14.0
@@ -121,11 +121,13 @@ func updateGame(dt float64) {
 		if rl.IsKeyDown(rl.KEY_A) || rl.IsKeyDown(rl.KEY_LEFT) {
 			dir := Vec2{up.Up.Y, -up.Up.X}
 			vel.Vel = vel.Vel.Add(dir.Scale(playerHorizontalControlsAccel * deltaTime))
+			player.FlipHorizontal = true
 			appliedControls = true
 		}
 		if rl.IsKeyDown(rl.KEY_D) || rl.IsKeyDown(rl.KEY_RIGHT) {
 			dir := Vec2{-up.Up.Y, up.Up.X}
 			vel.Vel = vel.Vel.Add(dir.Scale(playerHorizontalControlsAccel * deltaTime))
+			player.FlipHorizontal = false
 			appliedControls = true
 		}
 		if appliedControls {
@@ -269,7 +271,7 @@ func drawGame() {
 	// Planets
 	Each(func(ent Entity, planet *Planet, lay *Layout) {
 		rl.DrawCircleSector(lay.Pos, planet.Radius, 0, 360, 128, rl.Color{0x7a, 0x36, 0x7b, 0xff})
-		//rl.DrawCircleSectorLines(lay.Pos, planet.Radius+1, 0, 360, 28, rl.White)
+		rl.DrawCircleSectorLines(lay.Pos, planet.Radius+1, 0, 360, 28, rl.White)
 		gravRadius := planetGravRadiusMultiplier * planet.Radius
 		rl.DrawCircleSectorLines(lay.Pos, gravRadius, 0, 360, 32, rl.Color{0x7a, 0x36, 0x7b, 0xff})
 	})
@@ -301,6 +303,9 @@ func drawGame() {
 			Y:      0.5*playerSize.Y - destHeight,
 			Width:  playerSize.X,
 			Height: destHeight,
+		}
+		if player.FlipHorizontal {
+			texSource.Width = -texSource.Width
 		}
 		rl.DrawTexturePro(playerTexture, texSource, texDest, Vec2{0, 0}, 0, rl.White)
 

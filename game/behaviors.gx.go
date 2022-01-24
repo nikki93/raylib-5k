@@ -47,4 +47,6 @@ type Player struct {
 	CameraInitialized bool
 	CameraPos         Vec2
 	CameraRot         float64
+
+	FlipHorizontal bool
 }
