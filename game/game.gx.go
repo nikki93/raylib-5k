@@ -59,8 +59,8 @@ func createPlanet(pos Vec2, radius float64) Entity {
 	thickness := 1.0
 	resolution := 2 * Pi * radius / thickness
 	noiseBands := [...]PlanetNoiseBand{
-		{Frequency: 0.003, Amplitude: 9.0},
-		{Frequency: 0.015, Amplitude: 1.0},
+		{Frequency: 0.003, Amplitude: 0.2 * radius},
+		{Frequency: 0.015, Amplitude: 0.015 * radius},
 	}
 
 	// Generate heights and vertices
@@ -71,11 +71,11 @@ func createPlanet(pos Vec2, radius float64) Entity {
 		for _, band := range noiseBands {
 			height += band.Amplitude * Noise1(resolution*band.Frequency*angle)
 		}
-		planet.terrain.heights = append(planet.terrain.heights, height)
+		planet.Terrain.Heights = append(planet.Terrain.Heights, height)
 
 		// Vertex
 		vert := Vec2{Cos(angle), Sin(angle)}.Scale(height)
-		planet.terrain.verts = append(planet.terrain.verts, vert)
+		planet.Terrain.Verts = append(planet.Terrain.Verts, vert)
 	}
 
 	return ent
@@ -104,7 +104,7 @@ func initGame() {
 		edit.Camera().Target = playerPos
 
 		// Smaller planet
-		mediumPlanetRadius := 0.4 * homePlanetRadius
+		mediumPlanetRadius := 0.2 * homePlanetRadius
 		createPlanet(
 			Vec2{0, homePlanetPos.Y - 1.3*homePlanetRadius - 1.3*mediumPlanetRadius},
 			mediumPlanetRadius,
@@ -214,10 +214,10 @@ func updateGame(dt float64) {
 		poly.Verts[3] = Vec2{-0.5 * reducedPlayerSize.X, 0.5 * reducedPlayerSize.Y}
 		poly.CalculateNormals()
 		Each(func(planetEnt Entity, planet *Planet, planetLay *Layout) {
-			nVerts := len(planet.terrain.verts)
+			nVerts := len(planet.Terrain.Verts)
 			for i := 1; i < nVerts; i++ {
-				a := planetLay.Pos.Add(planet.terrain.verts[i-1])
-				b := planetLay.Pos.Add(planet.terrain.verts[i])
+				a := planetLay.Pos.Add(planet.Terrain.Verts[i-1])
+				b := planetLay.Pos.Add(planet.Terrain.Verts[i])
 				capsule := Capsule{A: a, B: b, Radius: thickness}
 
 				// Calculate intersection
@@ -315,28 +315,30 @@ func drawGame() {
 	// Planets
 	Each(func(ent Entity, planet *Planet, lay *Layout) {
 		// Base radius / sea level
-		rl.DrawCircleSector(lay.Pos, planet.Radius, 0, 360, 128, rl.Color{0x7a, 0x36, 0x7b, 0xff})
+		//rl.DrawCircleSectorLines(lay.Pos, planet.Radius, 0, 360, 128, rl.Color{0x7a, 0x36, 0x7b, 0xff})
 
 		// Terrain
 		rl.PushMatrix()
 		rl.Translatef(lay.Pos.X, lay.Pos.Y, 0)
-		nVerts := len(planet.terrain.verts)
-		rl.CheckRenderBatchLimit(2 * nVerts)
-		rl.Begin(rl.Lines)
+		nVerts := len(planet.Terrain.Verts)
+		rl.CheckRenderBatchLimit(4 * (nVerts - 1))
+		rl.Begin(rl.Quads)
 		for i := 1; i < nVerts; i++ {
 			drawLine := func(a, b Vec2) {
-				rl.Color4ub(0xff, 0xff, 0xff, 0xff)
-				rl.Vertex2f(a.X, a.Y)
+				rl.Color4ub(0x15, 0x1d, 0x28, 0xff)
+				rl.Vertex2f(0, 0)
+				rl.Vertex2f(0, 0)
 				rl.Vertex2f(b.X, b.Y)
+				rl.Vertex2f(a.X, a.Y)
 			}
-			drawLine(planet.terrain.verts[i-1], planet.terrain.verts[i])
+			drawLine(planet.Terrain.Verts[i-1], planet.Terrain.Verts[i])
 		}
 		rl.End()
 		rl.PopMatrix()
 
 		// Gravity radius
-		gravRadius := planetGravRadiusMultiplier * planet.Radius
-		rl.DrawCircleSectorLines(lay.Pos, gravRadius, 0, 360, 32, rl.Color{0x7a, 0x36, 0x7b, 0xff})
+		//gravRadius := planetGravRadiusMultiplier * planet.Radius
+		//rl.DrawCircleSectorLines(lay.Pos, gravRadius, 0, 360, 32, rl.Color{0x7a, 0x36, 0x7b, 0xff})
 	})
 
 	// Player

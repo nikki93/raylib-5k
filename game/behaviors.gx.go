@@ -24,8 +24,8 @@ type DisableFriction struct{}
 type ApplySurfaceFriction struct{}
 
 type PlanetTerrain struct {
-	heights []float64
-	verts   []Vec2
+	Heights []float64
+	Verts   []Vec2
 }
 
 type Planet struct {
@@ -33,7 +33,7 @@ type Planet struct {
 
 	Radius float64
 
-	terrain PlanetTerrain
+	Terrain PlanetTerrain
 }
 
 type Up struct {
