@@ -310,9 +310,13 @@ JS_EXPORT void JS_saveEditSession() {
 // Play / stop
 //
 
+constexpr auto rewindOnStop = false;
+
 void playEdit() {
   if (edit.enabled) {
-    editHistory.stopSelection = saveEditSelection();
+    if constexpr (rewindOnStop) {
+      editHistory.stopSelection = saveEditSelection();
+    }
     edit.enabled = false;
     clear(edit.notification);
   }
@@ -321,8 +325,12 @@ void playEdit() {
 void stopEdit() {
   if (!edit.enabled) {
     edit.enabled = true;
-    loadEditSnapshot();
-    loadEditSelection(editHistory.stopSelection);
+    if constexpr (rewindOnStop) {
+      loadEditSnapshot();
+      loadEditSelection(editHistory.stopSelection);
+    } else {
+      edit.camera.target = gameCamera.target;
+    }
     clear(edit.notification);
   }
 }
