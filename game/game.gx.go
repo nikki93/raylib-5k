@@ -22,7 +22,7 @@ var deltaTime = 0.0
 
 var playerSize = Vec2{1.5, 1}
 var playerJumpStrength = 9.0
-var playerGravityStrength = 80.0
+var playerGravityStrength = 17.0
 var playerHorizontalControlsAccel = 17.0
 
 const planetGravRadiusMultiplier = 1.38
