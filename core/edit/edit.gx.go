@@ -27,8 +27,8 @@ func IsMode(mode string) bool
 //gx:extern setEditMode
 func SetMode(mode string)
 
-func Camera() rl.Camera2D {
-	return edit.camera
+func Camera() *rl.Camera2D {
+	return &edit.camera
 }
 
 func LineThickness() float64 {
