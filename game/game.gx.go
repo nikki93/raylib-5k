@@ -93,7 +93,7 @@ func updateGame(dt float64) {
 
 	// Rotate toward up direction
 	Each(func(ent Entity, up *Up, lay *Layout) {
-		lay.Rot = Atan2(up.Up.Y, up.Up.X) + Pi/2
+		lay.Rot = Atan2(up.Up.X, -up.Up.Y)
 	})
 
 	// Horizontal controls
@@ -191,6 +191,12 @@ func updateGame(dt float64) {
 			player.CameraInitialized = true
 		}
 		gameCamera.Target = player.CameraPos
+		if player.CameraRot > 2*Pi {
+			player.CameraRot -= 2 * Pi
+		}
+		if player.CameraRot < 0 {
+			player.CameraRot += 2 * Pi
+		}
 		gameCamera.Rotation = -player.CameraRot * 180 / Pi
 	})
 }
