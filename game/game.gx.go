@@ -146,6 +146,16 @@ func initGame() {
 			createResource(fungusGiantTypeId, homePlanet)
 		}
 
+		fungusTinyTypeId := resourceTypeIdForName("fungus_tiny")
+		for i := 0; i < 36; i++ {
+			createResource(fungusTinyTypeId, homePlanet)
+		}
+
+		sproutTinyTypeId := resourceTypeIdForName("sprout_tiny")
+		for i := 0; i < 40; i++ {
+			createResource(sproutTinyTypeId, homePlanet)
+		}
+
 		// Smaller planet
 		mediumPlanetRadius := 0.6 * homePlanetRadius
 		createPlanet(

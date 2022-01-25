@@ -100,6 +100,20 @@ var resourceTypes = [...]ResourceType{
 			{Type: CarbonElement, Amount: 10},
 		},
 	},
+	{
+		Name:      "fungus_tiny",
+		ImageName: "resource_fungus_tiny.png",
+		ElementAmounts: []ElementAmount{
+			{Type: CarbonElement, Amount: 4},
+		},
+	},
+	{
+		Name:      "sprout_tiny",
+		ImageName: "resource_sprout_tiny.png",
+		ElementAmounts: []ElementAmount{
+			{Type: CarbonElement, Amount: 3},
+		},
+	},
 }
 
 type Resource struct {
