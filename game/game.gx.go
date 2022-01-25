@@ -8,7 +8,8 @@ import (
 	"github.com/nikki93/raylib-5k/core/str"
 )
 
-var gameCameraSize = Vec2{36, 20.25}.Scale(0.8)
+var gameCameraZoom = 0.7
+var gameCameraSize = Vec2{36, 20.25}.Scale(gameCameraZoom)
 
 var gameCamera = rl.Camera2D{
 	Target: Vec2{0, 0},
@@ -28,7 +29,6 @@ var playerSize = Vec2{1.5, 1}
 var playerJumpStrength = 14.0
 var playerGravityStrength = 28.0
 var playerHorizontalControlsAccel = 17.0
-
 var playerMinimumHorizontalSpeedForFriction = 12.0
 
 var planetGravRadiusMultiplier = 1.38
@@ -39,7 +39,7 @@ var spriteScale = playerSize.X / float64(playerTexture.Width)
 // Init
 //
 
-type PlanetNoiseBand struct {
+type NoiseBand struct {
 	Frequency, Amplitude float64
 }
 
@@ -58,11 +58,12 @@ func createPlanet(pos Vec2, radius float64) Entity {
 	}
 
 	// Generation parameters
-	thickness := 1.0
-	resolution := 2 * Pi * radius / thickness
-	noiseBands := [...]PlanetNoiseBand{
+	segmentLength := 1.5 * playerSize.X
+	resolution := 2 * Pi * radius / segmentLength
+	noiseBands := [...]NoiseBand{
 		{Frequency: 0.003, Amplitude: 0.2 * radius},
 		{Frequency: 0.015, Amplitude: 0.015 * radius},
+		{Frequency: 0.060, Amplitude: 0.015 * radius},
 	}
 
 	// Generate heights and vertices
@@ -87,7 +88,20 @@ func createResource(typeId ResourceTypeId, planetEnt Entity) Entity {
 	planet := GetComponent[Planet](planetEnt)
 	planetLay := GetComponent[Layout](planetEnt)
 
-	vertIndex := rl.GetRandomValue(0, len(planet.Terrain.Verts)-1)
+	noiseParameter := float64(planet.ResourceCounter)
+	planet.ResourceCounter++
+	noiseBands := [...]NoiseBand{
+		{Frequency: 0.003, Amplitude: 1},
+		{Frequency: 0.015, Amplitude: 0.015},
+	}
+	noise := 0.0
+	for _, band := range noiseBands {
+		noise += band.Amplitude * Noise1(200*band.Frequency*noiseParameter)
+	}
+	str.Print("%f", noise)
+
+	vertIndex := Floor((0.5 + 0.5*noise) * float64(len(planet.Terrain.Verts)-1))
+	vertIndex = Max(0, Min(vertIndex, len(planet.Terrain.Verts)-1))
 	pos := planetLay.Pos.Add(planet.Terrain.Verts[vertIndex])
 	rot := Atan2(pos.X, -pos.Y)
 
@@ -126,7 +140,7 @@ func initGame() {
 		homePlanet := createPlanet(homePlanetPos, homePlanetRadius)
 
 		// Player
-		playerPos := Vec2{0, homePlanetPos.Y - homePlanetRadius - 3 - 0.5*playerSize.Y}
+		playerPos := Vec2{0, homePlanetPos.Y - homePlanetRadius - 0.5*playerSize.Y - 5}
 		CreateEntity(
 			Layout{
 				Pos: playerPos,
@@ -336,16 +350,25 @@ func updateGame(dt float64) {
 
 	// Update camera
 	Each(func(ent Entity, player *Player, lay *Layout, vel *Velocity) {
+		upOffset := Vec2{0, 0}
+		velOffset := vel.Vel.Scale(0.4 * gameCameraZoom)
+		if up := GetComponent[Up](ent); up != nil {
+			upOffset = up.Up.Scale(2.0)
+			upVelOffset := up.Up.Scale(velOffset.DotProduct(up.Up))
+			velOffset = velOffset.Subtract(upVelOffset).Add(upVelOffset.Scale(0.2))
+		}
+		lookAt := lay.Pos.Add(upOffset).Add(velOffset)
+
 		if !player.CameraInitialized {
-			player.CameraPos = lay.Pos
+			player.CameraPos = lookAt
 			player.CameraRot = lay.Rot
 			player.CameraInitialized = true
 		} else {
 			// Position
 			{
-				lookAtDelta := vel.Vel.Scale(0.2)
-				lookAt := lay.Pos.Add(lookAtDelta)
-				rate := 14.0
+				zoomDelta := 1 - gameCameraZoom
+				rateFactor := zoomDelta * zoomDelta * zoomDelta
+				rate := 14.0 / (1 - rateFactor)
 				smoothing := 1 - Pow(2, -rate*deltaTime)
 				player.CameraPos = player.CameraPos.Lerp(lookAt, smoothing)
 			}
@@ -448,7 +471,7 @@ func drawGame() {
 
 		rl.PopMatrix()
 
-		rl.DrawCircleV(lay.Pos, 0.2, rl.Red)
+		rl.DrawCircleV(lay.Pos, 0.06, rl.Red)
 	})
 
 	// Player

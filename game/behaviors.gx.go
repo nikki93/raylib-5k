@@ -39,6 +39,8 @@ type Planet struct {
 	Radius float64
 
 	Terrain PlanetTerrain
+
+	ResourceCounter int
 }
 
 type Up struct {
