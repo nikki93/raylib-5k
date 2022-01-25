@@ -147,11 +147,6 @@ func updateGame(dt float64) {
 		}
 	})
 
-	// Rotate toward up direction
-	//Each(func(ent Entity, up *Up, lay *Layout) {
-	//  lay.Rot = Atan2(up.Up.X, -up.Up.Y)
-	//})
-
 	// Horizontal controls
 	Each(func(ent Entity, player *Player, up *Up, vel *Velocity) {
 		appliedControls := false
