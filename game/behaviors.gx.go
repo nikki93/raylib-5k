@@ -5,7 +5,12 @@ package game
 import (
 	. "github.com/nikki93/raylib-5k/core/entity"
 	. "github.com/nikki93/raylib-5k/core/geom"
+	"github.com/nikki93/raylib-5k/core/rl"
 )
+
+//
+// Physics
+//
 
 type Layout struct {
 	Behavior
@@ -60,4 +65,45 @@ type Player struct {
 	CameraRot         float64
 
 	FlipHorizontal bool
+}
+
+//
+// Resources
+//
+
+type ElementType int
+
+const (
+	CarbonElement   ElementType = 0
+	NumElementTypes             = 1
+)
+
+type ElementAmount struct {
+	Type   ElementType
+	Amount int
+}
+
+type ResourceTypeId int
+
+type ResourceType struct {
+	Name           string
+	ImageName      string
+	ElementAmounts []ElementAmount
+	Texture        rl.Texture
+}
+
+var resourceTypes = [...]ResourceType{
+	{
+		Name:      "fungus_giant",
+		ImageName: "resource_fungus_giant.png",
+		ElementAmounts: []ElementAmount{
+			{Type: CarbonElement, Amount: 10},
+		},
+	},
+}
+
+type Resource struct {
+	Behavior
+
+	TypeId ResourceTypeId
 }

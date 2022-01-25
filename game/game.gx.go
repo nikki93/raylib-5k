@@ -8,7 +8,7 @@ import (
 	"github.com/nikki93/raylib-5k/core/str"
 )
 
-var gameCameraSize = Vec2{36, 20.25}
+var gameCameraSize = Vec2{36, 20.25}.Scale(0.8)
 
 var gameCamera = rl.Camera2D{
 	Target: Vec2{0, 0},
@@ -32,6 +32,8 @@ var playerHorizontalControlsAccel = 17.0
 var playerMinimumHorizontalSpeedForFriction = 12.0
 
 var planetGravRadiusMultiplier = 1.38
+
+var spriteScale = playerSize.X / float64(playerTexture.Width)
 
 //
 // Init
@@ -81,12 +83,47 @@ func createPlanet(pos Vec2, radius float64) Entity {
 	return ent
 }
 
+func createResource(typeId ResourceTypeId, planetEnt Entity) Entity {
+	planet := GetComponent[Planet](planetEnt)
+	planetLay := GetComponent[Layout](planetEnt)
+
+	vertIndex := rl.GetRandomValue(0, len(planet.Terrain.Verts)-1)
+	pos := planetLay.Pos.Add(planet.Terrain.Verts[vertIndex])
+	rot := Atan2(pos.X, -pos.Y)
+
+	ent := CreateEntity(
+		Layout{
+			Pos: pos,
+			Rot: rot,
+		},
+		Resource{
+			TypeId: typeId,
+		},
+	)
+	return ent
+}
+
+func resourceTypeIdForName(name string) ResourceTypeId {
+	for i, resourceType := range resourceTypes {
+		if resourceType.Name == name {
+			return ResourceTypeId(i)
+		}
+	}
+	return ResourceTypeId(-1)
+}
+
 func initGame() {
+	// Initialize resource textures
+	for _, resourceType := range resourceTypes {
+		resourceType.Texture = rl.LoadTexture(getAssetPath(resourceType.ImageName))
+	}
+
+	// Scene
 	if !edit.LoadSession() {
 		// Home planet
 		homePlanetPos := Vec2{0, 24}
 		homePlanetRadius := 64.0
-		createPlanet(homePlanetPos, homePlanetRadius)
+		homePlanet := createPlanet(homePlanetPos, homePlanetRadius)
 
 		// Player
 		playerPos := Vec2{0, homePlanetPos.Y - homePlanetRadius - 3 - 0.5*playerSize.Y}
@@ -102,6 +139,12 @@ func initGame() {
 			Player{},
 		)
 		edit.Camera().Target = playerPos
+
+		// Resources
+		fungusGiantTypeId := resourceTypeIdForName("fungus_giant")
+		for i := 0; i < 20; i++ {
+			createResource(fungusGiantTypeId, homePlanet)
+		}
 
 		// Smaller planet
 		mediumPlanetRadius := 0.6 * homePlanetRadius
@@ -368,6 +411,34 @@ func drawGame() {
 		//rl.DrawCircleSectorLines(lay.Pos, gravRadius, 0, 360, 32, rl.Color{0x7a, 0x36, 0x7b, 0xff})
 	})
 
+	// TODO: Factor push / pop / matrix into `drawWithLayout` here?
+
+	// Resources
+	Each(func(ent Entity, resource *Resource, lay *Layout) {
+		rl.PushMatrix()
+		rl.Translatef(lay.Pos.X, lay.Pos.Y, 0)
+		rl.Rotatef(lay.Rot*180/Pi, 0, 0, 1)
+
+		texture := resourceTypes[resource.TypeId].Texture
+		texSize := Vec2{float64(texture.Width), float64(texture.Height)}
+		texSource := rl.Rectangle{
+			X:      0,
+			Y:      0,
+			Width:  texSize.X,
+			Height: texSize.Y,
+		}
+		destSize := texSize.Scale(spriteScale)
+		texDest := rl.Rectangle{
+			X:      -0.5 * destSize.X,
+			Y:      -0.5 * destSize.Y,
+			Width:  destSize.X,
+			Height: destSize.Y,
+		}
+		rl.DrawTexturePro(texture, texSource, texDest, Vec2{0, 0}, 0, rl.White)
+
+		rl.PopMatrix()
+	})
+
 	// Player
 	Each(func(ent Entity, player *Player, lay *Layout) {
 		rl.PushMatrix()
@@ -389,7 +460,7 @@ func drawGame() {
 			Width:  texWidth,
 			Height: texHeight,
 		}
-		destHeight := texHeight * playerSize.X / texWidth
+		destHeight := texHeight * spriteScale
 		texDest := rl.Rectangle{
 			X:      -0.5 * playerSize.X,
 			Y:      0.5*playerSize.Y - destHeight,
