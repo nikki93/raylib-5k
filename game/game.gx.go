@@ -437,6 +437,8 @@ func drawGame() {
 		rl.DrawTexturePro(texture, texSource, texDest, Vec2{0, 0}, 0, rl.White)
 
 		rl.PopMatrix()
+
+		rl.DrawCircleV(lay.Pos, 0.2, rl.Red)
 	})
 
 	// Player

@@ -68,7 +68,7 @@ type Player struct {
 }
 
 //
-// Resources
+// Resource
 //
 
 type ElementType int
