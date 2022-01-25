@@ -104,7 +104,7 @@ func initGame() {
 		edit.Camera().Target = playerPos
 
 		// Smaller planet
-		mediumPlanetRadius := 0.2 * homePlanetRadius
+		mediumPlanetRadius := 0.6 * homePlanetRadius
 		createPlanet(
 			Vec2{0, homePlanetPos.Y - 1.3*homePlanetRadius - 1.3*mediumPlanetRadius},
 			mediumPlanetRadius,
@@ -122,7 +122,7 @@ func updateGame(dt float64) {
 	gameTime += dt
 	deltaTime = dt
 
-	// Update up direction
+	// Update up direction and clear ground normals
 	Each(func(ent Entity, lay *Layout) {
 		minSqDist := -1.0
 		minDelta := Vec2{0, 0}
@@ -141,15 +141,16 @@ func updateGame(dt float64) {
 			dir := minDelta.Scale(1 / Sqrt(minSqDist))
 			up := AddComponent(ent, Up{})
 			up.Up = dir.Negate().Normalize()
+			up.GroundNormals = []Vec2{}
 		} else {
 			RemoveComponent[Up](ent)
 		}
 	})
 
 	// Rotate toward up direction
-	Each(func(ent Entity, up *Up, lay *Layout) {
-		lay.Rot = Atan2(up.Up.X, -up.Up.Y)
-	})
+	//Each(func(ent Entity, up *Up, lay *Layout) {
+	//  lay.Rot = Atan2(up.Up.X, -up.Up.Y)
+	//})
 
 	// Horizontal controls
 	Each(func(ent Entity, player *Player, up *Up, vel *Velocity) {
@@ -200,6 +201,8 @@ func updateGame(dt float64) {
 
 	// Apply velocity
 	Each(func(ent Entity, vel *Velocity, lay *Layout) {
+		up := GetComponent[Up](ent)
+
 		// Apply velocity
 		lay.Pos = lay.Pos.Add(vel.Vel.Scale(deltaTime))
 
@@ -231,9 +234,35 @@ func updateGame(dt float64) {
 
 					// Mark for friction application
 					AddComponent(ent, ApplySurfaceFriction{})
+
+					// Track normal
+					if up != nil && in.Normal.DotProduct(up.Up) > 0.2 {
+						up.GroundNormals = append(up.GroundNormals, in.Normal)
+						up.lastGroundTime = gameTime
+					}
 				}
 			}
 		})
+	})
+
+	// Update smooth up direction
+	Each(func(ent Entity, up *Up, lay *Layout) {
+		target := Vec2{0, 0}
+		rate := 28.0
+		if len(up.GroundNormals) == 0 {
+			if gameTime-up.lastGroundTime < 0.3 {
+				rate = 7.0
+			}
+			target = up.Up
+		} else {
+			for _, groundNormal := range up.GroundNormals {
+				target = target.Add(groundNormal)
+			}
+			target = target.Scale(1 / float64(len(up.GroundNormals)))
+		}
+		smoothing := 1 - Pow(2, -rate*deltaTime)
+		up.Smooth = up.Smooth.Add(target.Subtract(up.Smooth).Scale(smoothing)).Normalize()
+		lay.Rot = Atan2(up.Smooth.X, -up.Smooth.Y)
 	})
 
 	// Apply friction
@@ -276,6 +305,9 @@ func updateGame(dt float64) {
 			// Rotation
 			{
 				targetRot := lay.Rot
+				if up := GetComponent[Up](ent); up != nil {
+					targetRot = Atan2(up.Up.X, -up.Up.Y)
+				}
 				currRot := player.CameraRot
 				if targetRotAbove := targetRot + 2*Pi; Abs(targetRotAbove-currRot) < Abs(targetRot-currRot) {
 					targetRot = targetRotAbove

@@ -39,7 +39,11 @@ type Planet struct {
 type Up struct {
 	Behavior
 
-	Up Vec2
+	Up            Vec2
+	GroundNormals []Vec2
+	Smooth        Vec2
+
+	lastGroundTime float64
 }
 
 type Gravity struct {
