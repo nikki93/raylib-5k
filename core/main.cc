@@ -106,9 +106,9 @@ void frame() {
 //
 
 int main() {
-  if (!loadEditSession()) {
+  //if (!loadEditSession()) {
     initGame();
-  }
+  //}
 
 #ifdef __EMSCRIPTEN__
   emscripten_set_main_loop(frame, 0, true);
