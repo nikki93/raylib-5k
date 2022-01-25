@@ -103,6 +103,7 @@ var resourceTypes = [...]ResourceType{
 		ElementAmounts: []ElementAmount{
 			{Type: CarbonElement, Amount: 10},
 		},
+		VerticalOffset: -0.2,
 	},
 	{
 		Name:      "fungus_tiny",

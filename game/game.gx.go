@@ -98,7 +98,6 @@ func createResource(typeId ResourceTypeId, planetEnt Entity) Entity {
 	for _, band := range noiseBands {
 		noise += band.Amplitude * Noise1(200*band.Frequency*noiseParameter)
 	}
-	str.Print("%f", noise)
 
 	vertIndex := Floor((0.5 + 0.5*noise) * float64(len(planet.Terrain.Verts)-1))
 	vertIndex = Max(0, Min(vertIndex, len(planet.Terrain.Verts)-1))
@@ -416,39 +415,12 @@ func updateGame(dt float64) {
 //gx:extern getAssetPath
 func getAssetPath(assetName string) string
 
+var whiteTexture = rl.LoadTextureFromImage(rl.GenImageColor(1, 1, rl.Color{0xff, 0xff, 0xff, 0xff}))
+
 var playerTexture = rl.LoadTexture(getAssetPath("player.png"))
 
 func drawGame() {
 	rl.ClearBackground(rl.Color{0x10, 0x14, 0x1f, 0xff})
-
-	// Planets
-	Each(func(ent Entity, planet *Planet, lay *Layout) {
-		// Base radius / sea level
-		//rl.DrawCircleSectorLines(lay.Pos, planet.Radius, 0, 360, 128, rl.Color{0x7a, 0x36, 0x7b, 0xff})
-
-		// Terrain
-		rl.PushMatrix()
-		rl.Translatef(lay.Pos.X, lay.Pos.Y, 0)
-		nVerts := len(planet.Terrain.Verts)
-		rl.CheckRenderBatchLimit(4 * (nVerts - 1))
-		rl.Begin(rl.Quads)
-		for i := 1; i < nVerts; i++ {
-			drawLine := func(a, b Vec2) {
-				rl.Color4ub(0x15, 0x1d, 0x28, 0xff)
-				rl.Vertex2f(0, 0)
-				rl.Vertex2f(0, 0)
-				rl.Vertex2f(b.X, b.Y)
-				rl.Vertex2f(a.X, a.Y)
-			}
-			drawLine(planet.Terrain.Verts[i-1], planet.Terrain.Verts[i])
-		}
-		rl.End()
-		rl.PopMatrix()
-
-		// Gravity radius
-		//gravRadius := planetGravRadiusMultiplier * planet.Radius
-		//rl.DrawCircleSectorLines(lay.Pos, gravRadius, 0, 360, 32, rl.Color{0x7a, 0x36, 0x7b, 0xff})
-	})
 
 	// TODO: Factor push / pop / matrix into `drawWithLayout` here?
 
@@ -477,8 +449,40 @@ func drawGame() {
 		rl.DrawTexturePro(texture, texSource, texDest, Vec2{0, 0}, 0, rl.White)
 
 		rl.PopMatrix()
+	})
 
-		rl.DrawCircleV(lay.Pos, 0.06, rl.Red)
+	// Planets
+	Each(func(ent Entity, planet *Planet, lay *Layout) {
+		// Base radius / sea level
+		//rl.DrawCircleSectorLines(lay.Pos, planet.Radius, 0, 360, 128, rl.Color{0x7a, 0x36, 0x7b, 0xff})
+
+		// Terrain
+		rl.PushMatrix()
+		rl.Translatef(lay.Pos.X, lay.Pos.Y, 0)
+		nVerts := len(planet.Terrain.Verts)
+		rl.CheckRenderBatchLimit(4 * (nVerts - 1))
+		rl.SetTexture(whiteTexture.Id)
+		rl.Begin(rl.Quads)
+		for i := 1; i < nVerts; i++ {
+			drawLine := func(a, b Vec2) {
+				rl.Color4ub(0x15, 0x1d, 0x28, 0xff)
+				rl.TexCoord2f(0, 0)
+				rl.Vertex2f(0, 0)
+				rl.TexCoord2f(1, 0)
+				rl.Vertex2f(0, 0)
+				rl.TexCoord2f(1, 1)
+				rl.Vertex2f(b.X, b.Y)
+				rl.TexCoord2f(0, 1)
+				rl.Vertex2f(a.X, a.Y)
+			}
+			drawLine(planet.Terrain.Verts[i-1], planet.Terrain.Verts[i])
+		}
+		rl.End()
+		rl.PopMatrix()
+
+		// Gravity radius
+		//gravRadius := planetGravRadiusMultiplier * planet.Radius
+		//rl.DrawCircleSectorLines(lay.Pos, gravRadius, 0, 360, 32, rl.Color{0x7a, 0x36, 0x7b, 0xff})
 	})
 
 	// Player
