@@ -62,6 +62,7 @@ type Gravity struct {
 type Player struct {
 	Behavior
 
+	SmoothedVel       Vec2
 	CameraInitialized bool
 	CameraPos         Vec2
 	CameraRot         float64

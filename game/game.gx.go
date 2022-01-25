@@ -350,12 +350,18 @@ func updateGame(dt float64) {
 
 	// Update camera
 	Each(func(ent Entity, player *Player, lay *Layout, vel *Velocity) {
+		{
+			// Smoothed velocity
+			rate := 120.0
+			smoothing := 1 - Pow(2, -rate*deltaTime)
+			player.SmoothedVel = player.SmoothedVel.Lerp(vel.Vel, smoothing)
+		}
 		upOffset := Vec2{0, 0}
-		velOffset := vel.Vel.Scale(0.4 * gameCameraZoom)
+		velOffset := player.SmoothedVel.Scale(0.4 * gameCameraZoom)
 		if up := GetComponent[Up](ent); up != nil {
-			upOffset = up.Up.Scale(2.0)
+			upOffset = up.Up.Scale(0.7)
 			upVelOffset := up.Up.Scale(velOffset.DotProduct(up.Up))
-			velOffset = velOffset.Subtract(upVelOffset).Add(upVelOffset.Scale(0.2))
+			velOffset = velOffset.Subtract(upVelOffset).Add(upVelOffset.Scale(0.1))
 		}
 		lookAt := lay.Pos.Add(upOffset).Add(velOffset)
 
