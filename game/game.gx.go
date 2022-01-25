@@ -92,16 +92,21 @@ func createResource(typeId ResourceTypeId, planetEnt Entity) Entity {
 	planet.ResourceCounter++
 	noiseBands := [...]NoiseBand{
 		{Frequency: 0.003, Amplitude: 1},
-		{Frequency: 0.015, Amplitude: 0.015},
+		{Frequency: 0.015, Amplitude: 0.2},
 	}
 	noise := 0.0
 	for _, band := range noiseBands {
 		noise += band.Amplitude * Noise1(200*band.Frequency*noiseParameter)
 	}
 
-	vertIndex := Floor((0.5 + 0.5*noise) * float64(len(planet.Terrain.Verts)-1))
-	vertIndex = Max(0, Min(vertIndex, len(planet.Terrain.Verts)-1))
-	pos := planetLay.Pos.Add(planet.Terrain.Verts[vertIndex])
+	nVerts := len(planet.Terrain.Verts)
+	vertIndex := Floor((0.5 + 0.5*noise) * float64(nVerts-1))
+	vertIndex = Max(0, Min(vertIndex, nVerts-1))
+	vertPos := planetLay.Pos.Add(planet.Terrain.Verts[vertIndex])
+	nextVertIndex := (vertIndex + 1) % nVerts
+	nextVertPos := planetLay.Pos.Add(planet.Terrain.Verts[nextVertIndex])
+
+	pos := vertPos.Add(nextVertPos.Subtract(vertPos).Scale(0.01 * float64(rl.GetRandomValue(0, 100))))
 	rot := Atan2(pos.X, -pos.Y)
 
 	ent := CreateEntity(
@@ -153,28 +158,35 @@ func initGame() {
 		)
 		edit.Camera().Target = playerPos
 
-		// Resources
-		fungusGiantTypeId := resourceTypeIdForName("fungus_giant")
-		for i := 0; i < 20; i++ {
-			createResource(fungusGiantTypeId, homePlanet)
-		}
-
-		fungusTinyTypeId := resourceTypeIdForName("fungus_tiny")
-		for i := 0; i < 36; i++ {
-			createResource(fungusTinyTypeId, homePlanet)
-		}
-
-		sproutTinyTypeId := resourceTypeIdForName("sprout_tiny")
-		for i := 0; i < 40; i++ {
-			createResource(sproutTinyTypeId, homePlanet)
-		}
-
 		// Smaller planet
 		mediumPlanetRadius := 0.6 * homePlanetRadius
-		createPlanet(
+		mediumPlanet := createPlanet(
 			Vec2{0, homePlanetPos.Y - 1.3*homePlanetRadius - 1.3*mediumPlanetRadius},
 			mediumPlanetRadius,
 		)
+
+		// Resources
+		fungusGiantTypeId := resourceTypeIdForName("fungus_giant")
+		for i := 0; i < 16; i++ {
+			createResource(fungusGiantTypeId, homePlanet)
+		}
+		for i := 0; i < 5; i++ {
+			createResource(fungusGiantTypeId, mediumPlanet)
+		}
+		fungusTinyTypeId := resourceTypeIdForName("fungus_tiny")
+		for i := 0; i < 180; i++ {
+			createResource(fungusTinyTypeId, homePlanet)
+		}
+		for i := 0; i < 150; i++ {
+			createResource(fungusTinyTypeId, mediumPlanet)
+		}
+		sproutTinyTypeId := resourceTypeIdForName("sprout_tiny")
+		for i := 0; i < 220; i++ {
+			createResource(sproutTinyTypeId, homePlanet)
+		}
+		for i := 0; i < 120; i++ {
+			createResource(fungusTinyTypeId, mediumPlanet)
+		}
 
 		edit.SaveSnapshot("initialize scene")
 	}
@@ -351,7 +363,7 @@ func updateGame(dt float64) {
 	Each(func(ent Entity, player *Player, lay *Layout, vel *Velocity) {
 		{
 			// Smoothed velocity
-			rate := 120.0
+			rate := 160.0
 			smoothing := 1 - Pow(2, -rate*deltaTime)
 			player.SmoothedVel = player.SmoothedVel.Lerp(vel.Vel, smoothing)
 		}
