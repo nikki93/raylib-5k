@@ -91,30 +91,32 @@ type ResourceTypeId int
 type ResourceType struct {
 	Name           string
 	ImageName      string
+	VerticalOffset float64
 	ElementAmounts []ElementAmount
 	Texture        rl.Texture
-	VerticalOffset float64
 }
 
 var resourceTypes = [...]ResourceType{
 	{
-		Name:      "fungus_giant",
-		ImageName: "resource_fungus_giant.png",
+		Name:           "fungus_giant",
+		ImageName:      "resource_fungus_giant.png",
+		VerticalOffset: -0.2,
 		ElementAmounts: []ElementAmount{
 			{Type: CarbonElement, Amount: 10},
 		},
-		VerticalOffset: -0.2,
 	},
 	{
-		Name:      "fungus_tiny",
-		ImageName: "resource_fungus_tiny.png",
+		Name:           "fungus_tiny",
+		ImageName:      "resource_fungus_tiny.png",
+		VerticalOffset: -0.08,
 		ElementAmounts: []ElementAmount{
 			{Type: CarbonElement, Amount: 4},
 		},
 	},
 	{
-		Name:      "sprout_tiny",
-		ImageName: "resource_sprout_tiny.png",
+		Name:           "sprout_tiny",
+		ImageName:      "resource_sprout_tiny.png",
+		VerticalOffset: -0.08,
 		ElementAmounts: []ElementAmount{
 			{Type: CarbonElement, Amount: 3},
 		},
