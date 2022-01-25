@@ -93,6 +93,7 @@ type ResourceType struct {
 	ImageName      string
 	ElementAmounts []ElementAmount
 	Texture        rl.Texture
+	VerticalOffset float64
 }
 
 var resourceTypes = [...]ResourceType{

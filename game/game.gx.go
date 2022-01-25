@@ -458,7 +458,8 @@ func drawGame() {
 		rl.Translatef(lay.Pos.X, lay.Pos.Y, 0)
 		rl.Rotatef(lay.Rot*180/Pi, 0, 0, 1)
 
-		texture := resourceTypes[resource.TypeId].Texture
+		resourceType := &resourceTypes[resource.TypeId]
+		texture := resourceType.Texture
 		texSize := Vec2{float64(texture.Width), float64(texture.Height)}
 		texSource := rl.Rectangle{
 			X:      0,
@@ -469,7 +470,7 @@ func drawGame() {
 		destSize := texSize.Scale(spriteScale)
 		texDest := rl.Rectangle{
 			X:      -0.5 * destSize.X,
-			Y:      -0.5 * destSize.Y,
+			Y:      -destSize.Y - resourceType.VerticalOffset,
 			Width:  destSize.X,
 			Height: destSize.Y,
 		}
