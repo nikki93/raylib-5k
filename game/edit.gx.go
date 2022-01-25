@@ -54,7 +54,7 @@ func mergeGameEditBoxes() {
 		destSize := texSize.Scale(spriteScale)
 		edit.MergeBox(ent, rl.Rectangle{
 			X:      lay.Pos.X - 0.5*destSize.X,
-			Y:      lay.Pos.Y - destSize.Y - resourceType.VerticalOffset,
+			Y:      lay.Pos.Y - destSize.Y,
 			Width:  destSize.X,
 			Height: destSize.Y,
 		})

@@ -106,8 +106,18 @@ func createResource(typeId ResourceTypeId, planetEnt Entity) Entity {
 	nextVertIndex := (vertIndex + 1) % nVerts
 	nextVertPos := planetLay.Pos.Add(planet.Terrain.Verts[nextVertIndex])
 
-	pos := vertPos.Add(nextVertPos.Subtract(vertPos).Scale(0.01 * float64(rl.GetRandomValue(0, 100))))
-	rot := Atan2(pos.X, -pos.Y)
+	edgeDelta := nextVertPos.Subtract(vertPos)
+	fracAlongEdge := 0.5 + 0.5*Noise1(202.25*noiseParameter)
+	pos := vertPos.Add(edgeDelta.Scale(fracAlongEdge))
+
+	edgeDir := Vec2{edgeDelta.Y, -edgeDelta.X}.Normalize()
+	upDir := pos.Normalize()
+	dir := upDir.Lerp(edgeDir, 0.8)
+	rot := Atan2(dir.X, -dir.Y) + Pi/6*0.5*Noise1(302.33*noiseParameter)
+
+	resourceType := &resourceTypes[typeId]
+	verticalOffset := resourceType.BaseVerticalOffset * (2 + 1.5*Noise1(422.82*noiseParameter))
+	pos = pos.Add(dir.Scale(verticalOffset))
 
 	ent := CreateEntity(
 		Layout{
@@ -115,7 +125,8 @@ func createResource(typeId ResourceTypeId, planetEnt Entity) Entity {
 			Rot: rot,
 		},
 		Resource{
-			TypeId: typeId,
+			TypeId:         typeId,
+			FlipHorizontal: Noise1(102.67*noiseParameter) < 0,
 		},
 	)
 	return ent
@@ -201,7 +212,7 @@ func updateGame(dt float64) {
 	deltaTime = dt
 
 	// Update up direction and clear ground normals
-	Each(func(ent Entity, lay *Layout) {
+	Each(func(ent Entity, player *Player, lay *Layout) {
 		minSqDist := -1.0
 		minDelta := Vec2{0, 0}
 		Each(func(ent Entity, planet *Planet, planetLay *Layout) {
@@ -454,9 +465,12 @@ func drawGame() {
 		destSize := texSize.Scale(spriteScale)
 		texDest := rl.Rectangle{
 			X:      -0.5 * destSize.X,
-			Y:      -destSize.Y - resourceType.VerticalOffset,
+			Y:      -destSize.Y,
 			Width:  destSize.X,
 			Height: destSize.Y,
+		}
+		if resource.FlipHorizontal {
+			texSource.Width = -texSource.Width
 		}
 		rl.DrawTexturePro(texture, texSource, texDest, Vec2{0, 0}, 0, rl.White)
 
