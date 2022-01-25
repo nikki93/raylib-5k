@@ -1,0 +1,636 @@
+/* --- Typography ----------------------------------------------------------------- */
+
+/* Font */
+html {
+  font-family: 'Inter', sans-serif;
+}
+@supports (font-variation-settings: normal) {
+  html {
+    font-family: 'Inter var', sans-serif;
+  }
+}
+
+/* --- Layout --------------------------------------------------------------------- */
+
+/* Basics */
+html {
+  width: 100%;
+  height: 100%;
+}
+body {
+  background-color: #121212;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  width: 100%;
+  height: 100%;
+}
+
+/* Root */
+div.root-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+}
+
+/* Main */
+div.main-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Scene */
+div.scene-container {
+  user-select: none;
+  background-color: black;
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+div.scene-aspect-ratio {
+  width: 100%;
+  padding-top: 56.25%;
+  position: relative;
+}
+canvas.scene {
+  background-color: black;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+}
+canvas.mode-select {
+  cursor: default;
+}
+canvas.mode-move {
+  cursor: move;
+}
+canvas.mode-camera-pan {
+  cursor: grab;
+}
+
+/* Top */
+div.top-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+}
+
+/* Bottom */
+div.bottom-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+}
+
+/* Side */
+div.side-container {
+  flex: 0.5;
+  max-width: 400px;
+  position: relative;
+}
+div.side-panel {
+  position: absolute; /* Force layout boundary */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Status */
+div.status {
+  flex: 1;
+  padding: 4px 16px 4px 16px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+div.status > *:not(:last-child) {
+  margin-right: 8px;
+}
+div.status > div.flex-gap {
+  flex: 1;
+}
+div.status div.small-gap {
+  width: 12px;
+}
+
+/* Toolbar */
+div.toolbar {
+  flex: 1;
+  padding: 6px 13px 6px 13px;
+  align-items: center;
+}
+div.toolbar,
+div.toolbar > div {
+  display: flex;
+  flex-direction: row;
+}
+div.toolbar > *,
+div.toolbar > div > * {
+  margin-left: 3px;
+  margin-right: 3px;
+}
+div.toolbar > div.flex-gap {
+  flex: 1;
+}
+div.toolbar div.small-gap {
+  width: 12px;
+}
+div.toolbar button {
+  margin-top: -2px;
+  margin-bottom: -2px;
+}
+
+/* --- Inspect -------------------------------------------------------------------- */
+
+/* Inspector */
+div.inspector {
+  flex: 1;
+  padding: 6px 16px 6px 16px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: scroll;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+div.inspector::-webkit-scrollbar {
+  display: none;
+}
+
+/* Inspector sections */
+div.inspector > details {
+  padding: 8px;
+}
+div.inspector > details > summary {
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  -moz-user-select: none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  padding: 6px;
+  margin-left: -4px;
+  margin-right: -4px;
+  border-radius: 8px;
+  transition: 0.1s;
+}
+div.inspector > details > summary:focus {
+  outline: 0;
+}
+@media (hover: hover) {
+  div.inspector > details > summary:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+}
+div.inspector > details[open] > summary {
+  margin-bottom: 8px;
+}
+div.inspector > details[open] {
+  margin-bottom: 4px;
+}
+
+/* Inspector header extra buttons */
+div.inspector > details > summary > button {
+  margin-top: -6px;
+  margin-right: -6px;
+  float: right;
+  font-weight: normal;
+}
+
+/* Props inspect */
+div.inspector > details > div.component-container {
+  padding: 8px;
+  padding-top: 6px;
+}
+div.inspector > details div.props-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  margin-bottom: 2px;
+}
+div.inspector > details div.prop-break {
+  flex-basis: 100%;
+  height: 0;
+}
+div.inspector > details div.prop-container {
+  margin-right: 6px;
+  padding-left: 8px;
+  padding-right: 10px;
+}
+div.inspector > details > div.component-container > div.props-container > div.prop-container {
+  margin-bottom: 2px;
+}
+div.inspector > details div.prop-name {
+  font-weight: 600;
+  padding-top: 6px;
+  padding-bottom: 2px;
+  align-items: center;
+}
+div.inspector > details div.prop-value-container {
+  padding-top: 4px;
+  padding-bottom: 6px;
+}
+div.inspector > details div.seq-elem-container {
+  padding-top: 4px;
+  padding-bottom: 4px;
+  display: flex;
+  flex-direction: row;
+}
+div.inspector > details div.seq-elem-container > div.props-container {
+  margin-bottom: 6px;
+}
+div.inspector > details div.seq-elem-menu-anchor > div.seq-elem-container {
+  padding-top: 0px;
+}
+
+/* Asset inspect */
+div.inspector > details img.asset-preview {
+  margin: 4px;
+  max-height: 120px;
+  max-width: 240px;
+}
+div.inspector > details button.show-asset-browser::before {
+  content: '\f002';
+}
+
+/* Seq inspect */
+div.inspector > details button.show-seq-elem-menu {
+  margin-right: 2px;
+}
+div.inspector > details button.show-seq-elem-menu::before {
+  content: '\f142';
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+}
+div.inspector > details button.show-seq-elem-menu::before {
+  color: rgba(255, 255, 255, 0.6);
+}
+div.inspector > details button.show-seq-elem-menu[disabled]::before {
+  color: rgba(255, 255, 255, 0.3);
+}
+div.inspector > details div.seq-elem-menu-anchor {
+  position: relative;
+}
+div.inspector > details div.seq-elem-menu-background {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.45);
+}
+div.inspector > details div.seq-elem-menu-container {
+  position: absolute;
+  top: -6px;
+  left: 0px;
+  padding: 8px;
+  background-color: black;
+  border-radius: 8px;
+  box-shadow: 0px 0px 48px 48px rgba(0, 0, 0, 0.9);
+  z-index: 1001;
+  min-width: 200px;
+}
+div.inspector > details div.seq-elem-menu-container > *:not(:last-child) {
+  margin-bottom: 8px;
+}
+div.inspector > details button.add-seq-elem {
+  margin-bottom: 6px;
+}
+div.inspector > details button.add-seq-elem::before {
+  font-size: 14px;
+  content: '\f067';
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Inspect numbers row */
+div.inspector > details div.numbers-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+div.inspector > details div.numbers-row > input:not(:first-child) {
+  border-top-left-radius: 3px;
+  border-bottom-left-radius: 3px;
+}
+div.inspector > details div.numbers-row > input:not(:last-child) {
+  border-top-right-radius: 3px;
+  border-bottom-right-radius: 3px;
+  margin-right: 5px;
+}
+
+/* Inspector bottom buttons bar */
+div.inspector > div.button-bar {
+  padding: 24px;
+  padding-bottom: 0px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+div.inspector > div.button-bar > button {
+  margin: 4px;
+}
+
+/* --- General -------------------------------------------------------------------- */
+
+/* Scrollbar base */
+::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+}
+::-webkit-scrollbar {
+  background-color: transparent;
+}
+
+/* Input base */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+}
+input,
+textarea {
+  border: none;
+  font: inherit;
+  color: inherit;
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 6px;
+  margin-bottom: 6px;
+  margin-right: 10px;
+  border-radius: 8px;
+  flex: 1;
+  max-width: 128px;
+  resize: none;
+}
+input[type='number'] {
+  max-width: 56px;
+}
+input:focus,
+textarea:focus {
+  outline: 0;
+}
+textarea {
+  height: 130px;
+  max-width: 100%;
+  width: 100%;
+}
+
+/* Image checkerboard background */
+img.checker {
+  background-position: 0px 0px, 10px 10px;
+  background-size: 20px 20px;
+  background-image: linear-gradient(
+      45deg,
+      #eee 25%,
+      transparent 25%,
+      transparent 75%,
+      #eee 75%,
+      #eee 100%
+    ),
+    linear-gradient(45deg, #eee 25%, white 25%, white 75%, #eee 75%, #eee 100%);
+}
+
+/* Button base */
+button {
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  background-color: transparent;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  margin: 0px;
+  border-radius: 8px;
+  transition: 0.1s;
+}
+button:focus {
+  outline: 0;
+}
+button::before {
+  font-size: 16px;
+  font-family: FontAwesome;
+}
+button::after {
+  padding-left: 5px;
+}
+@media (hover: hover) {
+  button:hover:not([disabled]) {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+}
+button:active {
+  transform: translate(0px, 1px);
+}
+button[selected] {
+  color: coral;
+}
+button[disabled] {
+  color: #303030;
+  cursor: default;
+}
+button[label]::after {
+  content: attr(label);
+}
+
+/* Reload button */
+button.reload::before {
+  content: '\f021';
+}
+
+/* Add button */
+button.add::before {
+  content: '\f067';
+}
+
+/* Remove button */
+button.remove::before {
+  content: '\f00d';
+}
+
+/* Open button */
+button.open::before {
+  content: '\f07c';
+}
+
+/* Save button */
+button.save::before {
+  content: '\f0c7';
+}
+
+/* Zoom buttons */
+button.zoom-in::before {
+  content: '\f067';
+}
+button.zoom-out::before {
+  content: '\f068';
+}
+
+/* Pan button */
+button.pan::before {
+  content: '\f256';
+}
+
+/* Undo / redo buttons */
+button.undo::before {
+  content: '\f0e2';
+}
+button.redo::before {
+  content: '\f01e';
+}
+
+/* Play / stop button */
+button.play::before {
+  content: '\f04b';
+}
+button.stop::before {
+  content: '\f04d';
+}
+
+/* Select button */
+button.select::before {
+  content: '\f245';
+}
+
+/* Move button */
+button.move::before {
+  content: '\f0b2';
+}
+
+/* Delete button */
+button.delete::before {
+  content: '\f2ed';
+}
+
+/* Duplicate button */
+button.duplicate::before {
+  content: '\f24d';
+}
+
+/* New button */
+button.new::before {
+  content: '\f055';
+}
+
+/* On / off button */
+button.on,
+button.off {
+  padding: 0px;
+  margin: 4px;
+  margin-top: -2px;
+  margin-bottom: 0px;
+  color: rgba(255, 255, 255, 0.3);
+}
+@media (hover: hover) {
+  button.on:hover:not([disabled]),
+  button.off:hover:not([disabled]) {
+    background-color: transparent;
+  }
+}
+button.on::before {
+  font-size: 32px;
+  content: '\f205';
+}
+button.off::before {
+  font-size: 32px;
+  content: '\f204';
+}
+
+/* Up / down button */
+button.up::before {
+  content: '\f062';
+}
+button.down::before {
+  content: '\f063';
+}
+
+/* Pencil button */
+button.pencil::before {
+  content: '\f040';
+}
+
+/* Add entity button */
+button.add-entity::before {
+  content: '\f234';
+}
+
+/* Asset browser */
+div.asset-browser-background {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+div.asset-browser {
+  background-color: #121212;
+  border-radius: 8px;
+  width: 75%;
+  height: 75%;
+  max-width: 1200px;
+  max-height: 800px;
+  padding: 36px;
+  display: flex;
+  flex-direction: column;
+}
+div.asset-browser > div.content {
+  overflow-y: scroll;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+}
+div.asset-browser div.cell {
+  margin: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: 0.1s;
+  padding: 6px;
+}
+div.asset-browser div.cell * {
+  pointer-events: none;
+}
+@media (hover: hover) {
+  div.asset-browser div.cell:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+}
+div.asset-browser div.cell div.thumbnail-container {
+  height: 100px;
+  margin: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+div.asset-browser div.cell img.thumbnail {
+  max-height: 100%;
+  max-width: 88px;
+}
+div.asset-browser div.cell div.filename {
+  margin: 6px;
+  text-align: center;
+}

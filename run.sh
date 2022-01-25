@@ -200,7 +200,7 @@ case "$1" in
     ;;
   web-publish)
     ./run.sh web-release-fast
-    rsync -avP build/web-release-fast/{index.*,$PROJECT_NAME.*} dh_bedxci@dreamhotel.xyz:dreamhotel.xyz
+    rsync -avP build/web-release-fast/{index.*,$PROJECT_NAME.*} dh_bedxci@dreamhotel.xyz:dreamhotel.xyz/raylib-5k
     ;;
 
   # Electron
