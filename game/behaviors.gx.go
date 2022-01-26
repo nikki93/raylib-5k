@@ -87,34 +87,38 @@ type ElementAmount struct {
 type ResourceTypeId int
 
 type ResourceType struct {
-	Name               string
-	ImageName          string
-	BaseVerticalOffset float64
-	ElementAmounts     []ElementAmount
-	Texture            rl.Texture
+	Name                   string
+	ImageName              string
+	VerticalOffset         float64
+	VerticalOffsetVariance float64
+	ElementAmounts         []ElementAmount
+	Texture                rl.Texture
 }
 
 var resourceTypes = [...]ResourceType{
 	{
-		Name:               "fungus_giant",
-		ImageName:          "resource_fungus_giant.png",
-		BaseVerticalOffset: -10,
+		Name:                   "fungus_giant",
+		ImageName:              "resource_fungus_giant.png",
+		VerticalOffset:         -0.8,
+		VerticalOffsetVariance: -0.2,
 		ElementAmounts: []ElementAmount{
 			{Type: CarbonElement, Amount: 10},
 		},
 	},
 	{
-		Name:               "fungus_tiny",
-		ImageName:          "resource_fungus_tiny.png",
-		BaseVerticalOffset: 0,
+		Name:                   "fungus_tiny",
+		ImageName:              "resource_fungus_tiny.png",
+		VerticalOffset:         -0.3,
+		VerticalOffsetVariance: -0.08,
 		ElementAmounts: []ElementAmount{
 			{Type: CarbonElement, Amount: 4},
 		},
 	},
 	{
-		Name:               "sprout_tiny",
-		ImageName:          "resource_sprout_tiny.png",
-		BaseVerticalOffset: -1,
+		Name:                   "sprout_tiny",
+		ImageName:              "resource_sprout_tiny.png",
+		VerticalOffset:         -0.3,
+		VerticalOffsetVariance: -0.08,
 		ElementAmounts: []ElementAmount{
 			{Type: CarbonElement, Amount: 3},
 		},

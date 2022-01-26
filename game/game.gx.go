@@ -39,6 +39,10 @@ var spriteScale = playerSize.X / float64(playerTexture.Width)
 // Init
 //
 
+func unitRandom() float64 {
+	return float64(rl.GetRandomValue(0, 100)) / 100.0
+}
+
 type NoiseBand struct {
 	Frequency, Amplitude float64
 }
@@ -121,15 +125,17 @@ func createResources(params CreateResourcesParams) {
 			probability = Pow(probability, params.Exponent)
 			probability *= params.Thinning * 0.2
 
-			roll := float64(rl.GetRandomValue(0, 100)) / 100.0
+			roll := unitRandom()
 
 			if roll < probability {
 				upDir := pos.Normalize()
 				dir := upDir.Lerp(edgeDir, 0.8)
-				rot := Atan2(dir.X, -dir.Y) + Pi/6*0.5*(float64(rl.GetRandomValue(0, 100))/100.0)
+				rot := Atan2(dir.X, -dir.Y) + Pi/9*(unitRandom()-0.5)
+				rotDir := Vec2{Cos(rot), Sin(rot)}
 
-				verticalOffset := resourceType.BaseVerticalOffset * 3 * (float64(rl.GetRandomValue(0, 100)) / 100.0)
-				pos = pos.Add(dir.Scale(verticalOffset))
+				verticalOffsetDelta := resourceType.VerticalOffsetVariance * unitRandom()
+				verticalOffsetDir := Vec2{rotDir.Y, -rotDir.X}
+				pos = pos.Add(verticalOffsetDir.Scale(resourceType.VerticalOffset + verticalOffsetDelta))
 
 				CreateEntity(
 					Layout{
@@ -138,7 +144,7 @@ func createResources(params CreateResourcesParams) {
 					},
 					Resource{
 						TypeId:         params.TypeId,
-						FlipHorizontal: (float64(rl.GetRandomValue(0, 100)) / 100.0) < 0.5,
+						FlipHorizontal: unitRandom() < 0.5,
 					},
 				)
 			}
@@ -156,6 +162,8 @@ func resourceTypeIdForName(name string) ResourceTypeId {
 }
 
 func initGame() {
+	rl.SetRandomSeed(1024)
+
 	// Initialize resource textures
 	for _, resourceType := range resourceTypes {
 		resourceType.Texture = rl.LoadTexture(getAssetPath(resourceType.ImageName))
