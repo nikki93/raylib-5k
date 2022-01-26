@@ -631,5 +631,4 @@ func drawGame() {
 
 		rl.PopMatrix()
 	})
-
 }
