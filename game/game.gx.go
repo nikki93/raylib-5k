@@ -8,8 +8,10 @@ import (
 	"github.com/nikki93/raylib-5k/core/str"
 )
 
+var gameCameraZoomTarget = 0.7
 var gameCameraZoom = 0.7
-var gameCameraSize = Vec2{36, 20.25}.Scale(gameCameraZoom)
+var gameCameraBaseSize = Vec2{36, 20.25}
+var gameCameraSize = gameCameraBaseSize.Scale(gameCameraZoom)
 
 var gameCamera = rl.Camera2D{
 	Target: Vec2{0, 0},
@@ -203,9 +205,9 @@ func initGame() {
 		edit.Camera().Target = playerPos
 
 		// Smaller planet
-		mediumPlanetRadius := 0.6 * homePlanetRadius
+		mediumPlanetRadius := 0.3 * homePlanetRadius
 		createPlanet(
-			Vec2{0, homePlanetPos.Y - 1.3*homePlanetRadius - 1.3*mediumPlanetRadius},
+			Vec2{0, homePlanetPos.Y - 1.2*homePlanetRadius - 1.2*mediumPlanetRadius},
 			mediumPlanetRadius,
 		)
 
@@ -250,6 +252,21 @@ func initGame() {
 func updateGame(dt float64) {
 	gameTime += dt
 	deltaTime = dt
+
+	// Toggle zoom
+	if rl.IsKeyPressed(rl.KEY_Z) {
+		if gameCameraZoomTarget == 0.7 {
+			gameCameraZoomTarget = 1.2
+		} else {
+			gameCameraZoomTarget = 0.7
+		}
+	}
+	{
+		rate := 14.0
+		smoothing := 1 - Pow(2, -rate*deltaTime)
+		gameCameraZoom = gameCameraZoom + smoothing*(gameCameraZoomTarget-gameCameraZoom)
+		gameCameraSize = gameCameraBaseSize.Scale(gameCameraZoom)
+	}
 
 	// Update up direction and clear ground normals
 	Each(func(ent Entity, player *Player, lay *Layout) {
