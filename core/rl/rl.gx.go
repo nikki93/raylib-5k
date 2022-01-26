@@ -26,10 +26,10 @@ var Blue = Color{0x00, 0x00, 0xff, 0xff}
 //gx:extern rl::TextureCubemap
 type TextureCubemap Texture
 
-//gx:extern rl::rlRenderTexture2D
+//gx:extern rl::RenderTexture2D
 type RenderTexture2D RenderTexture
 
-//gx:extern rl::rlCamera
+//gx:extern rl::Camera
 type Camera Camera3D
 
 //
