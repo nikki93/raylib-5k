@@ -334,7 +334,7 @@ func updateGame(dt float64) {
 		thickness := 0.4
 		poly := Polygon{}
 		poly.Count = 4
-		reducedPlayerSize := playerSize.Subtract(Vec2{2 * thickness, 2.26 * thickness})
+		reducedPlayerSize := playerSize.SubtractValue(2 * thickness)
 		poly.Verts[0] = Vec2{-0.5 * reducedPlayerSize.X, -0.5 * reducedPlayerSize.Y}
 		poly.Verts[1] = Vec2{0.5 * reducedPlayerSize.X, -0.5 * reducedPlayerSize.Y}
 		poly.Verts[2] = Vec2{0.5 * reducedPlayerSize.X, 0.5 * reducedPlayerSize.Y}
