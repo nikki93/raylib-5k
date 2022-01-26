@@ -202,6 +202,28 @@ cJSON *write(const T (&val)[N]) {
   return result;
 }
 
+// gx::Array<T, N>
+template<typename T, int N>
+void read(gx::Array<T, N> &val, const cJSON *jsn) {
+  if (cJSON_IsArray(jsn)) {
+    auto i = 0;
+    for (auto elemJsn = jsn->child; elemJsn; elemJsn = elemJsn->next) {
+      if (i >= int(N)) {
+        break;
+      }
+      read(val[i++], elemJsn);
+    }
+  }
+}
+template<typename T, int N>
+cJSON *write(const gx::Array<T, N> &val) {
+  auto result = cJSON_CreateArray();
+  for (auto &elem : val) {
+    cJSON_AddItemToArray(result, write(elem));
+  }
+  return result;
+}
+
 // gx::Slice<T>
 template<typename T>
 inline void read(gx::Slice<T> &val, const cJSON *jsn) {
