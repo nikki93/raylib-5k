@@ -334,7 +334,7 @@ func updateGame(dt float64) {
 		thickness := 0.4
 		poly := Polygon{}
 		poly.Count = 4
-		reducedPlayerSize := playerSize.SubtractValue(2 * thickness)
+		reducedPlayerSize := playerSize.Subtract(Vec2{2 * thickness, 2.14 * thickness})
 		poly.Verts[0] = Vec2{-0.5 * reducedPlayerSize.X, -0.5 * reducedPlayerSize.Y}
 		poly.Verts[1] = Vec2{0.5 * reducedPlayerSize.X, -0.5 * reducedPlayerSize.Y}
 		poly.Verts[2] = Vec2{0.5 * reducedPlayerSize.X, 0.5 * reducedPlayerSize.Y}
@@ -587,6 +587,8 @@ func drawGame() {
 
 		nVerts := len(planet.Verts)
 
+		nBits := 0
+
 		bitTex := bitsTextureBasic
 		bitTexHeight := float64(bitTex.Height)
 		bitTexSource := rl.Rectangle{
@@ -617,8 +619,12 @@ func drawGame() {
 				rl.DrawCircleV(pos, 0.1, rl.Color{})
 
 				rl.DrawTexturePro(bitTex, bitTexSource, bitTexDest, bitTexOrigin, bit.Rot, rl.Color{0x4d, 0x2b, 0x32, 0xff})
+
+				nBits++
 			}
 		}
+
+		str.Display("%d bits", nBits)
 
 		rl.PopMatrix()
 	})
