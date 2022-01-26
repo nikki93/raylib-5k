@@ -38,6 +38,12 @@ var planetGravRadiusMultiplier = 1.38
 var spriteScale = playerSize.X / float64(playerTexture.Width)
 
 //
+// Sounds
+//
+
+var music = rl.LoadMusicStream(getAssetPath("music_1.ogg"))
+
+//
 // Init
 //
 
@@ -175,6 +181,7 @@ func resourceTypeIdForName(name string) ResourceTypeId {
 }
 
 func initGame() {
+	// Initialize random seed
 	rl.SetRandomSeed(1024)
 
 	// Initialize resource textures
@@ -243,6 +250,9 @@ func initGame() {
 
 		edit.SaveSnapshot("initialize scene")
 	}
+
+	// Play music
+	rl.PlayMusicStream(music)
 }
 
 //
@@ -486,6 +496,9 @@ func updateGame(dt float64) {
 		}
 		gameCamera.Rotation = -player.CameraRot * 180 / Pi
 	})
+
+	// Update music
+	rl.UpdateMusicStream(music)
 }
 
 //

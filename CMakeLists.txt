@@ -127,7 +127,7 @@ else()
 endif()
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(vendor/raylib)
-target_compile_definitions(raylib PUBLIC SUPPORT_FILEFORMAT_TGA=1)
+target_compile_definitions(raylib PUBLIC SUPPORT_FILEFORMAT_TGA=1 SUPPORT_FILEFORMAT_OGG=1)
 target_link_libraries(${PROJECT_NAME} PRIVATE raylib)
 
 # entt

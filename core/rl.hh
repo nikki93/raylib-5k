@@ -138,6 +138,7 @@ inline struct Init {
 #endif
     __lsan::DisableInThisThread(); // Some Emscripten initialization things leak memory...
     InitWindow(int(windowSize.x), int(windowSize.y), "");
+    InitAudioDevice();
     __lsan::EnableInThisThread();
 #ifdef __EMSCRIPTEN__
     EM_ASM({ initElectronFS(); });
