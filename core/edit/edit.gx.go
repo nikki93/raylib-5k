@@ -12,8 +12,6 @@ import (
 
 //gx:extern edit
 var edit struct {
-	enabled bool
-
 	camera rl.Camera2D
 
 	lineThickness float64
@@ -21,10 +19,6 @@ var edit struct {
 	mouseScreenPos  Vec2
 	mouseWorldPos   Vec2
 	mouseWorldDelta Vec2
-}
-
-func Enabled() bool {
-	return edit.enabled
 }
 
 //gx:extern isEditMode
