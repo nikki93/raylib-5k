@@ -98,7 +98,7 @@ var resourceTypes = [...]ResourceType{
 	{
 		Name:               "fungus_giant",
 		ImageName:          "resource_fungus_giant.png",
-		BaseVerticalOffset: -0.2,
+		BaseVerticalOffset: -10,
 		ElementAmounts: []ElementAmount{
 			{Type: CarbonElement, Amount: 10},
 		},
@@ -106,7 +106,7 @@ var resourceTypes = [...]ResourceType{
 	{
 		Name:               "fungus_tiny",
 		ImageName:          "resource_fungus_tiny.png",
-		BaseVerticalOffset: -0.09,
+		BaseVerticalOffset: 0,
 		ElementAmounts: []ElementAmount{
 			{Type: CarbonElement, Amount: 4},
 		},
@@ -114,7 +114,7 @@ var resourceTypes = [...]ResourceType{
 	{
 		Name:               "sprout_tiny",
 		ImageName:          "resource_sprout_tiny.png",
-		BaseVerticalOffset: -0.09,
+		BaseVerticalOffset: -1,
 		ElementAmounts: []ElementAmount{
 			{Type: CarbonElement, Amount: 3},
 		},
