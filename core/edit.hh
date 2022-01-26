@@ -21,7 +21,7 @@ inline struct EditState {
   Prop(rl::Camera2D, camera) {
     .target { 0, 0 },
   };
-  Prop(float, zoomLevel) = 0;
+  Prop(float, zoomLevel) = -8;
 
   float lineThickness = 1;
 
