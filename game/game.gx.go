@@ -78,11 +78,12 @@ func createPlanet(pos Vec2, radius float64) Entity {
 		for _, band := range noiseBands {
 			height += band.Amplitude * Noise1(resolution*band.Frequency*angle)
 		}
-		planet.Terrain.Heights = append(planet.Terrain.Heights, height)
 
 		// Vertex
 		vert := Vec2{Cos(angle), Sin(angle)}.Scale(height)
-		planet.Terrain.Verts = append(planet.Terrain.Verts, vert)
+		planet.Segments = append(planet.Segments, PlanetSegment{
+			Vert: vert,
+		})
 	}
 
 	return ent
@@ -103,11 +104,11 @@ func createResources(params CreateResourcesParams) {
 
 	resourceType := &resourceTypes[params.TypeId]
 
-	nVerts := len(planet.Terrain.Verts)
-	for vertIndex, localVertPos := range planet.Terrain.Verts {
-		vertPos := planetLay.Pos.Add(localVertPos)
-		nextVertIndex := (vertIndex + 1) % nVerts
-		nextVertPos := planetLay.Pos.Add(planet.Terrain.Verts[nextVertIndex])
+	nSegments := len(planet.Segments)
+	for vertIndex, segment := range planet.Segments {
+		vertPos := planetLay.Pos.Add(segment.Vert)
+		nextVertIndex := (vertIndex + 1) % nSegments
+		nextVertPos := planetLay.Pos.Add(planet.Segments[nextVertIndex].Vert)
 		edgeDelta := nextVertPos.Subtract(vertPos)
 		edgeDir := Vec2{edgeDelta.Y, -edgeDelta.X}.Normalize()
 
@@ -330,10 +331,10 @@ func updateGame(dt float64) {
 		poly.Verts[3] = Vec2{-0.5 * reducedPlayerSize.X, 0.5 * reducedPlayerSize.Y}
 		poly.CalculateNormals()
 		Each(func(planetEnt Entity, planet *Planet, planetLay *Layout) {
-			nVerts := len(planet.Terrain.Verts)
-			for i := 1; i < nVerts; i++ {
-				a := planetLay.Pos.Add(planet.Terrain.Verts[i-1])
-				b := planetLay.Pos.Add(planet.Terrain.Verts[i])
+			nSegments := len(planet.Segments)
+			for i, segment := range planet.Segments {
+				a := planetLay.Pos.Add(segment.Vert)
+				b := planetLay.Pos.Add(planet.Segments[(i+1)%nSegments].Vert)
 				capsule := Capsule{A: a, B: b, Radius: thickness}
 
 				// Calculate intersection
@@ -514,11 +515,11 @@ func drawGame() {
 		// Terrain
 		rl.PushMatrix()
 		rl.Translatef(lay.Pos.X, lay.Pos.Y, 0)
-		nVerts := len(planet.Terrain.Verts)
-		rl.CheckRenderBatchLimit(4 * (nVerts - 1))
+		nSegments := len(planet.Segments)
+		rl.CheckRenderBatchLimit(4 * (nSegments - 1))
 		rl.SetTexture(whiteTexture.Id)
 		rl.Begin(rl.Quads)
-		for i := 1; i < nVerts; i++ {
+		for i := 1; i < nSegments; i++ {
 			drawLine := func(a, b Vec2) {
 				rl.Color4ub(0x15, 0x1d, 0x28, 0xff)
 				rl.TexCoord2f(0, 0)
@@ -530,7 +531,7 @@ func drawGame() {
 				rl.TexCoord2f(0, 1)
 				rl.Vertex2f(a.X, a.Y)
 			}
-			drawLine(planet.Terrain.Verts[i-1], planet.Terrain.Verts[i])
+			drawLine(planet.Segments[i-1].Vert, planet.Segments[i].Vert)
 		}
 		rl.End()
 		rl.PopMatrix()
