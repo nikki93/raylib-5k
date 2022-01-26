@@ -569,13 +569,6 @@ func drawGame() {
 		rl.Translatef(lay.Pos.X, lay.Pos.Y, 0)
 		rl.Rotatef(lay.Rot*180/Pi, 0, 0, 1)
 
-		//rl.DrawRectangleRec(rl.Rectangle{
-		//  X:      -0.5 * playerSize.X,
-		//  Y:      -0.5 * playerSize.Y,
-		//  Width:  playerSize.X,
-		//  Height: playerSize.Y,
-		//}, rl.Color{0xbe, 0x77, 0x2b, 0xff})
-
 		texWidth := float64(playerTexture.Width)
 		texHeight := float64(playerTexture.Height)
 		texSource := rl.Rectangle{
@@ -605,8 +598,6 @@ func drawGame() {
 		rl.Translatef(lay.Pos.X, lay.Pos.Y, 0)
 
 		nVerts := len(planet.Verts)
-
-		nBits := 0
 
 		bitTex := bitsTextureBasic
 		bitTexHeight := float64(bitTex.Height)
@@ -638,12 +629,8 @@ func drawGame() {
 				rl.DrawCircleV(pos, 0.1, rl.Color{})
 
 				rl.DrawTexturePro(bitTex, bitTexSource, bitTexDest, bitTexOrigin, bit.Rot, rl.Color{0x4d, 0x2b, 0x32, 0xff})
-
-				nBits++
 			}
 		}
-
-		str.Display("%d bits", nBits)
 
 		rl.PopMatrix()
 	})
