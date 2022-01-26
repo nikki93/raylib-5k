@@ -624,8 +624,7 @@ func drawGame() {
 				bitTexDest.X = pos.X
 				bitTexDest.Y = pos.Y
 
-				rl.DrawCircleV(pos, 0.1, rl.Color{})
-
+				rl.DrawRectangleV(Vec2{}, Vec2{}, rl.Color{}) // <-- Fixes a bug with `DrawTexturePro` below...
 				rl.DrawTexturePro(bitTex, bitTexSource, bitTexDest, bitTexOrigin, bit.Rot, rl.Color{0x4d, 0x2b, 0x32, 0xff})
 			}
 		}
