@@ -84,52 +84,66 @@ func createPlanet(pos Vec2, radius float64) Entity {
 	return ent
 }
 
-func createResource(typeId ResourceTypeId, planetEnt Entity) Entity {
-	planet := GetComponent[Planet](planetEnt)
-	planetLay := GetComponent[Layout](planetEnt)
+type CreateResourcesParams struct {
+	TypeId     ResourceTypeId
+	Planet     Entity
+	Resolution int `default:"16"`
+	NoiseBands []NoiseBand
+	Exponent   float64 `default:"6"`
+	Thinning   float64 `default:"1"`
+}
 
-	noiseParameter := float64(planet.ResourceCounter)
-	planet.ResourceCounter++
-	noiseBands := [...]NoiseBand{
-		{Frequency: 0.003, Amplitude: 1},
-		{Frequency: 0.015, Amplitude: 0.2},
-	}
-	noise := 0.0
-	for _, band := range noiseBands {
-		noise += band.Amplitude * Noise1(200*band.Frequency*noiseParameter)
-	}
+func createResources(params CreateResourcesParams) {
+	planet := GetComponent[Planet](params.Planet)
+	planetLay := GetComponent[Layout](params.Planet)
+
+	resourceType := &resourceTypes[params.TypeId]
 
 	nVerts := len(planet.Terrain.Verts)
-	vertIndex := Floor((0.5 + 0.5*noise) * float64(nVerts-1))
-	vertIndex = Max(0, Min(vertIndex, nVerts-1))
-	vertPos := planetLay.Pos.Add(planet.Terrain.Verts[vertIndex])
-	nextVertIndex := (vertIndex + 1) % nVerts
-	nextVertPos := planetLay.Pos.Add(planet.Terrain.Verts[nextVertIndex])
+	for vertIndex, localVertPos := range planet.Terrain.Verts {
+		vertPos := planetLay.Pos.Add(localVertPos)
+		nextVertIndex := (vertIndex + 1) % nVerts
+		nextVertPos := planetLay.Pos.Add(planet.Terrain.Verts[nextVertIndex])
+		edgeDelta := nextVertPos.Subtract(vertPos)
+		edgeDir := Vec2{edgeDelta.Y, -edgeDelta.X}.Normalize()
 
-	edgeDelta := nextVertPos.Subtract(vertPos)
-	fracAlongEdge := 0.5 + 0.5*Noise1(202.25*noiseParameter)
-	pos := vertPos.Add(edgeDelta.Scale(fracAlongEdge))
+		for resI := 0; resI < params.Resolution; resI++ {
+			resF := float64(resI) / float64(params.Resolution)
+			pos := vertPos.Add(edgeDelta.Scale(resF))
+			localPos := pos.Subtract(planetLay.Pos)
+			angle := Atan2(localPos.X, -localPos.Y) / (2 * Pi)
 
-	edgeDir := Vec2{edgeDelta.Y, -edgeDelta.X}.Normalize()
-	upDir := pos.Normalize()
-	dir := upDir.Lerp(edgeDir, 0.8)
-	rot := Atan2(dir.X, -dir.Y) + Pi/6*0.5*Noise1(302.33*noiseParameter)
+			noise := 0.0
+			for _, band := range params.NoiseBands {
+				noise += band.Amplitude * Sin(band.Frequency*angle)
+			}
+			probability := 0.5 + 0.5*noise
+			probability = Pow(probability, params.Exponent)
+			probability *= params.Thinning * 0.2
 
-	resourceType := &resourceTypes[typeId]
-	verticalOffset := resourceType.BaseVerticalOffset * (2 + 1.5*Noise1(422.82*noiseParameter))
-	pos = pos.Add(dir.Scale(verticalOffset))
+			roll := float64(rl.GetRandomValue(0, 100)) / 100.0
 
-	ent := CreateEntity(
-		Layout{
-			Pos: pos,
-			Rot: rot,
-		},
-		Resource{
-			TypeId:         typeId,
-			FlipHorizontal: Noise1(102.67*noiseParameter) < 0,
-		},
-	)
-	return ent
+			if roll < probability {
+				upDir := pos.Normalize()
+				dir := upDir.Lerp(edgeDir, 0.8)
+				rot := Atan2(dir.X, -dir.Y) + Pi/6*0.5*(float64(rl.GetRandomValue(0, 100))/100.0)
+
+				verticalOffset := resourceType.BaseVerticalOffset * 3 * (float64(rl.GetRandomValue(0, 100)) / 100.0)
+				pos = pos.Add(dir.Scale(verticalOffset))
+
+				CreateEntity(
+					Layout{
+						Pos: pos,
+						Rot: rot,
+					},
+					Resource{
+						TypeId:         params.TypeId,
+						FlipHorizontal: (float64(rl.GetRandomValue(0, 100)) / 100.0) < 0.5,
+					},
+				)
+			}
+		}
+	}
 }
 
 func resourceTypeIdForName(name string) ResourceTypeId {
@@ -171,33 +185,40 @@ func initGame() {
 
 		// Smaller planet
 		mediumPlanetRadius := 0.6 * homePlanetRadius
-		mediumPlanet := createPlanet(
+		createPlanet(
 			Vec2{0, homePlanetPos.Y - 1.3*homePlanetRadius - 1.3*mediumPlanetRadius},
 			mediumPlanetRadius,
 		)
 
 		// Resources
-		fungusGiantTypeId := resourceTypeIdForName("fungus_giant")
-		for i := 0; i < 16; i++ {
-			createResource(fungusGiantTypeId, homePlanet)
-		}
-		for i := 0; i < 5; i++ {
-			createResource(fungusGiantTypeId, mediumPlanet)
-		}
-		fungusTinyTypeId := resourceTypeIdForName("fungus_tiny")
-		for i := 0; i < 180; i++ {
-			createResource(fungusTinyTypeId, homePlanet)
-		}
-		for i := 0; i < 150; i++ {
-			createResource(fungusTinyTypeId, mediumPlanet)
-		}
-		sproutTinyTypeId := resourceTypeIdForName("sprout_tiny")
-		for i := 0; i < 220; i++ {
-			createResource(sproutTinyTypeId, homePlanet)
-		}
-		for i := 0; i < 120; i++ {
-			createResource(fungusTinyTypeId, mediumPlanet)
-		}
+		createResources(CreateResourcesParams{
+			TypeId: resourceTypeIdForName("fungus_tiny"),
+			Planet: homePlanet,
+			NoiseBands: []NoiseBand{
+				{Frequency: 80, Amplitude: 0.5},
+				{Frequency: 16, Amplitude: 0.5},
+			},
+			Thinning: 0.6,
+		})
+		createResources(CreateResourcesParams{
+			TypeId: resourceTypeIdForName("sprout_tiny"),
+			Planet: homePlanet,
+			NoiseBands: []NoiseBand{
+				{Frequency: 80, Amplitude: 0.5},
+				{Frequency: 16, Amplitude: 0.5},
+			},
+			Exponent: 2,
+		})
+		createResources(CreateResourcesParams{
+			TypeId: resourceTypeIdForName("fungus_giant"),
+			Planet: homePlanet,
+			NoiseBands: []NoiseBand{
+				{Frequency: 80, Amplitude: 0.5},
+				{Frequency: 16, Amplitude: 0.5},
+			},
+			Exponent: 1,
+			Thinning: 0.02,
+		})
 
 		edit.SaveSnapshot("initialize scene")
 	}
