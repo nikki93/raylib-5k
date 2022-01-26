@@ -485,8 +485,6 @@ var playerTexture = rl.LoadTexture(getAssetPath("player.png"))
 func drawGame() {
 	rl.ClearBackground(rl.Color{0x10, 0x14, 0x1f, 0xff})
 
-	// TODO: Factor push / pop / matrix into `drawWithLayout` here?
-
 	// Resources
 	Each(func(ent Entity, resource *Resource, lay *Layout) {
 		rl.PushMatrix()
@@ -517,14 +515,13 @@ func drawGame() {
 		rl.PopMatrix()
 	})
 
-	// Planets
+	// Planet terrain
 	Each(func(ent Entity, planet *Planet, lay *Layout) {
 		rl.PushMatrix()
 		rl.Translatef(lay.Pos.X, lay.Pos.Y, 0)
 
 		nVerts := len(planet.Verts)
 
-		// Terrain
 		rl.CheckRenderBatchLimit(4 * (nVerts - 1))
 		rl.SetTexture(whiteTexture.Id)
 		rl.Begin(rl.Quads)
@@ -543,40 +540,6 @@ func drawGame() {
 			drawLine(planet.Verts[i-1], planet.Verts[i])
 		}
 		rl.End()
-
-		// Bits
-		bitTex := bitsTextureBasic
-		bitTexHeight := float64(bitTex.Height)
-		bitTexSource := rl.Rectangle{
-			X:      0,
-			Y:      0,
-			Width:  bitTexHeight,
-			Height: bitTexHeight,
-		}
-		bitTexDest := rl.Rectangle{
-			X:      0,
-			Y:      0,
-			Width:  spriteScale * bitTexHeight,
-			Height: spriteScale * bitTexHeight,
-		}
-		bitTexOrigin := Vec2{bitTexDest.Width, bitTexDest.Height}.Scale(0.5)
-		for vertI, vertPos := range planet.Verts {
-			edgeDelta := planet.Verts[(vertI+1)%nVerts].Subtract(vertPos)
-			for bitI, bit := range planet.Bits[vertI] {
-				bitTexSource.X = bitTexHeight * float64(bit.Frame)
-
-				frac := float64(bitI) / float64(numPlanetBitsPerSegment)
-				perturb := bit.Perturb.Scale(spriteScale / bitTexDest.Width)
-				pos := vertPos.Add(edgeDelta.Scale(frac)).Add(perturb)
-
-				bitTexDest.X = pos.X
-				bitTexDest.Y = pos.Y
-
-				rl.DrawCircleV(pos, 0.1, rl.Color{})
-
-				rl.DrawTexturePro(bitTex, bitTexSource, bitTexDest, bitTexOrigin, bit.Rot, rl.Color{0x4d, 0x2b, 0x32, 0xff})
-			}
-		}
 
 		rl.PopMatrix()
 	})
@@ -616,4 +579,48 @@ func drawGame() {
 
 		rl.PopMatrix()
 	})
+
+	// Planet bits
+	Each(func(ent Entity, planet *Planet, lay *Layout) {
+		rl.PushMatrix()
+		rl.Translatef(lay.Pos.X, lay.Pos.Y, 0)
+
+		nVerts := len(planet.Verts)
+
+		bitTex := bitsTextureBasic
+		bitTexHeight := float64(bitTex.Height)
+		bitTexSource := rl.Rectangle{
+			X:      0,
+			Y:      0,
+			Width:  bitTexHeight,
+			Height: bitTexHeight,
+		}
+		bitTexDest := rl.Rectangle{
+			X:      0,
+			Y:      0,
+			Width:  spriteScale * bitTexHeight,
+			Height: spriteScale * bitTexHeight,
+		}
+		bitTexOrigin := Vec2{bitTexDest.Width, bitTexDest.Height}.Scale(0.5)
+		for vertI, vertPos := range planet.Verts {
+			edgeDelta := planet.Verts[(vertI+1)%nVerts].Subtract(vertPos)
+			for bitI, bit := range planet.Bits[vertI] {
+				bitTexSource.X = bitTexHeight * float64(bit.Frame)
+
+				frac := float64(bitI) / float64(numPlanetBitsPerSegment)
+				perturb := bit.Perturb.Scale(spriteScale / bitTexDest.Width)
+				pos := vertPos.Add(edgeDelta.Scale(frac)).Add(perturb)
+
+				bitTexDest.X = pos.X
+				bitTexDest.Y = pos.Y
+
+				rl.DrawCircleV(pos, 0.1, rl.Color{})
+
+				rl.DrawTexturePro(bitTex, bitTexSource, bitTexDest, bitTexOrigin, bit.Rot, rl.Color{0x4d, 0x2b, 0x32, 0xff})
+			}
+		}
+
+		rl.PopMatrix()
+	})
+
 }
