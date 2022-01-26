@@ -47,6 +47,8 @@ type NoiseBand struct {
 	Frequency, Amplitude float64
 }
 
+var bitsTextureBasic = rl.LoadTexture(getAssetPath("planet_surface_bits_basic.png"))
+
 func createPlanet(pos Vec2, radius float64) Entity {
 	ent := CreateEntity(
 		Layout{
@@ -81,9 +83,17 @@ func createPlanet(pos Vec2, radius float64) Entity {
 
 		// Vertex
 		vert := Vec2{Cos(angle), Sin(angle)}.Scale(height)
-		planet.Segments = append(planet.Segments, PlanetSegment{
-			Vert: vert,
-		})
+		planet.Verts = append(planet.Verts, vert)
+
+		// Bits
+		planet.Bits = append(planet.Bits, PlanetBits{})
+		for _, bit := range planet.Bits[len(planet.Bits)-1] {
+			bit.Frame = rl.GetRandomValue(0, numPlanetBitFrames-1)
+			bit.Rot = 2 * Pi * unitRandom()
+			bit.Perturb = Vec2{float64(rl.GetRandomValue(-1, 1)), float64(rl.GetRandomValue(-1, 1))}
+			bit.FlipH = unitRandom() < 0.5
+			bit.FlipV = unitRandom() < 0.5
+		}
 	}
 
 	return ent
@@ -104,11 +114,11 @@ func createResources(params CreateResourcesParams) {
 
 	resourceType := &resourceTypes[params.TypeId]
 
-	nSegments := len(planet.Segments)
-	for vertIndex, segment := range planet.Segments {
-		vertPos := planetLay.Pos.Add(segment.Vert)
-		nextVertIndex := (vertIndex + 1) % nSegments
-		nextVertPos := planetLay.Pos.Add(planet.Segments[nextVertIndex].Vert)
+	nVerts := len(planet.Verts)
+	for vertIndex, localVertPos := range planet.Verts {
+		vertPos := planetLay.Pos.Add(localVertPos)
+		nextVertIndex := (vertIndex + 1) % nVerts
+		nextVertPos := planetLay.Pos.Add(planet.Verts[nextVertIndex])
 		edgeDelta := nextVertPos.Subtract(vertPos)
 		edgeDir := Vec2{edgeDelta.Y, -edgeDelta.X}.Normalize()
 
@@ -144,8 +154,8 @@ func createResources(params CreateResourcesParams) {
 						Rot: rot,
 					},
 					Resource{
-						TypeId:         params.TypeId,
-						FlipHorizontal: unitRandom() < 0.5,
+						TypeId: params.TypeId,
+						FlipH:  unitRandom() < 0.5,
 					},
 				)
 			}
@@ -272,13 +282,13 @@ func updateGame(dt float64) {
 		if rl.IsKeyDown(rl.KEY_A) || rl.IsKeyDown(rl.KEY_LEFT) {
 			dir := Vec2{up.Up.Y, -up.Up.X}
 			vel.Vel = vel.Vel.Add(dir.Scale(playerHorizontalControlsAccel * deltaTime))
-			player.FlipHorizontal = true
+			player.FlipH = true
 			appliedControls = true
 		}
 		if rl.IsKeyDown(rl.KEY_D) || rl.IsKeyDown(rl.KEY_RIGHT) {
 			dir := Vec2{-up.Up.Y, up.Up.X}
 			vel.Vel = vel.Vel.Add(dir.Scale(playerHorizontalControlsAccel * deltaTime))
-			player.FlipHorizontal = false
+			player.FlipH = false
 			appliedControls = true
 		}
 		if appliedControls {
@@ -331,10 +341,10 @@ func updateGame(dt float64) {
 		poly.Verts[3] = Vec2{-0.5 * reducedPlayerSize.X, 0.5 * reducedPlayerSize.Y}
 		poly.CalculateNormals()
 		Each(func(planetEnt Entity, planet *Planet, planetLay *Layout) {
-			nSegments := len(planet.Segments)
-			for i, segment := range planet.Segments {
-				a := planetLay.Pos.Add(segment.Vert)
-				b := planetLay.Pos.Add(planet.Segments[(i+1)%nSegments].Vert)
+			nVerts := len(planet.Verts)
+			for i, localVertPos := range planet.Verts {
+				a := planetLay.Pos.Add(localVertPos)
+				b := planetLay.Pos.Add(planet.Verts[(i+1)%nVerts])
 				capsule := Capsule{A: a, B: b, Radius: thickness}
 
 				// Calculate intersection
@@ -499,7 +509,7 @@ func drawGame() {
 			Width:  destSize.X,
 			Height: destSize.Y,
 		}
-		if resource.FlipHorizontal {
+		if resource.FlipH {
 			texSource.Width = -texSource.Width
 		}
 		rl.DrawTexturePro(texture, texSource, texDest, Vec2{0, 0}, 0, rl.White)
@@ -512,14 +522,16 @@ func drawGame() {
 		// Base radius / sea level
 		//rl.DrawCircleSectorLines(lay.Pos, planet.Radius, 0, 360, 128, rl.Color{0x7a, 0x36, 0x7b, 0xff})
 
-		// Terrain
 		rl.PushMatrix()
 		rl.Translatef(lay.Pos.X, lay.Pos.Y, 0)
-		nSegments := len(planet.Segments)
-		rl.CheckRenderBatchLimit(4 * (nSegments - 1))
+
+		nVerts := len(planet.Verts)
+
+		// Terrain
+		rl.CheckRenderBatchLimit(4 * (nVerts - 1))
 		rl.SetTexture(whiteTexture.Id)
 		rl.Begin(rl.Quads)
-		for i := 1; i < nSegments; i++ {
+		for i := 1; i < nVerts; i++ {
 			drawLine := func(a, b Vec2) {
 				rl.Color4ub(0x15, 0x1d, 0x28, 0xff)
 				rl.TexCoord2f(0, 0)
@@ -531,9 +543,44 @@ func drawGame() {
 				rl.TexCoord2f(0, 1)
 				rl.Vertex2f(a.X, a.Y)
 			}
-			drawLine(planet.Segments[i-1].Vert, planet.Segments[i].Vert)
+			drawLine(planet.Verts[i-1], planet.Verts[i])
 		}
 		rl.End()
+
+		// Bits
+		bitTex := bitsTextureBasic
+		bitTexHeight := float64(bitTex.Height)
+		bitTexSource := rl.Rectangle{
+			X:      0,
+			Y:      0,
+			Width:  bitTexHeight,
+			Height: bitTexHeight,
+		}
+		bitTexDest := rl.Rectangle{
+			X:      0,
+			Y:      0,
+			Width:  spriteScale * bitTexHeight,
+			Height: spriteScale * bitTexHeight,
+		}
+		bitTexOrigin := Vec2{bitTexDest.Width, bitTexDest.Height}.Scale(0.5)
+		for vertI, vertPos := range planet.Verts {
+			edgeDelta := planet.Verts[(vertI+1)%nVerts].Subtract(vertPos)
+			for bitI, bit := range planet.Bits[vertI] {
+				bitTexSource.X = bitTexHeight * float64(bit.Frame)
+
+				frac := float64(bitI) / float64(numPlanetBitsPerSegment)
+				perturb := bit.Perturb.Scale(spriteScale / bitTexDest.Width)
+				pos := vertPos.Add(edgeDelta.Scale(frac)).Add(perturb)
+
+				bitTexDest.X = pos.X
+				bitTexDest.Y = pos.Y
+
+				rl.DrawCircleV(pos, 0.1, rl.Color{})
+
+				rl.DrawTexturePro(bitTex, bitTexSource, bitTexDest, bitTexOrigin, bit.Rot, rl.Color{0x4d, 0x2b, 0x32, 0xff})
+			}
+		}
+
 		rl.PopMatrix()
 
 		// Gravity radius
@@ -569,7 +616,7 @@ func drawGame() {
 			Width:  playerSize.X,
 			Height: destHeight,
 		}
-		if player.FlipHorizontal {
+		if player.FlipH {
 			texSource.Width = -texSource.Width
 		}
 		rl.DrawTexturePro(playerTexture, texSource, texDest, Vec2{0, 0}, 0, rl.White)

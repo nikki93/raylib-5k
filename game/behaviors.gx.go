@@ -28,16 +28,26 @@ type Velocity struct {
 type DisableFriction struct{}
 type ApplySurfaceFriction struct{}
 
-type PlanetSegment struct {
-	Vert Vec2
+const numPlanetBitFrames = 9
+
+type PlanetBit struct {
+	Frame        int
+	Rot          float64
+	Perturb      Vec2
+	FlipH, FlipV bool
 }
+
+const numPlanetBitsPerSegment = 8
+
+type PlanetBits [numPlanetBitsPerSegment]PlanetBit
 
 type Planet struct {
 	Behavior
 
 	Radius float64
 
-	Segments []PlanetSegment
+	Verts []Vec2
+	Bits  []PlanetBits
 }
 
 type Up struct {
@@ -64,7 +74,7 @@ type Player struct {
 	CameraPos         Vec2
 	CameraRot         float64
 
-	FlipHorizontal bool
+	FlipH bool
 }
 
 //
@@ -129,5 +139,5 @@ type Resource struct {
 
 	TypeId ResourceTypeId
 
-	FlipHorizontal bool
+	FlipH bool
 }
