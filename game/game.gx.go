@@ -519,9 +519,6 @@ func drawGame() {
 
 	// Planets
 	Each(func(ent Entity, planet *Planet, lay *Layout) {
-		// Base radius / sea level
-		//rl.DrawCircleSectorLines(lay.Pos, planet.Radius, 0, 360, 128, rl.Color{0x7a, 0x36, 0x7b, 0xff})
-
 		rl.PushMatrix()
 		rl.Translatef(lay.Pos.X, lay.Pos.Y, 0)
 
@@ -582,10 +579,6 @@ func drawGame() {
 		}
 
 		rl.PopMatrix()
-
-		// Gravity radius
-		//gravRadius := planetGravRadiusMultiplier * planet.Radius
-		//rl.DrawCircleSectorLines(lay.Pos, gravRadius, 0, 360, 32, rl.Color{0x7a, 0x36, 0x7b, 0xff})
 	})
 
 	// Player
