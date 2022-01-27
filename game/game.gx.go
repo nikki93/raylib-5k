@@ -252,7 +252,7 @@ func initGame() {
 	}
 
 	// Play music
-	rl.PlayMusicStream(music)
+	//rl.PlayMusicStream(music)
 }
 
 //
@@ -445,12 +445,25 @@ func updateGame(dt float64) {
 			start := lay.Pos
 			end := rl.GetScreenToWorld2D(rl.GetMousePosition(), gameCamera)
 			endSqDist := end.Subtract(start).LengthSqr()
-
-			// Create beam capsule collision shape
 			beamCapsule := Capsule{
 				A:      start,
 				B:      end,
 				Radius: 0.01,
+			}
+
+			// Common intersection update
+			applyIntersectResult := func(in IntersectResult) {
+				if in.Count > 0 {
+					point := in.ContactPoints[0]
+					if in.Count > 1 {
+						point = point.Add(in.ContactPoints[1]).Scale(0.5)
+					}
+					sqDist := point.Subtract(start).LengthSqr()
+					if sqDist < endSqDist {
+						end = point
+						endSqDist = sqDist
+					}
+				}
 			}
 
 			// Check for intersection with planet terrain
@@ -464,26 +477,49 @@ func updateGame(dt float64) {
 						Radius: planetSegmentThickness,
 					}
 
-					// Calculate intersection
 					in := IntersectCapsules(planetSegmentCapsule, beamCapsule)
-					if in.Count > 0 {
-						point := in.ContactPoints[0]
-						if in.Count > 1 {
-							point = point.Add(in.ContactPoints[1]).Scale(0.5)
-						}
-						sqDist := point.Subtract(start).LengthSqr()
-						if sqDist < endSqDist {
-							end = point
-							endSqDist = sqDist
-						}
-					}
+					applyIntersectResult(in)
 				}
 			})
 
+			// Check for intersection with resources
+			Each(func(resourceEnt Entity, resource *Resource, resourceLay *Layout) {
+				resourceType := &resourceTypes[resource.TypeId]
+
+				texture := resourceType.Texture
+				texSize := Vec2{float64(texture.Width), float64(texture.Height)}
+				polySize := texSize.Scale(spriteScale).Multiply(Vec2{0.6, 0.8})
+
+				poly := Polygon{}
+				poly.Count = 4
+				poly.Verts[0] = Vec2{-0.5 * polySize.X, -polySize.Y}
+				poly.Verts[1] = Vec2{0.5 * polySize.X, -polySize.Y}
+				poly.Verts[2] = Vec2{0.5 * polySize.X, 0}
+				poly.Verts[3] = Vec2{-0.5 * polySize.X, 0}
+
+				// Capsule-polygon collision didn't give the right results...
+				//poly.CalculateNormals()
+				//in := IntersectCapsulePolygon(beamCapsule, &poly, resourceLay.Pos, resourceLay.Rot)
+				//applyIntersectResult(in)
+				for i := 0; i < 4; i++ {
+					localA := poly.Verts[i]
+					localB := poly.Verts[(i+1)%4]
+					planetSegmentCapsule := Capsule{
+						A:      resourceLay.Pos.Add(Vec2{Cos(lay.Rot)*localA.X - Sin(lay.Rot)*localA.Y, Sin(lay.Rot)*localA.X + Cos(lay.Rot)*localA.Y}),
+						B:      resourceLay.Pos.Add(Vec2{Cos(lay.Rot)*localB.X - Sin(lay.Rot)*localB.Y, Sin(lay.Rot)*localB.X + Cos(lay.Rot)*localB.Y}),
+						Radius: planetSegmentThickness,
+					}
+					in := IntersectCapsules(planetSegmentCapsule, beamCapsule)
+					applyIntersectResult(in)
+				}
+			})
+
+			// Update beam state
 			player.BeamOn = true
 			player.BeamEnd = end
 			player.BeamTime += deltaTime
 
+			// Check if we should flip player sprite
 			delta := player.BeamEnd.Subtract(lay.Pos)
 			playerDir := Vec2{Cos(lay.Rot), Sin(lay.Rot)}
 			player.FlipH = playerDir.DotProduct(delta) < 0
