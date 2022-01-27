@@ -76,9 +76,12 @@ type Player struct {
 
 	FlipH bool
 
-	BeamOn   bool
-	BeamEnd  Vec2
-	BeamTime float64
+	BeamOn             bool
+	BeamEnd            Vec2
+	BeamTimeSinceStart float64
+	BeamTimeTillDamage float64
+
+	ElementAmounts [NumElementTypes]int
 }
 
 //
@@ -105,8 +108,11 @@ type ResourceType struct {
 	ImageName              string
 	VerticalOffset         float64
 	VerticalOffsetVariance float64
-	ElementAmounts         []ElementAmount
-	Texture                rl.Texture
+
+	Health         int `default:"3"`
+	ElementAmounts []ElementAmount
+
+	Texture rl.Texture
 }
 
 var resourceTypes = [...]ResourceType{
@@ -115,8 +121,9 @@ var resourceTypes = [...]ResourceType{
 		ImageName:              "resource_fungus_giant.png",
 		VerticalOffset:         -0.8,
 		VerticalOffsetVariance: -0.2,
+		Health:                 15,
 		ElementAmounts: []ElementAmount{
-			{Type: CarbonElement, Amount: 10},
+			{Type: CarbonElement, Amount: 11},
 		},
 	},
 	{
@@ -124,8 +131,9 @@ var resourceTypes = [...]ResourceType{
 		ImageName:              "resource_fungus_tiny.png",
 		VerticalOffset:         -0.3,
 		VerticalOffsetVariance: -0.08,
+		Health:                 3,
 		ElementAmounts: []ElementAmount{
-			{Type: CarbonElement, Amount: 4},
+			{Type: CarbonElement, Amount: 2},
 		},
 	},
 	{
@@ -133,17 +141,20 @@ var resourceTypes = [...]ResourceType{
 		ImageName:              "resource_sprout_tiny.png",
 		VerticalOffset:         -0.3,
 		VerticalOffsetVariance: -0.08,
+		Health:                 3,
 		ElementAmounts: []ElementAmount{
-			{Type: CarbonElement, Amount: 3},
+			{Type: CarbonElement, Amount: 1},
 		},
 	},
+
 	{
 		Name:                   "rock_large",
 		ImageName:              "resource_rock_large.png",
 		VerticalOffset:         -0.8,
 		VerticalOffsetVariance: -0.2,
+		Health:                 50,
 		ElementAmounts: []ElementAmount{
-			{Type: SiliconElement, Amount: 10},
+			{Type: SiliconElement, Amount: 18},
 		},
 	},
 	{
@@ -151,8 +162,9 @@ var resourceTypes = [...]ResourceType{
 		ImageName:              "resource_rock_medium.png",
 		VerticalOffset:         -0.4,
 		VerticalOffsetVariance: -0.2,
+		Health:                 20,
 		ElementAmounts: []ElementAmount{
-			{Type: SiliconElement, Amount: 4},
+			{Type: SiliconElement, Amount: 6},
 		},
 	},
 }
@@ -163,4 +175,6 @@ type Resource struct {
 	TypeId ResourceTypeId
 
 	FlipH bool
+
+	Health int
 }

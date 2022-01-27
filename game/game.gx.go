@@ -38,6 +38,8 @@ var planetGravRadiusMultiplier = 1.38
 var spriteScale = playerSize.X / float64(playerTexture.Width)
 
 var beamZapTime = 0.06
+var beamDamagePeriod = 0.2
+var beamDamage = 1
 
 //
 // Sounds
@@ -166,6 +168,7 @@ func createResources(params CreateResourcesParams) {
 					Resource{
 						TypeId: params.TypeId,
 						FlipH:  unitRandom() < 0.5,
+						Health: resourceType.Health,
 					},
 				)
 			}
@@ -464,7 +467,7 @@ func updateGame(dt float64) {
 	ClearComponent[ApplySurfaceFriction]()
 
 	// Update beam
-	Each(func(ent Entity, player *Player, lay *Layout) {
+	Each(func(playerEnt Entity, player *Player, lay *Layout) {
 		if rl.IsMouseButtonDown(rl.MOUSE_BUTTON_LEFT) {
 			start := lay.Pos
 			reticlePos := rl.GetScreenToWorld2D(rl.GetMousePosition(), gameCamera)
@@ -476,13 +479,7 @@ func updateGame(dt float64) {
 				NormalizedDirection: reticleDir,
 				Length:              endDist,
 			}
-
-			// Common intersection update
-			applyRaycast := func(result RaycastResult) {
-				if result.Hit && result.Distance < endDist {
-					ray.Length = result.Distance
-				}
-			}
+			hitResourceEnt := NullEntity
 
 			// Check for intersection with planet terrain
 			planetSegmentThickness := 0.04
@@ -494,7 +491,10 @@ func updateGame(dt float64) {
 						B:      planetLay.Pos.Add(planet.Verts[(i+1)%nVerts]),
 						Radius: planetSegmentThickness,
 					}
-					applyRaycast(RaycastCapsule(ray, planetSegmentCapsule))
+					result := RaycastCapsule(ray, planetSegmentCapsule)
+					if result.Hit && result.Distance < endDist {
+						ray.Length = result.Distance
+					}
 				}
 			})
 
@@ -514,13 +514,56 @@ func updateGame(dt float64) {
 				poly.Verts[3] = Vec2{-0.5 * polySize.X, 0}
 				poly.CalculateNormals()
 
-				applyRaycast(RaycastPolygon(ray, &poly, resourceLay.Pos, resourceLay.Rot))
+				result := RaycastPolygon(ray, &poly, resourceLay.Pos, resourceLay.Rot)
+				if result.Hit && result.Distance < endDist {
+					ray.Length = result.Distance
+					hitResourceEnt = resourceEnt
+				}
 			})
 
 			// Update beam state
-			player.BeamOn = true
+			if !player.BeamOn {
+				player.BeamOn = true
+				player.BeamTimeTillDamage = beamDamagePeriod
+			}
 			player.BeamEnd = ray.Position.Add(ray.NormalizedDirection.Scale(ray.Length))
-			player.BeamTime += deltaTime
+			player.BeamTimeSinceStart += deltaTime
+			player.BeamTimeTillDamage -= deltaTime
+			if player.BeamTimeTillDamage < 0 {
+				if hitResourceEnt != NullEntity {
+					if resource := GetComponent[Resource](hitResourceEnt); resource != nil {
+						prevHealth := resource.Health
+						resource.Health = Max(0, resource.Health-beamDamage)
+						damageDone := prevHealth - resource.Health
+
+						resourceType := &resourceTypes[resource.TypeId]
+						for _, elementAmount := range resourceType.ElementAmounts {
+							damagePerAmount := resourceType.Health / Max(1, elementAmount.Amount/2)
+							if damagePerAmount > 0 {
+								amountGained := prevHealth/damagePerAmount - resource.Health/damagePerAmount
+								player.ElementAmounts[elementAmount.Type] += amountGained
+								if resource.Health == 0 {
+									remainingAmount := elementAmount.Amount - resourceType.Health/damagePerAmount
+									player.ElementAmounts[elementAmount.Type] += remainingAmount
+								}
+							} else {
+								amountPerDamage := (elementAmount.Amount / resourceType.Health) / 2
+								player.ElementAmounts[elementAmount.Type] += damageDone * amountPerDamage
+								if resource.Health == 0 {
+									remainingAmount := elementAmount.Amount - (amountPerDamage * resourceType.Health)
+									player.ElementAmounts[elementAmount.Type] += remainingAmount
+								}
+							}
+						}
+
+						if resource.Health == 0 {
+							DestroyEntity(hitResourceEnt)
+						}
+					}
+				}
+				// TODO: Consume energy?
+				player.BeamTimeTillDamage += beamDamagePeriod
+			}
 
 			// Check if we should flip player sprite
 			delta := player.BeamEnd.Subtract(lay.Pos)
@@ -528,7 +571,7 @@ func updateGame(dt float64) {
 			player.FlipH = playerDir.DotProduct(delta) < 0
 		} else {
 			player.BeamOn = false
-			player.BeamTime = 0
+			player.BeamTimeSinceStart = 0
 		}
 	})
 
@@ -618,6 +661,12 @@ var beamSheetFramesPerSecond = 16.0
 var reticleTexture = rl.LoadTexture(getAssetPath("cursor.png"))
 
 func drawGame() {
+	Each(func(ent Entity, player *Player) {
+		for elementType, amount := range player.ElementAmounts {
+			str.Display("element %d: %d", elementType, amount)
+		}
+	})
+
 	rl.ClearBackground(rl.Color{0x10, 0x14, 0x1f, 0xff})
 
 	// Resources
@@ -696,8 +745,8 @@ func drawGame() {
 			color := rl.Color{0x4f, 0x8f, 0xba, 0xff}
 
 			deltaLength := delta.Length()
-			if player.BeamTime < beamZapTime {
-				deltaLength *= player.BeamTime / beamZapTime
+			if player.BeamTimeSinceStart < beamZapTime {
+				deltaLength *= player.BeamTimeSinceStart / beamZapTime
 			}
 
 			texHeight := float64(beamSheetTexture.Height)
@@ -707,7 +756,7 @@ func drawGame() {
 				Width:  deltaLength / spriteScale,
 				Height: texHeight / float64(numBeamSheetFrames),
 			}
-			texSource.Y = float64(Floor(player.BeamTime*beamSheetFramesPerSecond)) * texSource.Height
+			texSource.Y = float64(Floor(player.BeamTimeSinceStart*beamSheetFramesPerSecond)) * texSource.Height
 			destHeight := spriteScale * texSource.Height
 			texDest := rl.Rectangle{
 				X:      0,
