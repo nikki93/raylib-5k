@@ -382,7 +382,6 @@ func updateGame(dt float64) {
 			if sqDist < gravRadius*gravRadius {
 				dist := Sqrt(sqDist)
 				dir := delta.Scale(1 / dist)
-
 				vel.Vel = vel.Vel.Add(dir.Scale(grav.Strength * deltaTime))
 			}
 		})
