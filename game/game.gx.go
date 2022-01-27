@@ -32,6 +32,7 @@ var playerJumpStrength = 14.0
 var playerGravityStrength = 28.0
 var playerHorizontalControlsAccel = 17.0
 var playerMinimumHorizontalSpeedForFriction = 12.0
+var playerJumpCooldown = 0.1
 
 var planetGravRadiusMultiplier = 1.38
 
@@ -362,7 +363,12 @@ func updateGame(dt float64) {
 	// Jump controls
 	Each(func(ent Entity, player *Player, up *Up, vel *Velocity) {
 		if rl.IsKeyPressed(rl.KEY_W) || rl.IsKeyPressed(rl.KEY_UP) {
-			vel.Vel = vel.Vel.Add(up.Up.Scale(playerJumpStrength))
+			if player.JumpsRemaining > 0 && gameTime-player.lastJumpTime > playerJumpCooldown {
+				tangentVel := vel.Vel.Subtract(up.Up.Scale(vel.Vel.DotProduct(up.Up)))
+				vel.Vel = tangentVel.Add(up.Up.Scale(playerJumpStrength))
+				player.lastJumpTime = gameTime
+				player.JumpsRemaining--
+			}
 		}
 	})
 
@@ -424,6 +430,9 @@ func updateGame(dt float64) {
 					if up != nil && in.Normal.DotProduct(up.Up) > 0.2 {
 						up.GroundNormals = append(up.GroundNormals, in.Normal)
 						up.lastGroundTime = gameTime
+						if player := GetComponent[Player](ent); player != nil && player.JumpsRemaining <= 0 {
+							player.JumpsRemaining = 1
+						}
 					}
 				}
 			}

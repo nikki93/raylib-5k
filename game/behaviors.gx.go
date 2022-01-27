@@ -69,6 +69,9 @@ type Gravity struct {
 type Player struct {
 	Behavior
 
+	JumpsRemaining int `default:"1"`
+	lastJumpTime   float64
+
 	SmoothedVel       Vec2
 	CameraInitialized bool
 	CameraPos         Vec2
