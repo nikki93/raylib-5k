@@ -678,6 +678,9 @@ var beamSheetTexture = func() rl.Texture {
 var numBeamSheetFrames = 3
 var beamSheetFramesPerSecond = 16.0
 
+var beamTipTexture = rl.LoadTexture(getAssetPath("player_beam_tip.png"))
+var beamTipCoreTexture = rl.LoadTexture(getAssetPath("player_beam_tip_core.png"))
+
 var reticleTexture = rl.LoadTexture(getAssetPath("cursor.png"))
 
 func drawGame() {
@@ -723,35 +726,6 @@ func drawGame() {
 		rl.PopMatrix()
 	})
 
-	// Planet terrain
-	Each(func(ent Entity, planet *Planet, lay *Layout) {
-		rl.PushMatrix()
-		rl.Translatef(lay.Pos.X, lay.Pos.Y, 0)
-
-		nVerts := len(planet.Verts)
-
-		rl.CheckRenderBatchLimit(4 * (nVerts - 1))
-		rl.SetTexture(whiteTexture.Id)
-		rl.Begin(rl.Quads)
-		for vertIndex, vertPos := range planet.Verts {
-			drawLine := func(a, b Vec2) {
-				rl.Color4ub(0x15, 0x1d, 0x28, 0xff)
-				rl.TexCoord2f(0, 0)
-				rl.Vertex2f(0, 0)
-				rl.TexCoord2f(1, 0)
-				rl.Vertex2f(0, 0)
-				rl.TexCoord2f(1, 1)
-				rl.Vertex2f(b.X, b.Y)
-				rl.TexCoord2f(0, 1)
-				rl.Vertex2f(a.X, a.Y)
-			}
-			drawLine(vertPos, planet.Verts[(vertIndex+1)%nVerts])
-		}
-		rl.End()
-
-		rl.PopMatrix()
-	})
-
 	// Beam
 	Each(func(ent Entity, player *Player, lay *Layout) {
 		if player.BeamOn {
@@ -766,29 +740,58 @@ func drawGame() {
 			// Light magenta: rl.Color{0xa2, 0x3e, 0x8c, 0xff}
 			// Dark blue: rl.Color{0x4f, 0x8f, 0xba, 0xff}
 			// Light blue: rl.Color{0x73, 0xbe, 0xd3, 0xff}
-			color := rl.Color{0x4f, 0x8f, 0xba, 0xff}
+			color := rl.Color{0xa8, 0xca, 0x58, 0xff}
 
-			deltaLength := delta.Length()
+			beamLength := delta.Length()
 			if player.BeamTimeSinceStart < beamZapTime {
-				deltaLength *= player.BeamTimeSinceStart / beamZapTime
+				beamLength *= player.BeamTimeSinceStart / beamZapTime
 			}
 
-			texHeight := float64(beamSheetTexture.Height)
-			texSource := rl.Rectangle{
-				X:      0,
-				Y:      0,
-				Width:  deltaLength / spriteScale,
-				Height: texHeight / float64(numBeamSheetFrames),
+			// Body
+			{
+				texHeight := float64(beamSheetTexture.Height)
+				texSource := rl.Rectangle{
+					X:      0,
+					Y:      0,
+					Width:  beamLength / spriteScale,
+					Height: texHeight / float64(numBeamSheetFrames),
+				}
+				texSource.Y = float64(Floor(player.BeamTimeSinceStart*beamSheetFramesPerSecond)) * texSource.Height
+				destHeight := spriteScale * texSource.Height
+				texDest := rl.Rectangle{
+					X:      0,
+					Y:      -0.5 * destHeight,
+					Width:  beamLength,
+					Height: destHeight,
+				}
+				rl.DrawTexturePro(beamSheetTexture, texSource, texDest, Vec2{0, 0}, 0, color)
 			}
-			texSource.Y = float64(Floor(player.BeamTimeSinceStart*beamSheetFramesPerSecond)) * texSource.Height
-			destHeight := spriteScale * texSource.Height
-			texDest := rl.Rectangle{
-				X:      0,
-				Y:      -0.5 * destHeight,
-				Width:  deltaLength,
-				Height: destHeight,
+
+			// Tip
+			drawBeamTip := func(tex rl.Texture, color rl.Color) {
+				texWidth := float64(tex.Width)
+				texHeight := float64(tex.Height)
+				numFrames := int(texHeight / texWidth)
+				texSource := rl.Rectangle{
+					X:      0,
+					Y:      0,
+					Width:  texWidth,
+					Height: texWidth,
+				}
+				texSource.Y = float64(Floor(player.BeamTimeSinceStart*beamSheetFramesPerSecond)%numFrames) * texSource.Height
+				destWidth := spriteScale * texWidth
+				texDest := rl.Rectangle{
+					X:      beamLength - 0.5*destWidth,
+					Y:      -0.5 * destWidth,
+					Width:  destWidth,
+					Height: destWidth,
+				}
+				rl.DrawTexturePro(tex, texSource, texDest, Vec2{0, 0}, 0, color)
 			}
-			rl.DrawTexturePro(beamSheetTexture, texSource, texDest, Vec2{0, 0}, 0, color)
+			drawBeamTip(beamTipTexture, color)
+			rl.BeginBlendMode(rl.BLEND_ADDITIVE)
+			drawBeamTip(beamTipCoreTexture, rl.Color{0xff, 0xff, 0xff, 0x42})
+			rl.EndBlendMode()
 
 			rl.PopMatrix()
 		}
@@ -830,6 +833,27 @@ func drawGame() {
 
 		nVerts := len(planet.Verts)
 
+		// Terrain
+		rl.CheckRenderBatchLimit(4 * (nVerts - 1))
+		rl.SetTexture(whiteTexture.Id)
+		rl.Begin(rl.Quads)
+		for vertIndex, vertPos := range planet.Verts {
+			drawLine := func(a, b Vec2) {
+				rl.Color4ub(0x15, 0x1d, 0x28, 0xff)
+				rl.TexCoord2f(0, 0)
+				rl.Vertex2f(0, 0)
+				rl.TexCoord2f(1, 0)
+				rl.Vertex2f(0, 0)
+				rl.TexCoord2f(1, 1)
+				rl.Vertex2f(b.X, b.Y)
+				rl.TexCoord2f(0, 1)
+				rl.Vertex2f(a.X, a.Y)
+			}
+			drawLine(vertPos, planet.Verts[(vertIndex+1)%nVerts])
+		}
+		rl.End()
+
+		// Bits
 		bitTex := bitsTextureBasic
 		bitTexHeight := float64(bitTex.Height)
 		bitTexSource := rl.Rectangle{
