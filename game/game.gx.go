@@ -565,7 +565,9 @@ func updateGame(dt float64) {
 func getAssetPath(assetName string) string
 
 var whiteTexture = rl.LoadTextureFromImage(rl.GenImageColor(1, 1, rl.Color{0xff, 0xff, 0xff, 0xff}))
+
 var playerTexture = rl.LoadTexture(getAssetPath("player.png"))
+
 var beamSheetTexture = func() rl.Texture {
 	result := rl.LoadTexture(getAssetPath("player_beam.png"))
 	rl.SetTextureWrap(result, rl.TEXTURE_WRAP_REPEAT)
@@ -573,6 +575,7 @@ var beamSheetTexture = func() rl.Texture {
 }()
 var numBeamSheetFrames = 3
 var beamSheetFramesPerSecond = 16.0
+var beamColor = rl.Color{0xa2, 0x3e, 0x8c, 0xff} // Green: rl.Color{0xa8, 0xca, 0x58, 0xff}, Darker magenta: rl.Color{0x7a, 0x36, 0x7b, 0xff}
 
 func drawGame() {
 	rl.ClearBackground(rl.Color{0x10, 0x14, 0x1f, 0xff})
@@ -661,7 +664,7 @@ func drawGame() {
 				Width:  deltaLength,
 				Height: destHeight,
 			}
-			rl.DrawTexturePro(beamSheetTexture, texSource, texDest, Vec2{0, 0}, 0, rl.Color{0xa8, 0xca, 0x58, 0xff})
+			rl.DrawTexturePro(beamSheetTexture, texSource, texDest, Vec2{0, 0}, 0, beamColor)
 
 			rl.PopMatrix()
 		}
