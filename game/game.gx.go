@@ -181,6 +181,8 @@ func resourceTypeIdForName(name string) ResourceTypeId {
 }
 
 func initGame() {
+	rl.HideCursor()
+
 	// Initialize random seed
 	rl.SetRandomSeed(1024)
 
@@ -611,6 +613,8 @@ var beamSheetTexture = func() rl.Texture {
 var numBeamSheetFrames = 3
 var beamSheetFramesPerSecond = 16.0
 
+var reticleTexture = rl.LoadTexture(getAssetPath("cursor.png"))
+
 func drawGame() {
 	rl.ClearBackground(rl.Color{0x10, 0x14, 0x1f, 0xff})
 
@@ -783,5 +787,12 @@ func drawGame() {
 	})
 
 	// Reticle
-	rl.DrawCircleSectorLines(rl.GetScreenToWorld2D(rl.GetMousePosition(), gameCamera), 0.3*gameCameraZoom, 0, 360, 6, rl.Red)
+	{
+		reticleScale := spriteScale
+		reticlePos := rl.GetScreenToWorld2D(rl.GetMousePosition(), gameCamera)
+		reticleWidth := float64(reticleTexture.Width) * spriteScale
+		reticleHeight := float64(reticleTexture.Height) * spriteScale
+		reticleTopLeft := reticlePos.Subtract(Vec2{reticleWidth, reticleHeight}.Scale(0.5))
+		rl.DrawTextureEx(reticleTexture, reticleTopLeft, 0, reticleScale, rl.Color{0x81, 0x97, 0x96, 0xff})
+	}
 }
