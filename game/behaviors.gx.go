@@ -76,8 +76,9 @@ type Player struct {
 
 	FlipH bool
 
-	BeamOn  bool
-	BeamEnd Vec2
+	BeamOn   bool
+	BeamEnd  Vec2
+	BeamTime float64
 }
 
 //

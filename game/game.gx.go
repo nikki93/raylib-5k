@@ -482,8 +482,10 @@ func updateGame(dt float64) {
 
 			player.BeamOn = true
 			player.BeamEnd = end
+			player.BeamTime += deltaTime
 		} else {
 			player.BeamOn = false
+			player.BeamTime = 0
 		}
 	})
 
@@ -559,8 +561,14 @@ func updateGame(dt float64) {
 func getAssetPath(assetName string) string
 
 var whiteTexture = rl.LoadTextureFromImage(rl.GenImageColor(1, 1, rl.Color{0xff, 0xff, 0xff, 0xff}))
-
 var playerTexture = rl.LoadTexture(getAssetPath("player.png"))
+var beamSheetTexture = func() rl.Texture {
+	result := rl.LoadTexture(getAssetPath("player_beam.png"))
+	rl.SetTextureWrap(result, rl.TEXTURE_WRAP_REPEAT)
+	return result
+}()
+var numBeamSheetFrames = 3
+var beamSheetFramesPerSecond = 16.0
 
 func drawGame() {
 	rl.ClearBackground(rl.Color{0x10, 0x14, 0x1f, 0xff})
@@ -622,6 +630,37 @@ func drawGame() {
 		rl.End()
 
 		rl.PopMatrix()
+	})
+
+	// Beam
+	Each(func(ent Entity, player *Player, lay *Layout) {
+		if player.BeamOn {
+			rl.PushMatrix()
+			rl.Translatef(lay.Pos.X, lay.Pos.Y, 0)
+			delta := player.BeamEnd.Subtract(lay.Pos)
+			angle := Atan2(delta.Y, delta.X)
+			rl.Rotatef(angle*180/Pi, 0, 0, 1)
+
+			deltaLength := delta.Length()
+			texHeight := float64(beamSheetTexture.Height)
+			texSource := rl.Rectangle{
+				X:      0,
+				Y:      0,
+				Width:  deltaLength / spriteScale,
+				Height: texHeight / float64(numBeamSheetFrames),
+			}
+			texSource.Y = float64(Floor(player.BeamTime*beamSheetFramesPerSecond)) * texSource.Height
+			destHeight := spriteScale * texSource.Height
+			texDest := rl.Rectangle{
+				X:      0,
+				Y:      -0.5 * destHeight,
+				Width:  deltaLength,
+				Height: destHeight,
+			}
+			rl.DrawTexturePro(beamSheetTexture, texSource, texDest, Vec2{0, 0}, 0, rl.Color{0xa8, 0xca, 0x58, 0xff})
+
+			rl.PopMatrix()
+		}
 	})
 
 	// Player
@@ -697,12 +736,4 @@ func drawGame() {
 
 	// Reticle
 	rl.DrawCircleV(rl.GetScreenToWorld2D(rl.GetMousePosition(), gameCamera), 0.2*gameCameraZoom, rl.Red)
-
-	// Beam
-	Each(func(ent Entity, player *Player, lay *Layout) {
-		if player.BeamOn {
-			rl.DrawLineV(lay.Pos, player.BeamEnd, rl.Green)
-			rl.DrawCircleV(player.BeamEnd, 0.1, rl.Green)
-		}
-	})
 }
