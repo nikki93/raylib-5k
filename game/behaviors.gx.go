@@ -75,6 +75,9 @@ type Player struct {
 	CameraRot         float64
 
 	FlipH bool
+
+	BeamOn  bool
+	BeamEnd Vec2
 }
 
 //

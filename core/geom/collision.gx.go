@@ -65,8 +65,17 @@ type c2x struct { // Transform
 	r c2r
 }
 
+//gx:extern c2CapsuletoCapsuleManifold
+func c2CapsuletoCapsuleManifold(a Capsule, b Capsule, result *IntersectResult)
+
+func IntersectCapsules(a Capsule, b Capsule) IntersectResult {
+	result := IntersectResult{}
+	c2CapsuletoCapsuleManifold(a, b, &result)
+	return result
+}
+
 //gx:extern c2CircletoPolyManifold
-func c2CircletoPolyManifold(a Circle, b *Polygon, bx *c2x, m *IntersectResult)
+func c2CircletoPolyManifold(a Circle, b *Polygon, bx *c2x, result *IntersectResult)
 
 func IntersectCirclePolygon(a Circle, b *Polygon, bPos Vec2, bAng float64) IntersectResult {
 	result := IntersectResult{}
@@ -76,7 +85,7 @@ func IntersectCirclePolygon(a Circle, b *Polygon, bPos Vec2, bAng float64) Inter
 }
 
 //gx:extern c2CapsuletoPolyManifold
-func c2CapsuletoPolyManifold(a Capsule, b *Polygon, bx *c2x, m *IntersectResult)
+func c2CapsuletoPolyManifold(a Capsule, b *Polygon, bx *c2x, result *IntersectResult)
 
 func IntersectCapsulePolygon(a Capsule, b *Polygon, bPos Vec2, bAng float64) IntersectResult {
 	result := IntersectResult{}
@@ -86,7 +95,7 @@ func IntersectCapsulePolygon(a Capsule, b *Polygon, bPos Vec2, bAng float64) Int
 }
 
 //gx:extern c2PolytoPolyManifold
-func c2PolytoPolyManifold(a *Polygon, ax *c2x, b *Polygon, bx *c2x, m *IntersectResult)
+func c2PolytoPolyManifold(a *Polygon, ax *c2x, b *Polygon, bx *c2x, result *IntersectResult)
 
 func IntersectPolygons(a *Polygon, aPos Vec2, aAng float64, b *Polygon, bPos Vec2, bAng float64) IntersectResult {
 	result := IntersectResult{}

@@ -370,12 +370,14 @@ func updateGame(dt float64) {
 		Each(func(planetEnt Entity, planet *Planet, planetLay *Layout) {
 			nVerts := len(planet.Verts)
 			for i, localVertPos := range planet.Verts {
-				a := planetLay.Pos.Add(localVertPos)
-				b := planetLay.Pos.Add(planet.Verts[(i+1)%nVerts])
-				capsule := Capsule{A: a, B: b, Radius: thickness}
+				planetSegmentCapsule := Capsule{
+					A:      planetLay.Pos.Add(localVertPos),
+					B:      planetLay.Pos.Add(planet.Verts[(i+1)%nVerts]),
+					Radius: thickness,
+				}
 
 				// Calculate intersection
-				in := IntersectCapsulePolygon(capsule, &poly, lay.Pos, lay.Rot)
+				in := IntersectCapsulePolygon(planetSegmentCapsule, &poly, lay.Pos, lay.Rot)
 				if in.Count > 0 {
 					// Push position out by intersection
 					lay.Pos = lay.Pos.Add(in.Normal.Scale(in.Depths[0]))
@@ -436,6 +438,54 @@ func updateGame(dt float64) {
 	})
 	ClearComponent[DisableFriction]()
 	ClearComponent[ApplySurfaceFriction]()
+
+	// Update beam
+	Each(func(ent Entity, player *Player, lay *Layout) {
+		if rl.IsMouseButtonDown(rl.MOUSE_BUTTON_LEFT) {
+			start := lay.Pos
+			end := rl.GetScreenToWorld2D(rl.GetMousePosition(), gameCamera)
+			endSqDist := end.Subtract(start).LengthSqr()
+
+			// Create beam capsule collision shape
+			beamCapsule := Capsule{
+				A:      start,
+				B:      end,
+				Radius: 0.01,
+			}
+
+			// Check for intersection with planet terrain
+			planetSegmentThickness := 0.04
+			Each(func(planetEnt Entity, planet *Planet, planetLay *Layout) {
+				nVerts := len(planet.Verts)
+				for i, localVertPos := range planet.Verts {
+					planetSegmentCapsule := Capsule{
+						A:      planetLay.Pos.Add(localVertPos),
+						B:      planetLay.Pos.Add(planet.Verts[(i+1)%nVerts]),
+						Radius: planetSegmentThickness,
+					}
+
+					// Calculate intersection
+					in := IntersectCapsules(planetSegmentCapsule, beamCapsule)
+					if in.Count > 0 {
+						point := in.ContactPoints[0]
+						if in.Count > 1 {
+							point = point.Add(in.ContactPoints[1]).Scale(0.5)
+						}
+						sqDist := point.Subtract(start).LengthSqr()
+						if sqDist < endSqDist {
+							end = point
+							endSqDist = sqDist
+						}
+					}
+				}
+			})
+
+			player.BeamOn = true
+			player.BeamEnd = end
+		} else {
+			player.BeamOn = false
+		}
+	})
 
 	// Update camera
 	Each(func(ent Entity, player *Player, lay *Layout, vel *Velocity) {
@@ -643,5 +693,16 @@ func drawGame() {
 		}
 
 		rl.PopMatrix()
+	})
+
+	// Reticle
+	rl.DrawCircleV(rl.GetScreenToWorld2D(rl.GetMousePosition(), gameCamera), 0.2*gameCameraZoom, rl.Red)
+
+	// Beam
+	Each(func(ent Entity, player *Player, lay *Layout) {
+		if player.BeamOn {
+			rl.DrawLineV(lay.Pos, player.BeamEnd, rl.Green)
+			rl.DrawCircleV(player.BeamEnd, 0.1, rl.Green)
+		}
 	})
 }
