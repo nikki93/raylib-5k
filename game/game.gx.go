@@ -483,6 +483,10 @@ func updateGame(dt float64) {
 			player.BeamOn = true
 			player.BeamEnd = end
 			player.BeamTime += deltaTime
+
+			delta := player.BeamEnd.Subtract(lay.Pos)
+			playerDir := Vec2{Cos(lay.Rot), Sin(lay.Rot)}
+			player.FlipH = playerDir.DotProduct(delta) < 0
 		} else {
 			player.BeamOn = false
 			player.BeamTime = 0
@@ -735,5 +739,5 @@ func drawGame() {
 	})
 
 	// Reticle
-	rl.DrawCircleV(rl.GetScreenToWorld2D(rl.GetMousePosition(), gameCamera), 0.2*gameCameraZoom, rl.Red)
+	rl.DrawCircleSectorLines(rl.GetScreenToWorld2D(rl.GetMousePosition(), gameCamera), 0.3*gameCameraZoom, 0, 360, 6, rl.Red)
 }
