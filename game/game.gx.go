@@ -575,7 +575,6 @@ var beamSheetTexture = func() rl.Texture {
 }()
 var numBeamSheetFrames = 3
 var beamSheetFramesPerSecond = 16.0
-var beamColor = rl.Color{0xa2, 0x3e, 0x8c, 0xff} // Green: rl.Color{0xa8, 0xca, 0x58, 0xff}, Darker magenta: rl.Color{0x7a, 0x36, 0x7b, 0xff}
 
 func drawGame() {
 	rl.ClearBackground(rl.Color{0x10, 0x14, 0x1f, 0xff})
@@ -648,6 +647,13 @@ func drawGame() {
 			angle := Atan2(delta.Y, delta.X)
 			rl.Rotatef(angle*180/Pi, 0, 0, 1)
 
+			// Green: rl.Color{0xa8, 0xca, 0x58, 0xff}
+			// Dark magenta: rl.Color{0x7a, 0x36, 0x7b, 0xff}
+			// Light magenta: rl.Color{0xa2, 0x3e, 0x8c, 0xff}
+			// Dark blue: rl.Color{0x4f, 0x8f, 0xba, 0xff}
+			// Light blue: rl.Color{0x73, 0xbe, 0xd3, 0xff}
+			color := rl.Color{0x4f, 0x8f, 0xba, 0xff}
+
 			deltaLength := delta.Length()
 			texHeight := float64(beamSheetTexture.Height)
 			texSource := rl.Rectangle{
@@ -664,7 +670,7 @@ func drawGame() {
 				Width:  deltaLength,
 				Height: destHeight,
 			}
-			rl.DrawTexturePro(beamSheetTexture, texSource, texDest, Vec2{0, 0}, 0, beamColor)
+			rl.DrawTexturePro(beamSheetTexture, texSource, texDest, Vec2{0, 0}, 0, color)
 
 			rl.PopMatrix()
 		}
