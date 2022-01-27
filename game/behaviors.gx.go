@@ -178,3 +178,9 @@ type Resource struct {
 
 	Health int
 }
+
+type ResourceDamaged struct {
+	rotDeviation   float64
+	time           float64
+	lastDamageTime float64
+}

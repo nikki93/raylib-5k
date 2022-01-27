@@ -535,6 +535,8 @@ func updateGame(dt float64) {
 						prevHealth := resource.Health
 						resource.Health = Max(0, resource.Health-beamDamage)
 						damageDone := prevHealth - resource.Health
+						resourceDamaged := AddComponent(hitResourceEnt, ResourceDamaged{})
+						resourceDamaged.lastDamageTime = gameTime
 
 						resourceType := &resourceTypes[resource.TypeId]
 						for _, elementAmount := range resourceType.ElementAmounts {
@@ -572,6 +574,19 @@ func updateGame(dt float64) {
 		} else {
 			player.BeamOn = false
 			player.BeamTimeSinceStart = 0
+		}
+	})
+
+	// Wobble damaged resources
+	Each(func(ent Entity, resourceDamaged *ResourceDamaged, resource *Resource) {
+		resourceDamaged.time += deltaTime
+		if gameTime-resourceDamaged.lastDamageTime < 0.3 {
+			height := spriteScale * float64(resourceTypes[resource.TypeId].Texture.Height)
+			resourceDamaged.rotDeviation = (Pi / 60) * Sin(10*2*Pi*resourceDamaged.time) / height
+		} else {
+			rate := 420.0
+			smoothing := 1 - Pow(2, -rate*deltaTime)
+			resourceDamaged.rotDeviation *= smoothing
 		}
 	})
 
@@ -673,7 +688,11 @@ func drawGame() {
 	Each(func(ent Entity, resource *Resource, lay *Layout) {
 		rl.PushMatrix()
 		rl.Translatef(lay.Pos.X, lay.Pos.Y, 0)
-		rl.Rotatef(lay.Rot*180/Pi, 0, 0, 1)
+		rot := lay.Rot
+		if resourceDamaged := GetComponent[ResourceDamaged](ent); resourceDamaged != nil {
+			rot += resourceDamaged.rotDeviation
+		}
+		rl.Rotatef(rot*180/Pi, 0, 0, 1)
 
 		resourceType := &resourceTypes[resource.TypeId]
 		texture := resourceType.Texture
