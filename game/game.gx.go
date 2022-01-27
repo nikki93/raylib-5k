@@ -37,6 +37,8 @@ var planetGravRadiusMultiplier = 1.38
 
 var spriteScale = playerSize.X / float64(playerTexture.Width)
 
+var beamZapTime = 0.06
+
 //
 // Sounds
 //
@@ -694,6 +696,10 @@ func drawGame() {
 			color := rl.Color{0x4f, 0x8f, 0xba, 0xff}
 
 			deltaLength := delta.Length()
+			if player.BeamTime < beamZapTime {
+				deltaLength *= player.BeamTime / beamZapTime
+			}
+
 			texHeight := float64(beamSheetTexture.Height)
 			texSource := rl.Rectangle{
 				X:      0,
