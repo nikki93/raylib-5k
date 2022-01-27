@@ -89,7 +89,8 @@ type ElementType int
 
 const (
 	CarbonElement   ElementType = 0
-	NumElementTypes             = 1
+	SiliconElement  ElementType = 1
+	NumElementTypes             = 2
 )
 
 type ElementAmount struct {
@@ -134,6 +135,24 @@ var resourceTypes = [...]ResourceType{
 		VerticalOffsetVariance: -0.08,
 		ElementAmounts: []ElementAmount{
 			{Type: CarbonElement, Amount: 3},
+		},
+	},
+	{
+		Name:                   "rock_large",
+		ImageName:              "resource_rock_large.png",
+		VerticalOffset:         -0.8,
+		VerticalOffsetVariance: -0.2,
+		ElementAmounts: []ElementAmount{
+			{Type: SiliconElement, Amount: 10},
+		},
+	},
+	{
+		Name:                   "rock_medium",
+		ImageName:              "resource_rock_medium.png",
+		VerticalOffset:         -0.4,
+		VerticalOffsetVariance: -0.2,
+		ElementAmounts: []ElementAmount{
+			{Type: SiliconElement, Amount: 4},
 		},
 	},
 }

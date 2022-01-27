@@ -247,6 +247,26 @@ func initGame() {
 			Exponent: 1,
 			Thinning: 0.02,
 		})
+		createResources(CreateResourcesParams{
+			TypeId: resourceTypeIdForName("rock_large"),
+			Planet: homePlanet,
+			NoiseBands: []NoiseBand{
+				{Frequency: 60, Amplitude: 0.5},
+				{Frequency: 3, Amplitude: 0.2},
+			},
+			Exponent: 1,
+			Thinning: 0.001,
+		})
+		createResources(CreateResourcesParams{
+			TypeId: resourceTypeIdForName("rock_medium"),
+			Planet: homePlanet,
+			NoiseBands: []NoiseBand{
+				{Frequency: 60, Amplitude: 0.5},
+				{Frequency: 3, Amplitude: 0.4},
+			},
+			Exponent: 1,
+			Thinning: 0.015,
+		})
 
 		edit.SaveSnapshot("initialize scene")
 	}
