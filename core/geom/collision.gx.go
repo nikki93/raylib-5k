@@ -42,6 +42,13 @@ func (p *Polygon) CalculateNormals() {
 	c2Norms(&p.Verts[0], &p.Normals[0], p.Count)
 }
 
+//gx:extern c2Ray
+type Ray struct {
+	Position            Vec2    //gx:extern p
+	NormalizedDirection Vec2    //gx:extern d
+	Length              float64 //gx:extern t
+}
+
 //
 // Intersect
 //
@@ -103,6 +110,41 @@ func IntersectPolygons(a *Polygon, aPos Vec2, aAng float64, b *Polygon, bPos Vec
 	bx := c2x{bPos, c2r{Cos(bAng), Sin(bAng)}}
 	c2PolytoPolyManifold(a, &ax, b, &bx, &result)
 	return result
+}
+
+//gx:extern c2Raycast
+type c2Raycast struct {
+	Distance float64 //gx:extern t
+	Normal   Vec2    //gx:extern n
+}
+
+type RaycastResult struct {
+	Hit      bool
+	Distance float64
+	Normal   Vec2
+}
+
+//gx:extern c2RaytoCapsule
+func c2RaytoCapsule(a Ray, b Capsule, raycast *c2Raycast) int
+
+func RaycastCapsule(ray Ray, capsule Capsule) RaycastResult {
+	raycast := c2Raycast{}
+	if c2RaytoCapsule(ray, capsule, &raycast) == 0 {
+		return RaycastResult{Hit: false, Distance: 0, Normal: Vec2{0, 0}}
+	}
+	return RaycastResult{Hit: true, Distance: raycast.Distance, Normal: raycast.Normal}
+}
+
+//gx:extern c2RaytoPoly
+func c2RaytoPoly(a Ray, b *Polygon, bx *c2x, raycast *c2Raycast) int
+
+func RaycastPolygon(ray Ray, b *Polygon, bPos Vec2, bAng float64) RaycastResult {
+	raycast := c2Raycast{}
+	bx := c2x{bPos, c2r{Cos(bAng), Sin(bAng)}}
+	if c2RaytoPoly(ray, b, &bx, &raycast) == 0 {
+		return RaycastResult{Hit: false, Distance: 0, Normal: Vec2{0, 0}}
+	}
+	return RaycastResult{Hit: true, Distance: raycast.Distance, Normal: raycast.Normal}
 }
 
 //

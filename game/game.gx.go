@@ -463,26 +463,20 @@ func updateGame(dt float64) {
 	Each(func(ent Entity, player *Player, lay *Layout) {
 		if rl.IsMouseButtonDown(rl.MOUSE_BUTTON_LEFT) {
 			start := lay.Pos
-			end := rl.GetScreenToWorld2D(rl.GetMousePosition(), gameCamera)
-			endSqDist := end.Subtract(start).LengthSqr()
-			beamCapsule := Capsule{
-				A:      start,
-				B:      end,
-				Radius: 0.01,
+			reticlePos := rl.GetScreenToWorld2D(rl.GetMousePosition(), gameCamera)
+			reticleDelta := reticlePos.Subtract(start)
+			endDist := reticleDelta.Length()
+			reticleDir := reticleDelta.Scale(1 / endDist)
+			ray := Ray{
+				Position:            start,
+				NormalizedDirection: reticleDir,
+				Length:              endDist,
 			}
 
 			// Common intersection update
-			applyIntersectResult := func(in IntersectResult) {
-				if in.Count > 0 {
-					point := in.ContactPoints[0]
-					if in.Count > 1 {
-						point = point.Add(in.ContactPoints[1]).Scale(0.5)
-					}
-					sqDist := point.Subtract(start).LengthSqr()
-					if sqDist < endSqDist {
-						end = point
-						endSqDist = sqDist
-					}
+			applyRaycast := func(result RaycastResult) {
+				if result.Hit && result.Distance < endDist {
+					ray.Length = result.Distance
 				}
 			}
 
@@ -496,9 +490,7 @@ func updateGame(dt float64) {
 						B:      planetLay.Pos.Add(planet.Verts[(i+1)%nVerts]),
 						Radius: planetSegmentThickness,
 					}
-
-					in := IntersectCapsules(planetSegmentCapsule, beamCapsule)
-					applyIntersectResult(in)
+					applyRaycast(RaycastCapsule(ray, planetSegmentCapsule))
 				}
 			})
 
@@ -508,7 +500,7 @@ func updateGame(dt float64) {
 
 				texture := resourceType.Texture
 				texSize := Vec2{float64(texture.Width), float64(texture.Height)}
-				polySize := texSize.Scale(spriteScale).Multiply(Vec2{0.6, 0.8})
+				polySize := texSize.Scale(spriteScale).Multiply(Vec2{0.4, 0.8})
 
 				poly := Polygon{}
 				poly.Count = 4
@@ -516,27 +508,14 @@ func updateGame(dt float64) {
 				poly.Verts[1] = Vec2{0.5 * polySize.X, -polySize.Y}
 				poly.Verts[2] = Vec2{0.5 * polySize.X, 0}
 				poly.Verts[3] = Vec2{-0.5 * polySize.X, 0}
+				poly.CalculateNormals()
 
-				// Capsule-polygon collision didn't give the right results...
-				//poly.CalculateNormals()
-				//in := IntersectCapsulePolygon(beamCapsule, &poly, resourceLay.Pos, resourceLay.Rot)
-				//applyIntersectResult(in)
-				for i := 0; i < 4; i++ {
-					localA := poly.Verts[i]
-					localB := poly.Verts[(i+1)%4]
-					planetSegmentCapsule := Capsule{
-						A:      resourceLay.Pos.Add(Vec2{Cos(lay.Rot)*localA.X - Sin(lay.Rot)*localA.Y, Sin(lay.Rot)*localA.X + Cos(lay.Rot)*localA.Y}),
-						B:      resourceLay.Pos.Add(Vec2{Cos(lay.Rot)*localB.X - Sin(lay.Rot)*localB.Y, Sin(lay.Rot)*localB.X + Cos(lay.Rot)*localB.Y}),
-						Radius: planetSegmentThickness,
-					}
-					in := IntersectCapsules(planetSegmentCapsule, beamCapsule)
-					applyIntersectResult(in)
-				}
+				applyRaycast(RaycastPolygon(ray, &poly, resourceLay.Pos, resourceLay.Rot))
 			})
 
 			// Update beam state
 			player.BeamOn = true
-			player.BeamEnd = end
+			player.BeamEnd = ray.Position.Add(ray.NormalizedDirection.Scale(ray.Length))
 			player.BeamTime += deltaTime
 
 			// Check if we should flip player sprite
