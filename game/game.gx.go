@@ -55,7 +55,7 @@ func unitRandom() float64 {
 	return float64(rl.GetRandomValue(0, 100)) / 100.0
 }
 
-type NoiseBand struct {
+type FrequencyBand struct {
 	Frequency, Amplitude float64
 }
 
@@ -78,7 +78,7 @@ func createPlanet(pos Vec2, radius float64) Entity {
 	// Generation parameters
 	segmentLength := 1.5 * playerSize.X
 	resolution := 2 * Pi * radius / segmentLength
-	noiseBands := [...]NoiseBand{
+	frequencyBands := [...]FrequencyBand{
 		{Frequency: 0.003, Amplitude: 0.2 * radius},
 		{Frequency: 0.015, Amplitude: 0.015 * radius},
 		{Frequency: 0.060, Amplitude: 0.015 * radius},
@@ -89,7 +89,7 @@ func createPlanet(pos Vec2, radius float64) Entity {
 	for angle := 0.0; angle < 2*Pi; angle += angleStep {
 		// Height
 		height := radius
-		for _, band := range noiseBands {
+		for _, band := range frequencyBands {
 			height += band.Amplitude * Noise1(resolution*band.Frequency*angle)
 		}
 
@@ -112,13 +112,13 @@ func createPlanet(pos Vec2, radius float64) Entity {
 }
 
 type CreateResourcesParams struct {
-	TypeName   string
-	TypeId     ResourceTypeId
-	Planet     Entity
-	Resolution int `default:"16"`
-	NoiseBands []NoiseBand
-	Exponent   float64 `default:"6"`
-	Thinning   float64 `default:"1"`
+	TypeName       string
+	TypeId         ResourceTypeId
+	Planet         Entity
+	Resolution     int `default:"16"`
+	FrequencyBands []FrequencyBand
+	Exponent       float64 `default:"6"`
+	Thinning       float64 `default:"1"`
 }
 
 func createResources(params CreateResourcesParams) {
@@ -146,7 +146,7 @@ func createResources(params CreateResourcesParams) {
 			angle := Atan2(localPos.X, -localPos.Y) / (2 * Pi)
 
 			noise := 0.0
-			for _, band := range params.NoiseBands {
+			for _, band := range params.FrequencyBands {
 				noise += band.Amplitude * Sin(band.Frequency*angle)
 			}
 			probability := 0.5 + 0.5*noise
@@ -230,11 +230,11 @@ func initGame() {
 			mediumPlanetRadius,
 		)
 
-		// Resources
+		// Resources on home planet
 		createResources(CreateResourcesParams{
 			TypeName: "fungus_tiny",
 			Planet:   homePlanet,
-			NoiseBands: []NoiseBand{
+			FrequencyBands: []FrequencyBand{
 				{Frequency: 80, Amplitude: 0.5},
 				{Frequency: 16, Amplitude: 0.5},
 			},
@@ -243,7 +243,7 @@ func initGame() {
 		createResources(CreateResourcesParams{
 			TypeName: "sprout_tiny",
 			Planet:   homePlanet,
-			NoiseBands: []NoiseBand{
+			FrequencyBands: []FrequencyBand{
 				{Frequency: 80, Amplitude: 0.5},
 				{Frequency: 16, Amplitude: 0.5},
 			},
@@ -252,7 +252,7 @@ func initGame() {
 		createResources(CreateResourcesParams{
 			TypeName: "fungus_giant",
 			Planet:   homePlanet,
-			NoiseBands: []NoiseBand{
+			FrequencyBands: []FrequencyBand{
 				{Frequency: 80, Amplitude: 0.5},
 				{Frequency: 16, Amplitude: 0.5},
 			},
@@ -262,7 +262,7 @@ func initGame() {
 		createResources(CreateResourcesParams{
 			TypeName: "rock_large",
 			Planet:   homePlanet,
-			NoiseBands: []NoiseBand{
+			FrequencyBands: []FrequencyBand{
 				{Frequency: 60, Amplitude: 0.5},
 				{Frequency: 3, Amplitude: 0.2},
 			},
@@ -272,7 +272,7 @@ func initGame() {
 		createResources(CreateResourcesParams{
 			TypeName: "rock_medium",
 			Planet:   homePlanet,
-			NoiseBands: []NoiseBand{
+			FrequencyBands: []FrequencyBand{
 				{Frequency: 60, Amplitude: 0.5},
 				{Frequency: 3, Amplitude: 0.4},
 			},
