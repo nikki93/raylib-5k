@@ -112,6 +112,7 @@ func createPlanet(pos Vec2, radius float64) Entity {
 }
 
 type CreateResourcesParams struct {
+	TypeName   string
 	TypeId     ResourceTypeId
 	Planet     Entity
 	Resolution int `default:"16"`
@@ -121,6 +122,10 @@ type CreateResourcesParams struct {
 }
 
 func createResources(params CreateResourcesParams) {
+	if params.TypeName != "" {
+		params.TypeId = resourceTypeIdForName(params.TypeName)
+	}
+
 	planet := GetComponent[Planet](params.Planet)
 	planetLay := GetComponent[Layout](params.Planet)
 
@@ -227,8 +232,8 @@ func initGame() {
 
 		// Resources
 		createResources(CreateResourcesParams{
-			TypeId: resourceTypeIdForName("fungus_tiny"),
-			Planet: homePlanet,
+			TypeName: "fungus_tiny",
+			Planet:   homePlanet,
 			NoiseBands: []NoiseBand{
 				{Frequency: 80, Amplitude: 0.5},
 				{Frequency: 16, Amplitude: 0.5},
@@ -236,8 +241,8 @@ func initGame() {
 			Thinning: 0.6,
 		})
 		createResources(CreateResourcesParams{
-			TypeId: resourceTypeIdForName("sprout_tiny"),
-			Planet: homePlanet,
+			TypeName: "sprout_tiny",
+			Planet:   homePlanet,
 			NoiseBands: []NoiseBand{
 				{Frequency: 80, Amplitude: 0.5},
 				{Frequency: 16, Amplitude: 0.5},
@@ -245,8 +250,8 @@ func initGame() {
 			Exponent: 2,
 		})
 		createResources(CreateResourcesParams{
-			TypeId: resourceTypeIdForName("fungus_giant"),
-			Planet: homePlanet,
+			TypeName: "fungus_giant",
+			Planet:   homePlanet,
 			NoiseBands: []NoiseBand{
 				{Frequency: 80, Amplitude: 0.5},
 				{Frequency: 16, Amplitude: 0.5},
@@ -255,8 +260,8 @@ func initGame() {
 			Thinning: 0.02,
 		})
 		createResources(CreateResourcesParams{
-			TypeId: resourceTypeIdForName("rock_large"),
-			Planet: homePlanet,
+			TypeName: "rock_large",
+			Planet:   homePlanet,
 			NoiseBands: []NoiseBand{
 				{Frequency: 60, Amplitude: 0.5},
 				{Frequency: 3, Amplitude: 0.2},
@@ -265,8 +270,8 @@ func initGame() {
 			Thinning: 0.001,
 		})
 		createResources(CreateResourcesParams{
-			TypeId: resourceTypeIdForName("rock_medium"),
-			Planet: homePlanet,
+			TypeName: "rock_medium",
+			Planet:   homePlanet,
 			NoiseBands: []NoiseBand{
 				{Frequency: 60, Amplitude: 0.5},
 				{Frequency: 3, Amplitude: 0.4},
