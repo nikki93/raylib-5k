@@ -50,6 +50,8 @@ var music = rl.LoadMusicStream(getAssetPath("music_1.ogg"))
 
 var laserSound = rl.LoadMusicStream(getAssetPath("sfx_laser_on.ogg")) // Music so it loops
 
+var hitSound = rl.LoadSound(getAssetPath("sfx_hit_1.wav"))
+
 //
 // Init
 //
@@ -543,14 +545,17 @@ func updateGame(dt float64) {
 			player.BeamTimeSinceStart += deltaTime
 			player.BeamTimeTillDamage -= deltaTime
 			if player.BeamTimeTillDamage < 0 {
+				// Check if we hit a resource
 				if hitResourceEnt != NullEntity {
 					if resource := GetComponent[Resource](hitResourceEnt); resource != nil {
+						// Damage resource a bit
 						prevHealth := resource.Health
 						resource.Health = Max(0, resource.Health-beamDamage)
 						damageDone := prevHealth - resource.Health
 						resourceDamaged := AddComponent(hitResourceEnt, ResourceDamaged{})
 						resourceDamaged.lastDamageTime = gameTime
 
+						// Consume elements from it
 						resourceType := &resourceTypes[resource.TypeId]
 						for _, elementAmount := range resourceType.ElementAmounts {
 							damagePerAmount := resourceType.Health / Max(1, elementAmount.Amount/2)
@@ -571,9 +576,14 @@ func updateGame(dt float64) {
 							}
 						}
 
+						// Destroy resource if it's out of health
 						if resource.Health == 0 {
 							DestroyEntity(hitResourceEnt)
 						}
+
+						// Play damage sound
+						rl.SetSoundVolume(hitSound, 0.9)
+						rl.PlaySound(hitSound)
 					}
 				}
 				// TODO: Consume energy?
@@ -587,6 +597,7 @@ func updateGame(dt float64) {
 
 			// Play sound
 			if !rl.IsMusicStreamPlaying(laserSound) {
+				rl.SetMusicVolume(laserSound, 0.4)
 				rl.PlayMusicStream(laserSound)
 			}
 		} else {
