@@ -25,6 +25,12 @@ type Velocity struct {
 	Vel Vec2
 }
 
+type AngularVelocity struct {
+	Behavior
+
+	AngVel float64
+}
+
 type DisableFriction struct{}
 type ApplySurfaceFriction struct{}
 
@@ -249,7 +255,7 @@ var resourceTypes = [...]ResourceType{
 	},
 	{
 		Name:          "building_launchpad",
-		ImageName:     "resource_building_refiner.png",
+		ImageName:     "resource_building_launchpad.png",
 		NumFrames:     2,
 		IconImageName: "icon_building_refiner.png",
 		Health:        50,

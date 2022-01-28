@@ -28,12 +28,18 @@ var surfaceFrictionDecel = 25.0
 var atmosphereFrictionDecel = 18.0
 
 var playerSize = Vec2{1.5, 1}
+
 var playerJumpStrength = 14.0
 var playerHorizontalControlsAccel = 17.0
 var playerMinimumHorizontalSpeedForFriction = 12.0
 var playerJumpCooldown = 0.1
-var playerLiftoffAccelAccel = 12.0
-var playerMaxFlyingAccel = 32.0
+
+var playerFlyingLiftoffAccelAccel = 12.0
+var playerFlyingMaxAccel = 18.0
+var playerFlyingMaxSpeed = 20.0
+var playerFlyingAngAccel = 8.0
+var playerFlyingAngDecel = 20.0
+var playerFlyingMaxAngSpeed = 1.0
 
 var planetGravRadiusMultiplier = 1.38
 var planetSegmentThickness = 0.4
@@ -361,11 +367,12 @@ func updateGame(dt float64) {
 		up.grounded = false
 	})
 
-	// Regular controls
+	// Grounded controls
 	Each(func(ent Entity, player *Player, up *Up, vel *Velocity) {
 		if player.Flying {
 			return
 		}
+		RemoveComponent[AngularVelocity](ent)
 
 		// Horizontal
 		appliedControls := false
@@ -405,24 +412,41 @@ func updateGame(dt float64) {
 		if !player.Flying {
 			return
 		}
+		angVel := AddComponent(ent, AngularVelocity{})
 
 		// Acceleration / slowdown
 		forwardDir := Vec2{0, -1}.Rotate(lay.Rot)
 		if rl.IsKeyDown(rl.KEY_W) || rl.IsKeyDown(rl.KEY_UP) {
-			player.FlyingAccel += playerLiftoffAccelAccel * deltaTime
+			player.FlyingAccel += Min(playerFlyingLiftoffAccelAccel*deltaTime, playerFlyingMaxAccel)
 			vel.Vel = vel.Vel.Add(forwardDir.Scale(player.FlyingAccel * deltaTime))
 		}
 		if rl.IsKeyDown(rl.KEY_S) || rl.IsKeyDown(rl.KEY_DOWN) {
 			vel.Vel = vel.Vel.Add(forwardDir.Scale(-player.FlyingAccel * deltaTime))
 		}
 
-		// Turning
-		if rl.IsKeyDown(rl.KEY_A) || rl.IsKeyDown(rl.KEY_LEFT) {
+		// Velocity limits
+		if speed := vel.Vel.Length(); speed > playerFlyingMaxSpeed {
+			vel.Vel.Scale(playerFlyingMaxSpeed / speed)
+		}
 
+		// Turning
+		appliedTurning := false
+		if rl.IsKeyDown(rl.KEY_A) || rl.IsKeyDown(rl.KEY_LEFT) {
+			angVel.AngVel -= playerFlyingAngAccel * deltaTime
+			appliedTurning = true
 		}
 		if rl.IsKeyDown(rl.KEY_D) || rl.IsKeyDown(rl.KEY_RIGHT) {
-
+			angVel.AngVel += playerFlyingAngAccel * deltaTime
+			appliedTurning = true
 		}
+
+		// Angular velocity limits
+		angSpeed := Abs(angVel.AngVel)
+		if !appliedTurning {
+			angSpeed = Max(0, angSpeed-playerFlyingAngDecel*deltaTime)
+		}
+		angSpeed = Min(angSpeed, playerFlyingMaxAngSpeed)
+		angVel.AngVel = Sign(angVel.AngVel) * angSpeed
 	})
 
 	// Gravity toward planets
@@ -495,6 +519,17 @@ func updateGame(dt float64) {
 		}
 	})
 
+	// Apply angular velocity
+	Each(func(ent Entity, lay *Layout, angVel *AngularVelocity) {
+		lay.Rot += angVel.AngVel * deltaTime
+		for lay.Rot > 2*Pi {
+			lay.Rot -= 2 * Pi
+		}
+		for lay.Rot < 0 {
+			lay.Rot += 2 * Pi
+		}
+	})
+
 	// Donate jumps if grounded
 	Each(func(ent Entity, player *Player, up *Up) {
 		if up.grounded {
@@ -544,6 +579,19 @@ func updateGame(dt float64) {
 				}
 				tangentSpeed = Max(0, tangentSpeed-decel*deltaTime)
 				vel.Vel = upVel.Add(tangentDir.Scale(tangentSpeed))
+			}
+		}
+	})
+	Each(func(ent Entity, fric *ApplySurfaceFriction, collisionNormals *CollisionNormals, vel *Velocity) {
+		if !HasComponent[Up](ent) && !HasComponent[DisableFriction](ent) {
+			for _, normal := range collisionNormals.Normals {
+				normalVel := normal.Normal.Scale(vel.Vel.DotProduct(normal.Normal))
+				tangentVel := vel.Vel.Subtract(normalVel)
+				if tangentSpeed := tangentVel.Length(); tangentSpeed > 0 {
+					tangentDir := tangentVel.Scale(1 / tangentSpeed)
+					tangentSpeed = Max(0, tangentSpeed-surfaceFrictionDecel*deltaTime)
+					vel.Vel = normalVel.Add(tangentDir.Scale(tangentSpeed))
+				}
 			}
 		}
 	})
@@ -776,7 +824,7 @@ func updateGame(dt float64) {
 		if refiner.CarbonAmount >= refinerCarbonPerFuel {
 			// On
 			resource.Frame = 0
-			refiner.TimeTillNextRefinement -= dt
+			refiner.TimeTillNextRefinement -= deltaTime
 			if refiner.TimeTillNextRefinement <= 0 {
 				refiner.TimeTillNextRefinement += refinerRefinmentPeriod
 				refiner.CarbonAmount -= refinerCarbonPerFuel
@@ -912,10 +960,10 @@ func updateGame(dt float64) {
 
 		// Apply to camera, fix angle
 		gameCamera.Target = player.CameraPos
-		if player.CameraRot > 2*Pi {
+		for player.CameraRot > 2*Pi {
 			player.CameraRot -= 2 * Pi
 		}
-		if player.CameraRot < 0 {
+		for player.CameraRot < 0 {
 			player.CameraRot += 2 * Pi
 		}
 		gameCamera.Rotation = -player.CameraRot * 180 / Pi
