@@ -970,7 +970,7 @@ func drawGame() {
 					0,
 					fontSize,
 					1.0,
-					rl.White,
+					rl.Color{0x81, 0x97, 0x96, 0xff},
 				)
 
 				iconPosition.X += 1.375 * iconWidth
