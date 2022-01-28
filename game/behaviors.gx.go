@@ -85,6 +85,9 @@ type Player struct {
 	BeamTimeTillDamage float64
 
 	ElementAmounts [NumElementTypes]int
+
+	BuildUIEnabled bool
+	BuildUIPos     Vec2
 }
 
 //

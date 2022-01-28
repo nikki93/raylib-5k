@@ -631,6 +631,14 @@ func updateGame(dt float64) {
 		}
 	})
 
+	// Update build UI
+	Each(func(ent Entity, player *Player) {
+		if rl.IsMouseButtonPressed(rl.MOUSE_BUTTON_RIGHT) {
+			player.BuildUIEnabled = !player.BuildUIEnabled
+			player.BuildUIPos = rl.GetScreenToWorld2D(rl.GetMousePosition(), gameCamera)
+		}
+	})
+
 	// Update camera
 	Each(func(ent Entity, player *Player, lay *Layout, vel *Velocity) {
 		{
@@ -923,49 +931,64 @@ func drawGame() {
 
 	// Reticle
 	{
-		reticleScale := spriteScale
+		reticleScale := gameCameraZoom * spriteScale
 		reticlePos := rl.GetScreenToWorld2D(rl.GetMousePosition(), gameCamera)
-		reticleWidth := float64(reticleTexture.Width) * spriteScale
-		reticleHeight := float64(reticleTexture.Height) * spriteScale
+		reticleWidth := float64(reticleTexture.Width) * reticleScale
+		reticleHeight := float64(reticleTexture.Height) * reticleScale
 		reticleTopLeft := reticlePos.Subtract(Vec2{reticleWidth, reticleHeight}.Scale(0.5))
 		rl.DrawTextureEx(reticleTexture, reticleTopLeft, 0, reticleScale, rl.Color{0x81, 0x97, 0x96, 0xff})
 	}
 
 	// HUD
 	Each(func(ent Entity, player *Player) {
-		rl.PushMatrix()
-		worldCameraTopLeft := rl.GetScreenToWorld2D(Vec2{0, 0}, gameCamera)
-		rl.Translatef(worldCameraTopLeft.X, worldCameraTopLeft.Y, 0)
-		rl.Rotatef(-gameCamera.Rotation, 0, 0, 1)
-		rl.Scalef(2*gameCameraZoom*spriteScale, 2*gameCameraZoom*spriteScale, 1)
+		// Inventory icons
+		{
+			rl.PushMatrix()
+			worldCameraTopLeft := rl.GetScreenToWorld2D(Vec2{0, 0}, gameCamera)
+			rl.Translatef(worldCameraTopLeft.X, worldCameraTopLeft.Y, 0)
+			rl.Rotatef(-gameCamera.Rotation, 0, 0, 1)
+			rl.Scalef(2*gameCameraZoom*spriteScale, 2*gameCameraZoom*spriteScale, 1)
 
-		iconScreenMargin := 0.5 * float64(elementTypes[0].iconTexture.Width)
-		iconPosition := Vec2{iconScreenMargin, iconScreenMargin}
-		for typeId, amount := range player.ElementAmounts {
-			elementType := &elementTypes[typeId]
-			tex := elementType.iconTexture
-			iconWidth := float64(tex.Width)
-			iconHeight := float64(tex.Height)
+			iconScreenMargin := 0.5 * float64(elementTypes[0].iconTexture.Width)
+			iconPosition := Vec2{iconScreenMargin, iconScreenMargin}
+			for typeId, amount := range player.ElementAmounts {
+				elementType := &elementTypes[typeId]
+				tex := elementType.iconTexture
+				iconWidth := float64(tex.Width)
+				iconHeight := float64(tex.Height)
 
-			rl.DrawTextureEx(tex, iconPosition, 0, 1, rl.White)
-			rl.DrawTextureEx(elementFrameTexture, iconPosition.SubtractValue(1), 0, 1, rl.White)
+				rl.DrawTextureEx(tex, iconPosition, 0, 1, rl.White)
+				rl.DrawTextureEx(elementFrameTexture, iconPosition.SubtractValue(1), 0, 1, rl.White)
 
-			textPosition := iconPosition.Add(Vec2{0, 1.25 * iconHeight})
-			fontSize := 0.4 * iconHeight
-			rl.DrawTextPro(
-				rl.GetFontDefault(),
-				rl.TextFormat("%d", amount),
-				textPosition,
-				Vec2{0, 0},
-				0,
-				fontSize,
-				1.0,
-				rl.White,
-			)
+				textPosition := iconPosition.Add(Vec2{0, 1.25 * iconHeight})
+				fontSize := 0.4 * iconHeight
+				rl.DrawTextPro(
+					rl.GetFontDefault(),
+					rl.TextFormat("%d", amount),
+					textPosition,
+					Vec2{0, 0},
+					0,
+					fontSize,
+					1.0,
+					rl.White,
+				)
 
-			iconPosition.X += 1.375 * iconWidth
+				iconPosition.X += 1.375 * iconWidth
+			}
+
+			rl.PopMatrix()
 		}
 
-		rl.PopMatrix()
+		// Build UI
+		if player.BuildUIEnabled {
+			rl.PushMatrix()
+			rl.Translatef(player.BuildUIPos.X, player.BuildUIPos.Y, 0)
+			rl.Rotatef(-gameCamera.Rotation, 0, 0, 1)
+			rl.Scalef(2*gameCameraZoom*spriteScale, 2*gameCameraZoom*spriteScale, 1)
+
+			rl.DrawRectangle(0, 0, 16, 16, rl.Red)
+
+			rl.PopMatrix()
+		}
 	})
 }
