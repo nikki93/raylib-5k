@@ -238,7 +238,9 @@ func initGame() {
 					{-0.5 * playerPolySize.X, 0.5 * playerPolySize.Y},
 				},
 			},
-			Player{},
+			Player{
+				ElementAmounts: [NumElementTypes]int{200, 200},
+			},
 		)
 		edit.Camera().Target = playerPos
 
@@ -659,26 +661,38 @@ func updateGame(dt float64) {
 
 		// Build resource if selected
 		if player.BuildUISelectedTypeId >= 0 {
-			resourceType := &resourceTypes[player.BuildUISelectedTypeId]
-			buildingEnt := CreateEntity(
-				Layout{
-					Pos: player.BuildUIPos,
-					Rot: -gameCamera.Rotation * Pi / 180,
-				},
-				Resource{
-					TypeId: player.BuildUISelectedTypeId,
-					Health: resourceType.Health,
-				},
-				Velocity{},
-				Gravity{},
-			)
-			if len(resourceType.CollisionShapeVerts) > 0 {
-				AddComponent(buildingEnt, CollisionShape{
-					Verts: resourceType.CollisionShapeVerts,
-				})
-			}
+			resourceTypeId := player.BuildUISelectedTypeId
+			player.BuildUISelectedTypeId = -1
+			resourceType := &resourceTypes[resourceTypeId]
 
-			player.BuildUISelectedTypeId = -1 // Reset
+			canBuild := true
+			for _, requiredElementAmount := range resourceType.ElementAmounts {
+				if requiredElementAmount.Amount > player.ElementAmounts[requiredElementAmount.TypeId] {
+					canBuild = false
+				}
+			}
+			if canBuild {
+				for _, requiredElementAmount := range resourceType.ElementAmounts {
+					player.ElementAmounts[requiredElementAmount.TypeId] -= requiredElementAmount.Amount
+				}
+				buildingEnt := CreateEntity(
+					Layout{
+						Pos: player.BuildUIPos,
+						Rot: -gameCamera.Rotation * Pi / 180,
+					},
+					Resource{
+						TypeId: resourceTypeId,
+						Health: resourceType.Health,
+					},
+					Velocity{},
+					Gravity{},
+				)
+				if len(resourceType.CollisionShapeVerts) > 0 {
+					AddComponent(buildingEnt, CollisionShape{
+						Verts: resourceType.CollisionShapeVerts,
+					})
+				}
+			}
 		}
 	})
 
