@@ -29,12 +29,12 @@ var atmosphereFrictionDecel = 18.0
 
 var playerSize = Vec2{1.5, 1}
 var playerJumpStrength = 14.0
-var playerGravityStrength = 28.0
 var playerHorizontalControlsAccel = 17.0
 var playerMinimumHorizontalSpeedForFriction = 12.0
 var playerJumpCooldown = 0.1
 
 var planetGravRadiusMultiplier = 1.38
+var planetSegmentThickness = 0.4
 
 var spriteScale = playerSize.X / float64(playerTexture.Width)
 
@@ -52,6 +52,8 @@ var laserSound = rl.LoadMusicStream(getAssetPath("sfx_laser_on.ogg")) // Music s
 
 var hitSound1 = rl.LoadSound(getAssetPath("sfx_hit_1.wav"))
 var hitSound2 = rl.LoadSound(getAssetPath("sfx_hit_2.wav"))
+
+var resourceHitGroundSound = rl.LoadSound(getAssetPath("sfx_vehicle_collision.ogg"))
 
 //
 // Init
@@ -220,14 +222,21 @@ func initGame() {
 
 		// Player
 		playerPos := Vec2{0, homePlanetPos.Y - homePlanetRadius - 0.5*playerSize.Y - 5}
+		playerPolySize := playerSize.Subtract(Vec2{2 * planetSegmentThickness, 2.14 * planetSegmentThickness})
 		CreateEntity(
 			Layout{
 				Pos: playerPos,
 			},
 			Velocity{},
 			Up{},
-			Gravity{
-				Strength: playerGravityStrength,
+			Gravity{},
+			CollisionShape{
+				Verts: []Vec2{
+					{-0.5 * playerPolySize.X, -0.5 * playerPolySize.Y},
+					{0.5 * playerPolySize.X, -0.5 * playerPolySize.Y},
+					{0.5 * playerPolySize.X, 0.5 * playerPolySize.Y},
+					{-0.5 * playerPolySize.X, 0.5 * playerPolySize.Y},
+				},
 			},
 			Player{},
 		)
@@ -321,7 +330,7 @@ func updateGame(dt float64) {
 	}
 
 	// Update up direction and clear ground normals
-	Each(func(ent Entity, player *Player, lay *Layout) {
+	Each(func(ent Entity, grav *Gravity, lay *Layout) {
 		minSqDist := -1.0
 		minDelta := Vec2{0, 0}
 		Each(func(ent Entity, planet *Planet, planetLay *Layout) {
@@ -404,47 +413,46 @@ func updateGame(dt float64) {
 		lay.Pos = lay.Pos.Add(vel.Vel.Scale(deltaTime))
 
 		// Handle collisons
-		thickness := 0.4
-		poly := Polygon{}
-		poly.Count = 4
-		reducedPlayerSize := playerSize.Subtract(Vec2{2 * thickness, 2.14 * thickness})
-		poly.Verts[0] = Vec2{-0.5 * reducedPlayerSize.X, -0.5 * reducedPlayerSize.Y}
-		poly.Verts[1] = Vec2{0.5 * reducedPlayerSize.X, -0.5 * reducedPlayerSize.Y}
-		poly.Verts[2] = Vec2{0.5 * reducedPlayerSize.X, 0.5 * reducedPlayerSize.Y}
-		poly.Verts[3] = Vec2{-0.5 * reducedPlayerSize.X, 0.5 * reducedPlayerSize.Y}
-		poly.CalculateNormals()
-		Each(func(planetEnt Entity, planet *Planet, planetLay *Layout) {
-			nVerts := len(planet.Verts)
-			for i, localVertPos := range planet.Verts {
-				planetSegmentCapsule := Capsule{
-					A:      planetLay.Pos.Add(localVertPos),
-					B:      planetLay.Pos.Add(planet.Verts[(i+1)%nVerts]),
-					Radius: thickness,
-				}
+		if collisionShape := GetComponent[CollisionShape](ent); collisionShape != nil {
+			Each(func(planetEnt Entity, planet *Planet, planetLay *Layout) {
+				nVerts := len(planet.Verts)
+				for i, localVertPos := range planet.Verts {
+					planetSegmentCapsule := Capsule{
+						A:      planetLay.Pos.Add(localVertPos),
+						B:      planetLay.Pos.Add(planet.Verts[(i+1)%nVerts]),
+						Radius: planetSegmentThickness,
+					}
 
-				// Calculate intersection
-				in := IntersectCapsulePolygon(planetSegmentCapsule, &poly, lay.Pos, lay.Rot)
-				if in.Count > 0 {
-					// Push position out by intersection
-					lay.Pos = lay.Pos.Add(in.Normal.Scale(in.Depths[0]))
+					// Calculate intersection
+					poly := Polygon{}
+					poly.Count = len(collisionShape.Verts)
+					for i := 0; i < poly.Count; i++ {
+						poly.Verts[i] = collisionShape.Verts[i]
+					}
+					poly.CalculateNormals()
+					in := IntersectCapsulePolygon(planetSegmentCapsule, &poly, lay.Pos, lay.Rot)
+					if in.Count > 0 {
+						// Push position out by intersection
+						lay.Pos = lay.Pos.Add(in.Normal.Scale(in.Depths[0]))
 
-					// Remove component of velocity along normal
-					vel.Vel = vel.Vel.Subtract(in.Normal.Scale(vel.Vel.DotProduct(in.Normal)))
+						// Remove component of velocity along normal
+						vel.Vel = vel.Vel.Subtract(in.Normal.Scale(vel.Vel.DotProduct(in.Normal)))
 
-					// Mark for friction application
-					AddComponent(ent, ApplySurfaceFriction{})
+						// Mark for friction application
+						AddComponent(ent, ApplySurfaceFriction{})
 
-					// Track normal
-					if up != nil && in.Normal.DotProduct(up.Up) > 0.2 {
-						up.GroundNormals = append(up.GroundNormals, in.Normal)
-						up.lastGroundTime = gameTime
-						if player := GetComponent[Player](ent); player != nil && player.JumpsRemaining <= 0 {
-							player.JumpsRemaining = 2
+						// Track normal
+						if up != nil && in.Normal.DotProduct(up.Up) > 0.2 {
+							up.GroundNormals = append(up.GroundNormals, in.Normal)
+							up.lastGroundTime = gameTime
+							if player := GetComponent[Player](ent); player != nil && player.JumpsRemaining <= 0 {
+								player.JumpsRemaining = 2
+							}
 						}
 					}
 				}
-			}
-		})
+			})
+		}
 	})
 
 	// Update smooth up direction
@@ -636,18 +644,55 @@ func updateGame(dt float64) {
 
 	// Update build UI
 	Each(func(ent Entity, player *Player) {
+		// Toggle with right click
 		if rl.IsMouseButtonPressed(rl.MOUSE_BUTTON_RIGHT) {
 			player.BuildUIEnabled = !player.BuildUIEnabled
 			if player.BuildUIEnabled {
 				player.BuildUIPos = rl.GetScreenToWorld2D(rl.GetMousePosition(), gameCamera)
-			} else {
-				player.BuildUIMouseOver = false
 			}
 		}
-		if rl.IsMouseButtonReleased(rl.MOUSE_BUTTON_LEFT) {
+
+		// Reset mouseover state on click release
+		if rl.IsMouseButtonReleased(rl.MOUSE_BUTTON_LEFT) || rl.IsMouseButtonReleased(rl.MOUSE_BUTTON_RIGHT) {
 			player.BuildUIMouseOver = false
 		}
+
+		// Build resource if selected
+		if player.BuildUISelectedTypeId >= 0 {
+			resourceType := &resourceTypes[player.BuildUISelectedTypeId]
+			buildingEnt := CreateEntity(
+				Layout{
+					Pos: player.BuildUIPos,
+					Rot: -gameCamera.Rotation * Pi / 180,
+				},
+				Resource{
+					TypeId: player.BuildUISelectedTypeId,
+					Health: resourceType.Health,
+				},
+				Velocity{},
+				Gravity{},
+			)
+			if len(resourceType.CollisionShapeVerts) > 0 {
+				AddComponent(buildingEnt, CollisionShape{
+					Verts: resourceType.CollisionShapeVerts,
+				})
+			}
+
+			player.BuildUISelectedTypeId = -1 // Reset
+		}
 	})
+
+	// Stop moving resources that have fallen to the ground
+	Each(func(ent Entity, vel *Velocity, resource *Resource, up *Up) {
+		if len(up.GroundNormals) > 0 {
+			rl.PlaySound(resourceHitGroundSound)
+			RemoveComponent[Up](ent)
+			RemoveComponent[Gravity](ent)
+			RemoveComponent[Velocity](ent)
+		}
+	})
+
+	// NOTE: Adding building logic here
 
 	// Update camera
 	Each(func(ent Entity, player *Player, lay *Layout, vel *Velocity) {
@@ -760,10 +805,13 @@ func drawGame() {
 
 		resourceType := &resourceTypes[resource.TypeId]
 		texture := resourceType.texture
-		texSize := Vec2{float64(texture.Width), float64(texture.Height)}
+		texSize := Vec2{
+			X: float64(texture.Width),
+			Y: float64(texture.Height) / float64(resourceType.NumFrames),
+		}
 		texSource := rl.Rectangle{
 			X:      0,
-			Y:      0,
+			Y:      float64(resource.Frame) * texSize.Y,
 			Width:  texSize.X,
 			Height: texSize.Y,
 		}

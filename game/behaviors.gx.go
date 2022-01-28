@@ -63,7 +63,13 @@ type Up struct {
 type Gravity struct {
 	Behavior
 
-	Strength float64
+	Strength float64 `default:"28"`
+}
+
+type CollisionShape struct {
+	Behavior
+
+	Verts []Vec2
 }
 
 type Player struct {
@@ -89,7 +95,7 @@ type Player struct {
 	BuildUIEnabled        bool
 	BuildUIPos            Vec2
 	BuildUIMouseOver      bool
-	BuildUISelectedTypeId ResourceTypeId
+	BuildUISelectedTypeId ResourceTypeId `default:"-1"`
 }
 
 //
@@ -135,6 +141,7 @@ type ResourceTypeId int
 type ResourceType struct {
 	Name                   string
 	ImageName              string
+	NumFrames              int `default:"1"`
 	IconImageName          string
 	VerticalOffset         float64
 	VerticalOffsetVariance float64
@@ -143,6 +150,8 @@ type ResourceType struct {
 	ElementAmounts []ElementAmount
 
 	Buildable bool
+
+	CollisionShapeVerts []Vec2
 
 	texture     rl.Texture
 	iconTexture rl.Texture
@@ -204,12 +213,19 @@ var resourceTypes = [...]ResourceType{
 	{
 		Name:          "building_refiner",
 		ImageName:     "resource_building_refiner.png",
+		NumFrames:     2,
 		IconImageName: "icon_building_refiner.png",
 		Health:        50,
 		ElementAmounts: []ElementAmount{
 			{TypeId: SiliconElement, Amount: 100},
 		},
 		Buildable: true,
+		CollisionShapeVerts: []Vec2{
+			{-0.5 * 3, -2},
+			{0.5 * 3, -2},
+			{0.5 * 3, -0.8},
+			{-0.5 * 3, -0.8},
+		},
 	},
 }
 
@@ -218,6 +234,7 @@ type Resource struct {
 
 	TypeId ResourceTypeId
 
+	Frame int
 	FlipH bool
 
 	Health int
