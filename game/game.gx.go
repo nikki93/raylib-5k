@@ -689,7 +689,7 @@ func updateGame(dt float64) {
 	})
 
 	// Update musics
-	rl.SetMusicVolume(music, 0.6)
+	rl.SetMusicVolume(music, 0.5)
 	rl.UpdateMusicStream(music)
 	rl.UpdateMusicStream(laserSound)
 }
