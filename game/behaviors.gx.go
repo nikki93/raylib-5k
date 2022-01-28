@@ -91,16 +91,37 @@ type Player struct {
 // Resource
 //
 
-type ElementType int
+type ElementTypeId int
 
 const (
-	CarbonElement   ElementType = 0
-	SiliconElement  ElementType = 1
-	NumElementTypes             = 2
+	CarbonElement   ElementTypeId = 0
+	SiliconElement  ElementTypeId = 1
+	NumElementTypes               = 2
 )
 
+type ElementType struct {
+	Name string
+
+	IconImageName string
+
+	iconTexture rl.Texture
+}
+
+var elementTypes = func() [NumElementTypes]ElementType {
+	result := [NumElementTypes]ElementType{}
+	result[CarbonElement] = ElementType{
+		Name:          "carbon",
+		IconImageName: "element_carbon.png",
+	}
+	result[SiliconElement] = ElementType{
+		Name:          "silicon",
+		IconImageName: "element_silicon.png",
+	}
+	return result
+}()
+
 type ElementAmount struct {
-	Type   ElementType
+	TypeId ElementTypeId
 	Amount int
 }
 
@@ -115,7 +136,7 @@ type ResourceType struct {
 	Health         int `default:"3"`
 	ElementAmounts []ElementAmount
 
-	Texture rl.Texture
+	texture rl.Texture
 }
 
 var resourceTypes = [...]ResourceType{
@@ -126,7 +147,7 @@ var resourceTypes = [...]ResourceType{
 		VerticalOffsetVariance: -0.2,
 		Health:                 15,
 		ElementAmounts: []ElementAmount{
-			{Type: CarbonElement, Amount: 11},
+			{TypeId: CarbonElement, Amount: 11},
 		},
 	},
 	{
@@ -136,7 +157,7 @@ var resourceTypes = [...]ResourceType{
 		VerticalOffsetVariance: -0.08,
 		Health:                 3,
 		ElementAmounts: []ElementAmount{
-			{Type: CarbonElement, Amount: 2},
+			{TypeId: CarbonElement, Amount: 2},
 		},
 	},
 	{
@@ -146,7 +167,7 @@ var resourceTypes = [...]ResourceType{
 		VerticalOffsetVariance: -0.08,
 		Health:                 3,
 		ElementAmounts: []ElementAmount{
-			{Type: CarbonElement, Amount: 1},
+			{TypeId: CarbonElement, Amount: 1},
 		},
 	},
 
@@ -157,7 +178,7 @@ var resourceTypes = [...]ResourceType{
 		VerticalOffsetVariance: -0.2,
 		Health:                 50,
 		ElementAmounts: []ElementAmount{
-			{Type: SiliconElement, Amount: 18},
+			{TypeId: SiliconElement, Amount: 18},
 		},
 	},
 	{
@@ -167,7 +188,7 @@ var resourceTypes = [...]ResourceType{
 		VerticalOffsetVariance: -0.2,
 		Health:                 20,
 		ElementAmounts: []ElementAmount{
-			{Type: SiliconElement, Amount: 6},
+			{TypeId: SiliconElement, Amount: 6},
 		},
 	},
 }

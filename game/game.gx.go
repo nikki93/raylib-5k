@@ -200,9 +200,12 @@ func initGame() {
 	// Initialize random seed
 	rl.SetRandomSeed(1024)
 
-	// Initialize resource textures
+	// Initialize element and resource textures
+	for _, elementType := range elementTypes {
+		elementType.iconTexture = rl.LoadTexture(getAssetPath(elementType.IconImageName))
+	}
 	for _, resourceType := range resourceTypes {
-		resourceType.Texture = rl.LoadTexture(getAssetPath(resourceType.ImageName))
+		resourceType.texture = rl.LoadTexture(getAssetPath(resourceType.ImageName))
 	}
 
 	// Scene
@@ -518,7 +521,7 @@ func updateGame(dt float64) {
 			Each(func(resourceEnt Entity, resource *Resource, resourceLay *Layout) {
 				resourceType := &resourceTypes[resource.TypeId]
 
-				texture := resourceType.Texture
+				texture := resourceType.texture
 				texSize := Vec2{float64(texture.Width), float64(texture.Height)}
 				polySize := texSize.Scale(spriteScale).Multiply(Vec2{0.4, 0.8})
 
@@ -562,17 +565,17 @@ func updateGame(dt float64) {
 							damagePerAmount := resourceType.Health / Max(1, elementAmount.Amount/2)
 							if damagePerAmount > 0 {
 								amountGained := prevHealth/damagePerAmount - resource.Health/damagePerAmount
-								player.ElementAmounts[elementAmount.Type] += amountGained
+								player.ElementAmounts[elementAmount.TypeId] += amountGained
 								if resource.Health == 0 {
 									remainingAmount := elementAmount.Amount - resourceType.Health/damagePerAmount
-									player.ElementAmounts[elementAmount.Type] += remainingAmount
+									player.ElementAmounts[elementAmount.TypeId] += remainingAmount
 								}
 							} else {
 								amountPerDamage := (elementAmount.Amount / resourceType.Health) / 2
-								player.ElementAmounts[elementAmount.Type] += damageDone * amountPerDamage
+								player.ElementAmounts[elementAmount.TypeId] += damageDone * amountPerDamage
 								if resource.Health == 0 {
 									remainingAmount := elementAmount.Amount - (amountPerDamage * resourceType.Health)
-									player.ElementAmounts[elementAmount.Type] += remainingAmount
+									player.ElementAmounts[elementAmount.TypeId] += remainingAmount
 								}
 							}
 						}
@@ -619,7 +622,7 @@ func updateGame(dt float64) {
 	Each(func(ent Entity, resourceDamaged *ResourceDamaged, resource *Resource) {
 		resourceDamaged.time += deltaTime
 		if gameTime-resourceDamaged.lastDamageTime < 0.3 {
-			height := spriteScale * float64(resourceTypes[resource.TypeId].Texture.Height)
+			height := spriteScale * float64(resourceTypes[resource.TypeId].texture.Height)
 			resourceDamaged.rotDeviation = (Pi / 60) * Sin(10*2*Pi*resourceDamaged.time) / height
 		} else {
 			rate := 420.0
@@ -720,13 +723,9 @@ var beamTipCoreTexture = rl.LoadTexture(getAssetPath("player_beam_tip_core.png")
 
 var reticleTexture = rl.LoadTexture(getAssetPath("cursor.png"))
 
-func drawGame() {
-	Each(func(ent Entity, player *Player) {
-		for elementType, amount := range player.ElementAmounts {
-			str.Display("element %d: %d", elementType, amount)
-		}
-	})
+var elementFrameTexture = rl.LoadTexture(getAssetPath("element_frame.png"))
 
+func drawGame() {
 	rl.ClearBackground(rl.Color{0x10, 0x14, 0x1f, 0xff})
 
 	// Resources
@@ -740,7 +739,7 @@ func drawGame() {
 		rl.Rotatef(rot*180/Pi, 0, 0, 1)
 
 		resourceType := &resourceTypes[resource.TypeId]
-		texture := resourceType.Texture
+		texture := resourceType.texture
 		texSize := Vec2{float64(texture.Width), float64(texture.Height)}
 		texSource := rl.Rectangle{
 			X:      0,
@@ -931,4 +930,42 @@ func drawGame() {
 		reticleTopLeft := reticlePos.Subtract(Vec2{reticleWidth, reticleHeight}.Scale(0.5))
 		rl.DrawTextureEx(reticleTexture, reticleTopLeft, 0, reticleScale, rl.Color{0x81, 0x97, 0x96, 0xff})
 	}
+
+	// HUD
+	Each(func(ent Entity, player *Player) {
+		rl.PushMatrix()
+		worldCameraTopLeft := rl.GetScreenToWorld2D(Vec2{0, 0}, gameCamera)
+		rl.Translatef(worldCameraTopLeft.X, worldCameraTopLeft.Y, 0)
+		rl.Rotatef(-gameCamera.Rotation, 0, 0, 1)
+		rl.Scalef(2*gameCameraZoom*spriteScale, 2*gameCameraZoom*spriteScale, 1)
+
+		iconScreenMargin := 0.5 * float64(elementTypes[0].iconTexture.Width)
+		iconPosition := Vec2{iconScreenMargin, iconScreenMargin}
+		for typeId, amount := range player.ElementAmounts {
+			elementType := &elementTypes[typeId]
+			tex := elementType.iconTexture
+			iconWidth := float64(tex.Width)
+			iconHeight := float64(tex.Height)
+
+			rl.DrawTextureEx(tex, iconPosition, 0, 1, rl.White)
+			rl.DrawTextureEx(elementFrameTexture, iconPosition.SubtractValue(1), 0, 1, rl.White)
+
+			textPosition := iconPosition.Add(Vec2{0, 1.25 * iconHeight})
+			fontSize := 0.4 * iconHeight
+			rl.DrawTextPro(
+				rl.GetFontDefault(),
+				rl.TextFormat("%d", amount),
+				textPosition,
+				Vec2{0, 0},
+				0,
+				fontSize,
+				1.0,
+				rl.White,
+			)
+
+			iconPosition.X += 1.375 * iconWidth
+		}
+
+		rl.PopMatrix()
+	})
 }

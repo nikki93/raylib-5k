@@ -49,7 +49,7 @@ func mergeGameEditBoxes() {
 	// Resources
 	Each(func(ent Entity, resource *Resource, lay *Layout) {
 		resourceType := &resourceTypes[resource.TypeId]
-		texture := resourceType.Texture
+		texture := resourceType.texture
 		texSize := Vec2{float64(texture.Width), float64(texture.Height)}
 		destSize := texSize.Scale(spriteScale)
 		edit.MergeBox(ent, rl.Rectangle{
