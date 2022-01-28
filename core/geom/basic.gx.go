@@ -141,9 +141,8 @@ func (v Vec2) Lerp(u Vec2, amount float64) Vec2
 func (v Vec2) Reflect(normal Vec2) Vec2
 
 // Rotate Vector by float in Degrees.
-// NOTE: Skipping because it uses degrees...
 //gx:extern rl::Vector2Rotate
-//func (v Vec2) Rotate(degs float64)
+func (v Vec2) Rotate(angle float64) Vec2
 
 // Move Vector towards target
 // NOTE: Skipping because not sure how useful...

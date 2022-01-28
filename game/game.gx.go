@@ -487,7 +487,7 @@ func updateGame(dt float64) {
 
 	// Update beam
 	Each(func(playerEnt Entity, player *Player, lay *Layout) {
-		if rl.IsMouseButtonDown(rl.MOUSE_BUTTON_LEFT) {
+		if rl.IsMouseButtonDown(rl.MOUSE_BUTTON_LEFT) && !player.BuildUIMouseOver {
 			start := lay.Pos
 			reticlePos := rl.GetScreenToWorld2D(rl.GetMousePosition(), gameCamera)
 			reticleDelta := reticlePos.Subtract(start)
@@ -635,7 +635,14 @@ func updateGame(dt float64) {
 	Each(func(ent Entity, player *Player) {
 		if rl.IsMouseButtonPressed(rl.MOUSE_BUTTON_RIGHT) {
 			player.BuildUIEnabled = !player.BuildUIEnabled
-			player.BuildUIPos = rl.GetScreenToWorld2D(rl.GetMousePosition(), gameCamera)
+			if player.BuildUIEnabled {
+				player.BuildUIPos = rl.GetScreenToWorld2D(rl.GetMousePosition(), gameCamera)
+			} else {
+				player.BuildUIMouseOver = false
+			}
+		}
+		if rl.IsMouseButtonReleased(rl.MOUSE_BUTTON_LEFT) {
+			player.BuildUIMouseOver = false
 		}
 	})
 
@@ -943,20 +950,20 @@ func drawGame() {
 
 			iconSize := float64(elementTypes[0].iconTexture.Width)
 			iconScreenMargin := 0.5 * iconSize
-			iconPosition := Vec2{iconScreenMargin, iconScreenMargin}
+			iconPos := Vec2{iconScreenMargin, iconScreenMargin}
 			for typeId, amount := range player.ElementAmounts {
 				elementType := &elementTypes[typeId]
 				tex := elementType.iconTexture
 
-				rl.DrawTextureEx(tex, iconPosition, 0, 1, rl.White)
-				rl.DrawTextureEx(elementFrameTexture, iconPosition.SubtractValue(1), 0, 1, rl.White)
+				rl.DrawTextureEx(tex, iconPos, 0, 1, rl.White)
+				rl.DrawTextureEx(elementFrameTexture, iconPos.SubtractValue(1), 0, 1, rl.White)
 
-				textPosition := iconPosition.Add(Vec2{0, 1.25 * iconSize})
+				textPos := iconPos.Add(Vec2{0, 1.25 * iconSize})
 				fontSize := 0.4 * iconSize
 				rl.DrawTextPro(
 					rl.GetFontDefault(),
 					rl.TextFormat("%d", amount),
-					textPosition,
+					textPos,
 					Vec2{0, 0},
 					0,
 					fontSize,
@@ -964,7 +971,7 @@ func drawGame() {
 					rl.Color{0x81, 0x97, 0x96, 0xff},
 				)
 
-				iconPosition.X += 1.375 * iconSize
+				iconPos.X += 1.375 * iconSize
 			}
 
 			rl.PopMatrix()
@@ -975,14 +982,35 @@ func drawGame() {
 			rl.PushMatrix()
 			rl.Translatef(player.BuildUIPos.X, player.BuildUIPos.Y, 0)
 			rl.Rotatef(-gameCamera.Rotation, 0, 0, 1)
-			rl.Scalef(2*gameCameraZoom*spriteScale, 2*gameCameraZoom*spriteScale, 1)
+			scale := 2 * gameCameraZoom * spriteScale
+			rl.Scalef(scale, scale, 1)
 
 			frameWidth := float64(buildUIFrameTexture.Width)
 			frameHeight := float64(buildUIFrameTexture.Height)
-			rl.Translatef(-0.5*frameWidth, -frameHeight, 0)
-			rl.DrawRectangle(0, 0, int(frameWidth), int(frameHeight), rl.White)
+			frameOffset := Vec2{0.5 * frameWidth, 1.1 * frameHeight}
+			rl.Translatef(-frameOffset.X, -frameOffset.Y, 0)
 			rl.DrawTextureEx(buildUIFrameTexture, Vec2{0, 0}, 0, 1, rl.White)
-			rl.DrawCircleV(Vec2{0, 0}, 10, rl.Red)
+
+			mouseWorldPos := rl.GetScreenToWorld2D(rl.GetMousePosition(), gameCamera)
+			mouseFramePos := mouseWorldPos.
+				Subtract(player.BuildUIPos).
+				Rotate(gameCamera.Rotation * Pi / 180).
+				Scale(1 / scale).
+				Add(frameOffset)
+			rl.DrawCircleV(mouseFramePos, 1, rl.Red)
+			player.BuildUIMouseOver = mouseFramePos.X >= 0 && mouseFramePos.Y >= 0 &&
+				mouseFramePos.X <= frameWidth && mouseFramePos.Y <= (frameHeight-8)
+
+			if rl.IsMouseButtonPressed(rl.MOUSE_BUTTON_LEFT) && !player.BuildUIMouseOver {
+				player.BuildUIEnabled = false
+				player.BuildUIMouseOver = false
+			}
+
+			iconFrameMargin := 3.0
+			iconPos := Vec2{iconFrameMargin, iconFrameMargin}
+			tex := elementTypes[1].iconTexture
+			rl.DrawTextureEx(tex, iconPos, 0, 1, rl.White)
+			str.Display("%f %f", iconPos.X, iconPos.Y)
 
 			rl.PopMatrix()
 		}

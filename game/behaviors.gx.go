@@ -86,8 +86,9 @@ type Player struct {
 
 	ElementAmounts [NumElementTypes]int
 
-	BuildUIEnabled bool
-	BuildUIPos     Vec2
+	BuildUIEnabled   bool
+	BuildUIPos       Vec2
+	BuildUIMouseOver bool
 }
 
 //
