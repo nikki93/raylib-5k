@@ -288,7 +288,7 @@ func initGame() {
 	}
 
 	// Play music
-	//rl.PlayMusicStream(music)
+	rl.PlayMusicStream(music)
 }
 
 //
@@ -584,11 +584,11 @@ func updateGame(dt float64) {
 
 						// Play damage sound
 						if unitRandom() < 0.7 {
-							rl.SetSoundVolume(hitSound1, 0.9)
+							rl.SetSoundVolume(hitSound1, 0.9*1.8)
 							rl.SetSoundPitch(hitSound1, 0.60+0.24*unitRandom())
 							rl.PlaySound(hitSound1)
 						} else {
-							rl.SetSoundVolume(hitSound2, 0.6)
+							rl.SetSoundVolume(hitSound2, 0.6*1.8)
 							rl.SetSoundPitch(hitSound2, 0.60+0.28*unitRandom())
 							rl.PlaySound(hitSound2)
 						}
@@ -605,7 +605,7 @@ func updateGame(dt float64) {
 
 			// Play sound
 			if !rl.IsMusicStreamPlaying(laserSound) {
-				rl.SetMusicVolume(laserSound, 0.4)
+				rl.SetMusicVolume(laserSound, 0.9)
 				rl.PlayMusicStream(laserSound)
 			}
 		} else {
@@ -689,6 +689,7 @@ func updateGame(dt float64) {
 	})
 
 	// Update musics
+	rl.SetMusicVolume(music, 0.6)
 	rl.UpdateMusicStream(music)
 	rl.UpdateMusicStream(laserSound)
 }
