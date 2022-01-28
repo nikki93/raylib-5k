@@ -129,7 +129,7 @@ var elementTypes = func() [NumElementTypes]ElementType {
 	}
 	result[FuelElement] = ElementType{
 		Name:          "fuel",
-		IconImageName: "icon_element_silicon.png",
+		IconImageName: "icon_element_fuel.png",
 	}
 	return result
 }()
