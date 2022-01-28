@@ -433,7 +433,7 @@ func updateGame(dt float64) {
 						up.GroundNormals = append(up.GroundNormals, in.Normal)
 						up.lastGroundTime = gameTime
 						if player := GetComponent[Player](ent); player != nil && player.JumpsRemaining <= 0 {
-							player.JumpsRemaining = 1
+							player.JumpsRemaining = 2
 						}
 					}
 				}
