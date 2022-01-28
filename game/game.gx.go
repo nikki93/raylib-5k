@@ -242,7 +242,7 @@ func initGame() {
 				},
 			},
 			Player{
-				ElementAmounts: [NumElementTypes]int{100, 200},
+				//ElementAmounts: [NumElementTypes]int{100, 200},
 			},
 		)
 		edit.Camera().Target = playerPos
