@@ -105,10 +105,11 @@ type Player struct {
 type ElementTypeId int
 
 const (
-	CarbonElement   ElementTypeId = 0
-	SiliconElement  ElementTypeId = 1
-	FuelElement     ElementTypeId = 2
-	NumElementTypes               = 3
+	CarbonElement     ElementTypeId = 0
+	SiliconElement    ElementTypeId = 1
+	FuelElement       ElementTypeId = 2
+	AntimatterElement ElementTypeId = 3
+	NumElementTypes                 = 4
 )
 
 type ElementType struct {
@@ -130,6 +131,10 @@ var elementTypes = func() [NumElementTypes]ElementType {
 	result[FuelElement] = ElementType{
 		Name:          "fuel",
 		IconImageName: "icon_element_fuel.png",
+	}
+	result[AntimatterElement] = ElementType{
+		Name:          "antimatter",
+		IconImageName: "icon_element_antimatter.png",
 	}
 	return result
 }()
