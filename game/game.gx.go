@@ -50,7 +50,8 @@ var music = rl.LoadMusicStream(getAssetPath("music_1.ogg"))
 
 var laserSound = rl.LoadMusicStream(getAssetPath("sfx_laser_on.ogg")) // Music so it loops
 
-var hitSound = rl.LoadSound(getAssetPath("sfx_hit_1.wav"))
+var hitSound1 = rl.LoadSound(getAssetPath("sfx_hit_1.wav"))
+var hitSound2 = rl.LoadSound(getAssetPath("sfx_hit_2.wav"))
 
 //
 // Init
@@ -582,8 +583,15 @@ func updateGame(dt float64) {
 						}
 
 						// Play damage sound
-						rl.SetSoundVolume(hitSound, 0.9)
-						rl.PlaySound(hitSound)
+						if unitRandom() < 0.7 {
+							rl.SetSoundVolume(hitSound1, 0.9)
+							rl.SetSoundPitch(hitSound1, 0.60+0.24*unitRandom())
+							rl.PlaySound(hitSound1)
+						} else {
+							rl.SetSoundVolume(hitSound2, 0.6)
+							rl.SetSoundPitch(hitSound2, 0.60+0.28*unitRandom())
+							rl.PlaySound(hitSound2)
+						}
 					}
 				}
 				// TODO: Consume energy?
