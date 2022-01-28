@@ -55,7 +55,8 @@ type Up struct {
 
 	Up            Vec2
 	GroundNormals []Vec2
-	Smooth        Vec2
+
+	AutoUprightDir Vec2
 
 	lastGroundTime float64
 }
@@ -97,7 +98,8 @@ type Player struct {
 	BuildUIMouseOver      bool
 	BuildUISelectedTypeId ResourceTypeId `default:"-1"`
 
-	Flying bool
+	Flying      bool
+	FlyingAccel float64
 }
 
 //

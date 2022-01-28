@@ -32,6 +32,8 @@ var playerJumpStrength = 14.0
 var playerHorizontalControlsAccel = 17.0
 var playerMinimumHorizontalSpeedForFriction = 12.0
 var playerJumpCooldown = 0.1
+var playerLiftoffAccelAccel = 12.0
+var playerMaxFlyingAccel = 32.0
 
 var planetGravRadiusMultiplier = 1.38
 var planetSegmentThickness = 0.4
@@ -335,7 +337,7 @@ func updateGame(dt float64) {
 	}
 
 	// Update up direction and clear ground normals
-	Each(func(ent Entity, grav *Gravity, lay *Layout) {
+	Each(func(ent Entity, up *Up, lay *Layout) {
 		minSqDist := -1.0
 		minDelta := Vec2{0, 0}
 		Each(func(ent Entity, planet *Planet, planetLay *Layout) {
@@ -351,18 +353,18 @@ func updateGame(dt float64) {
 		})
 		if minSqDist > 0 {
 			dir := minDelta.Scale(1 / Sqrt(minSqDist))
-			up := AddComponent(ent, Up{})
 			up.Up = dir.Negate().Normalize()
 			up.GroundNormals = []Vec2{}
-		} else {
-			RemoveComponent[Up](ent)
 		}
 	})
 
-	// Horizontal controls
+	// Regular controls
 	Each(func(ent Entity, player *Player, up *Up, vel *Velocity) {
-		// TODO: Flying
+		if player.Flying {
+			return
+		}
 
+		// Horizontal
 		appliedControls := false
 		if rl.IsKeyDown(rl.KEY_A) || rl.IsKeyDown(rl.KEY_LEFT) {
 			dir := Vec2{up.Up.Y, -up.Up.X}
@@ -383,12 +385,8 @@ func updateGame(dt float64) {
 				AddComponent(ent, DisableFriction{})
 			}
 		}
-	})
 
-	// Jump controls
-	Each(func(ent Entity, player *Player, up *Up, vel *Velocity) {
-		// TODO: Flying
-
+		// Jump
 		if rl.IsKeyPressed(rl.KEY_W) || rl.IsKeyPressed(rl.KEY_UP) {
 			if player.JumpsRemaining > 0 && gameTime-player.lastJumpTime > playerJumpCooldown {
 				tangentVel := vel.Vel.Subtract(up.Up.Scale(vel.Vel.DotProduct(up.Up)))
@@ -396,6 +394,31 @@ func updateGame(dt float64) {
 				player.lastJumpTime = gameTime
 				player.JumpsRemaining--
 			}
+		}
+	})
+
+	// Flying controls
+	Each(func(ent Entity, player *Player, vel *Velocity, lay *Layout) {
+		if !player.Flying {
+			return
+		}
+
+		// Acceleration / slowdown
+		forwardDir := Vec2{0, -1}.Rotate(lay.Rot)
+		if rl.IsKeyDown(rl.KEY_W) || rl.IsKeyDown(rl.KEY_UP) {
+			player.FlyingAccel += playerLiftoffAccelAccel * deltaTime
+			vel.Vel = vel.Vel.Add(forwardDir.Scale(player.FlyingAccel * deltaTime))
+		}
+		if rl.IsKeyDown(rl.KEY_S) || rl.IsKeyDown(rl.KEY_DOWN) {
+			vel.Vel = vel.Vel.Add(forwardDir.Scale(-player.FlyingAccel * deltaTime))
+		}
+
+		// Turning
+		if rl.IsKeyDown(rl.KEY_A) || rl.IsKeyDown(rl.KEY_LEFT) {
+
+		}
+		if rl.IsKeyDown(rl.KEY_D) || rl.IsKeyDown(rl.KEY_RIGHT) {
+
 		}
 	})
 
@@ -467,7 +490,7 @@ func updateGame(dt float64) {
 		}
 	})
 
-	// Update smooth up direction
+	// Update auto-upright
 	Each(func(ent Entity, up *Up, lay *Layout) {
 		target := Vec2{0, 0}
 		rate := 28.0
@@ -483,8 +506,8 @@ func updateGame(dt float64) {
 			target = target.Scale(1 / float64(len(up.GroundNormals)))
 		}
 		smoothing := 1 - Pow(2, -rate*deltaTime)
-		up.Smooth = up.Smooth.Add(target.Subtract(up.Smooth).Scale(smoothing)).Normalize()
-		lay.Rot = Atan2(up.Smooth.X, -up.Smooth.Y)
+		up.AutoUprightDir = up.AutoUprightDir.Add(target.Subtract(up.AutoUprightDir).Scale(smoothing)).Normalize()
+		lay.Rot = Atan2(up.AutoUprightDir.X, -up.AutoUprightDir.Y)
 	})
 
 	// Apply friction
@@ -700,6 +723,7 @@ func updateGame(dt float64) {
 						Health: resourceType.Health,
 					},
 					Velocity{},
+					Up{},
 					Gravity{},
 				)
 				if len(resourceType.CollisionShapeVerts) > 0 {
@@ -798,7 +822,9 @@ func updateGame(dt float64) {
 						hint.Message = "launch"
 
 						if rl.IsKeyPressed(rl.KEY_E) {
+							RemoveComponent[Up](playerEnt)
 							player.Flying = true
+							player.FlyingAccel = 0
 						}
 					}
 				} else {
@@ -814,36 +840,38 @@ func updateGame(dt float64) {
 
 	// Update camera
 	Each(func(ent Entity, player *Player, lay *Layout, vel *Velocity) {
-		{
-			// Smoothed velocity
+		upOffset := Vec2{0, 0}
+		velOffset := Vec2{0, 0}
+		if !player.Flying {
+			// Offset look-at by smoothed velocity and up direction when not flying
 			rate := 160.0
 			smoothing := 1 - Pow(2, -rate*deltaTime)
 			player.SmoothedVel = player.SmoothedVel.Lerp(vel.Vel, smoothing)
+			velOffset = player.SmoothedVel.Scale(0.4 * gameCameraZoom)
+			if up := GetComponent[Up](ent); up != nil {
+				upOffset = up.Up.Scale(0.7)
+				upVelOffset := up.Up.Scale(velOffset.DotProduct(up.Up))
+				velOffset = velOffset.Subtract(upVelOffset).Add(upVelOffset.Scale(0.1))
+			}
 		}
-		upOffset := Vec2{0, 0}
-		velOffset := player.SmoothedVel.Scale(0.4 * gameCameraZoom)
-		if up := GetComponent[Up](ent); up != nil {
-			upOffset = up.Up.Scale(0.7)
-			upVelOffset := up.Up.Scale(velOffset.DotProduct(up.Up))
-			velOffset = velOffset.Subtract(upVelOffset).Add(upVelOffset.Scale(0.1))
-		}
-		lookAt := lay.Pos.Add(upOffset).Add(velOffset)
+		targetPos := lay.Pos.Add(upOffset).Add(velOffset)
 
 		if !player.CameraInitialized {
-			player.CameraPos = lookAt
+			// Immediate snap on initialization
+			player.CameraPos = targetPos
 			player.CameraRot = lay.Rot
 			player.CameraInitialized = true
 		} else {
-			// Position
+			// Smooth to position
 			{
 				zoomDelta := 1 - gameCameraZoom
 				rateFactor := zoomDelta * zoomDelta * zoomDelta
 				rate := 14.0 / (1 - rateFactor)
 				smoothing := 1 - Pow(2, -rate*deltaTime)
-				player.CameraPos = player.CameraPos.Lerp(lookAt, smoothing)
+				player.CameraPos = player.CameraPos.Lerp(targetPos, smoothing)
 			}
 
-			// Rotation
+			// Smooth to rotation
 			{
 				targetRot := lay.Rot
 				if up := GetComponent[Up](ent); up != nil {
@@ -862,6 +890,8 @@ func updateGame(dt float64) {
 			}
 			player.CameraInitialized = true
 		}
+
+		// Apply to camera, fix angle
 		gameCamera.Target = player.CameraPos
 		if player.CameraRot > 2*Pi {
 			player.CameraRot -= 2 * Pi
