@@ -245,3 +245,20 @@ type ResourceDamaged struct {
 	time           float64
 	lastDamageTime float64
 }
+
+//
+// Interactables
+//
+
+type InteractionHint struct {
+	Interactable   bool
+	Hint           string
+	VerticalOffset float64 `default:"-4"`
+}
+
+type Refiner struct {
+	Behavior
+
+	CarbonAmount int
+	FuelAmount   int
+}

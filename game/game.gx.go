@@ -692,6 +692,13 @@ func updateGame(dt float64) {
 						Verts: resourceType.CollisionShapeVerts,
 					})
 				}
+				if resourceType.Name == "building_refiner" {
+					AddComponent(buildingEnt, Refiner{})
+					AddComponent(buildingEnt, InteractionHint{
+						Interactable: true,
+						Hint:         "requires carbon",
+					})
+				}
 			}
 		}
 	})
@@ -706,7 +713,14 @@ func updateGame(dt float64) {
 		}
 	})
 
-	// NOTE: Adding building logic here
+	// Update refiners
+	Each(func(ent Entity, refiner *Refiner, resource *Resource) {
+		if refiner.CarbonAmount > 0 {
+			resource.Frame = 0
+		} else {
+			resource.Frame = 1
+		}
+	})
 
 	// Update camera
 	Each(func(ent Entity, player *Player, lay *Layout, vel *Velocity) {
@@ -803,6 +817,8 @@ var reticleTexture = rl.LoadTexture(getAssetPath("cursor.png"))
 var elementFrameTexture = rl.LoadTexture(getAssetPath("element_frame.png"))
 
 var buildUIFrameTexture = rl.LoadTexture(getAssetPath("build_interface.png"))
+
+var interactionHintTexture = rl.LoadTexture(getAssetPath("interaction_hint.png"))
 
 func drawGame() {
 	rl.ClearBackground(rl.Color{0x10, 0x14, 0x1f, 0xff})
@@ -1091,6 +1107,41 @@ func drawGame() {
 
 			rl.PopMatrix()
 		}
+	})
+
+	Each(func(ent Entity, interactionHint *InteractionHint, lay *Layout) {
+		rl.PushMatrix()
+		hintPos := lay.Pos.Add(Vec2{0, interactionHint.VerticalOffset}.Rotate(lay.Rot))
+		rl.Translatef(hintPos.X, hintPos.Y, 0)
+		rl.Rotatef(-gameCamera.Rotation, 0, 0, 1)
+		scale := 2 * gameCameraZoom * spriteScale
+		rl.Scalef(scale, scale, 1)
+
+		texHeight := float64(interactionHintTexture.Height)
+
+		textHeight := int(0.8 * texHeight)
+		frameWidth := float64(rl.MeasureTextEx(rl.GetFontDefault(), interactionHint.Hint, float64(textHeight), 1.0).X)
+		if interactionHint.Interactable {
+			frameWidth += 1.4 * texHeight
+		}
+		rl.Translatef(-0.5*frameWidth, 0, 0)
+
+		if interactionHint.Interactable {
+			rl.DrawTextureEx(interactionHintTexture, Vec2{0, -0.5 * texHeight}, 0, 1, rl.White)
+			rl.Translatef(1.4*texHeight, 0, 0)
+		}
+		rl.DrawTextPro(
+			rl.GetFontDefault(),
+			interactionHint.Hint,
+			Vec2{0, -0.5 * float64(textHeight)},
+			Vec2{0, 0},
+			0,
+			float64(textHeight),
+			1.0,
+			rl.Color{0x81, 0x97, 0x96, 0xff},
+		)
+
+		rl.PopMatrix()
 	})
 
 	// Reticle
