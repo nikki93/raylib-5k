@@ -733,6 +733,8 @@ var reticleTexture = rl.LoadTexture(getAssetPath("cursor.png"))
 
 var elementFrameTexture = rl.LoadTexture(getAssetPath("element_frame.png"))
 
+var buildUIFrameTexture = rl.LoadTexture(getAssetPath("build_interface.png"))
+
 func drawGame() {
 	rl.ClearBackground(rl.Color{0x10, 0x14, 0x1f, 0xff})
 
@@ -929,16 +931,6 @@ func drawGame() {
 		rl.PopMatrix()
 	})
 
-	// Reticle
-	{
-		reticleScale := gameCameraZoom * spriteScale
-		reticlePos := rl.GetScreenToWorld2D(rl.GetMousePosition(), gameCamera)
-		reticleWidth := float64(reticleTexture.Width) * reticleScale
-		reticleHeight := float64(reticleTexture.Height) * reticleScale
-		reticleTopLeft := reticlePos.Subtract(Vec2{reticleWidth, reticleHeight}.Scale(0.5))
-		rl.DrawTextureEx(reticleTexture, reticleTopLeft, 0, reticleScale, rl.Color{0x81, 0x97, 0x96, 0xff})
-	}
-
 	// HUD
 	Each(func(ent Entity, player *Player) {
 		// Inventory icons
@@ -949,19 +941,18 @@ func drawGame() {
 			rl.Rotatef(-gameCamera.Rotation, 0, 0, 1)
 			rl.Scalef(2*gameCameraZoom*spriteScale, 2*gameCameraZoom*spriteScale, 1)
 
-			iconScreenMargin := 0.5 * float64(elementTypes[0].iconTexture.Width)
+			iconSize := float64(elementTypes[0].iconTexture.Width)
+			iconScreenMargin := 0.5 * iconSize
 			iconPosition := Vec2{iconScreenMargin, iconScreenMargin}
 			for typeId, amount := range player.ElementAmounts {
 				elementType := &elementTypes[typeId]
 				tex := elementType.iconTexture
-				iconWidth := float64(tex.Width)
-				iconHeight := float64(tex.Height)
 
 				rl.DrawTextureEx(tex, iconPosition, 0, 1, rl.White)
 				rl.DrawTextureEx(elementFrameTexture, iconPosition.SubtractValue(1), 0, 1, rl.White)
 
-				textPosition := iconPosition.Add(Vec2{0, 1.25 * iconHeight})
-				fontSize := 0.4 * iconHeight
+				textPosition := iconPosition.Add(Vec2{0, 1.25 * iconSize})
+				fontSize := 0.4 * iconSize
 				rl.DrawTextPro(
 					rl.GetFontDefault(),
 					rl.TextFormat("%d", amount),
@@ -973,7 +964,7 @@ func drawGame() {
 					rl.Color{0x81, 0x97, 0x96, 0xff},
 				)
 
-				iconPosition.X += 1.375 * iconWidth
+				iconPosition.X += 1.375 * iconSize
 			}
 
 			rl.PopMatrix()
@@ -986,9 +977,24 @@ func drawGame() {
 			rl.Rotatef(-gameCamera.Rotation, 0, 0, 1)
 			rl.Scalef(2*gameCameraZoom*spriteScale, 2*gameCameraZoom*spriteScale, 1)
 
-			rl.DrawRectangle(0, 0, 16, 16, rl.Red)
+			frameWidth := float64(buildUIFrameTexture.Width)
+			frameHeight := float64(buildUIFrameTexture.Height)
+			rl.Translatef(-0.5*frameWidth, -frameHeight, 0)
+			rl.DrawRectangle(0, 0, int(frameWidth), int(frameHeight), rl.White)
+			rl.DrawTextureEx(buildUIFrameTexture, Vec2{0, 0}, 0, 1, rl.White)
+			rl.DrawCircleV(Vec2{0, 0}, 10, rl.Red)
 
 			rl.PopMatrix()
 		}
 	})
+
+	// Reticle
+	{
+		reticleScale := gameCameraZoom * spriteScale
+		reticlePos := rl.GetScreenToWorld2D(rl.GetMousePosition(), gameCamera)
+		reticleWidth := float64(reticleTexture.Width) * reticleScale
+		reticleHeight := float64(reticleTexture.Height) * reticleScale
+		reticleTopLeft := reticlePos.Subtract(Vec2{reticleWidth, reticleHeight}.Scale(0.5))
+		rl.DrawTextureEx(reticleTexture, reticleTopLeft, 0, reticleScale, rl.Color{0x81, 0x97, 0x96, 0xff})
+	}
 }
