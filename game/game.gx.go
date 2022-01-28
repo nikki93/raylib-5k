@@ -875,18 +875,14 @@ func drawGame() {
 		rl.SetTexture(whiteTexture.Id)
 		rl.Begin(rl.Quads)
 		for vertIndex, vertPos := range planet.Verts {
-			drawLine := func(a, b Vec2) {
+			drawTriangleToSegment := func(a, b Vec2) {
 				rl.Color4ub(0x15, 0x1d, 0x28, 0xff)
-				rl.TexCoord2f(0, 0)
 				rl.Vertex2f(0, 0)
-				rl.TexCoord2f(1, 0)
 				rl.Vertex2f(0, 0)
-				rl.TexCoord2f(1, 1)
 				rl.Vertex2f(b.X, b.Y)
-				rl.TexCoord2f(0, 1)
 				rl.Vertex2f(a.X, a.Y)
 			}
-			drawLine(vertPos, planet.Verts[(vertIndex+1)%nVerts])
+			drawTriangleToSegment(vertPos, planet.Verts[(vertIndex+1)%nVerts])
 		}
 		rl.End()
 
