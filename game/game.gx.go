@@ -42,6 +42,9 @@ var beamZapTime = 0.06
 var beamDamagePeriod = 0.2
 var beamDamage = 1
 
+var refinerCarbonPerFuel = 5
+var refinerRefinmentPeriod = 5.0
+
 //
 // Sounds
 //
@@ -239,7 +242,7 @@ func initGame() {
 				},
 			},
 			Player{
-				ElementAmounts: [NumElementTypes]int{200, 200},
+				ElementAmounts: [NumElementTypes]int{100, 200},
 			},
 		)
 		edit.Camera().Target = playerPos
@@ -610,7 +613,6 @@ func updateGame(dt float64) {
 						}
 					}
 				}
-				// TODO: Consume energy?
 				player.BeamTimeTillDamage += beamDamagePeriod
 			}
 
@@ -694,11 +696,9 @@ func updateGame(dt float64) {
 				}
 				if resourceType.Name == "building_refiner" {
 					AddComponent(buildingEnt, Refiner{})
-					AddComponent(buildingEnt, InteractionHint{
-						Interactable: true,
-						Hint:         "requires carbon",
-					})
 				}
+			} else {
+				// TODO: Play "can't build" sound
 			}
 		}
 	})
@@ -714,12 +714,60 @@ func updateGame(dt float64) {
 	})
 
 	// Update refiners
-	Each(func(ent Entity, refiner *Refiner, resource *Resource) {
-		if refiner.CarbonAmount > 0 {
+	Each(func(refinerEnt Entity, refiner *Refiner, resource *Resource, refinerLay *Layout) {
+		if refiner.CarbonAmount >= refinerCarbonPerFuel {
+			// On
 			resource.Frame = 0
+			refiner.TimeTillNextRefinement -= dt
+			if refiner.TimeTillNextRefinement <= 0 {
+				refiner.TimeTillNextRefinement += refinerRefinmentPeriod
+				refiner.CarbonAmount -= refinerCarbonPerFuel
+				refiner.FuelAmount += 1
+			}
 		} else {
+			// Off
 			resource.Frame = 1
+			refiner.TimeTillNextRefinement = refinerRefinmentPeriod
 		}
+
+		// Interaction
+		Each(func(playerEnt Entity, player *Player, playerLay *Layout) {
+			minDist := 2.0
+			if playerLay.Pos.Subtract(refinerLay.Pos).LengthSqr() < minDist*minDist {
+				if refiner.FuelAmount > 0 {
+					hint := AddComponent(refinerEnt, InteractionHint{})
+					hint.Interactable = true
+					hint.Message = rl.TextFormat("take %d fuel", refiner.FuelAmount)
+
+					if rl.IsKeyPressed(rl.KEY_E) { // Take all fuel
+						player.ElementAmounts[FuelElement] += refiner.FuelAmount
+						refiner.FuelAmount = 0
+					}
+				} else if refiner.CarbonAmount < 100 {
+					if player.ElementAmounts[CarbonElement] > 0 {
+						hint := AddComponent(refinerEnt, InteractionHint{})
+						hint.Interactable = true
+						amountAddable := Min(player.ElementAmounts[CarbonElement], 100-refiner.CarbonAmount)
+						hint.Message = rl.TextFormat("add %d/100 carbon", amountAddable)
+
+						if rl.IsKeyPressed(rl.KEY_E) {
+							refiner.CarbonAmount += amountAddable
+							player.ElementAmounts[CarbonElement] -= amountAddable
+						}
+					} else {
+						hint := AddComponent(refinerEnt, InteractionHint{})
+						hint.Interactable = false
+						hint.Message = "needs carbon"
+					}
+				} else {
+					hint := AddComponent(refinerEnt, InteractionHint{})
+					hint.Interactable = false
+					hint.Message = "carbon 100/100 full"
+				}
+			} else {
+				RemoveComponent[InteractionHint](refinerEnt)
+			}
+		})
 	})
 
 	// Update camera
@@ -1120,7 +1168,7 @@ func drawGame() {
 		texHeight := float64(interactionHintTexture.Height)
 
 		textHeight := int(0.8 * texHeight)
-		frameWidth := float64(rl.MeasureTextEx(rl.GetFontDefault(), interactionHint.Hint, float64(textHeight), 1.0).X)
+		frameWidth := float64(rl.MeasureTextEx(rl.GetFontDefault(), interactionHint.Message, float64(textHeight), 1.0).X)
 		if interactionHint.Interactable {
 			frameWidth += 1.4 * texHeight
 		}
@@ -1132,7 +1180,7 @@ func drawGame() {
 		}
 		rl.DrawTextPro(
 			rl.GetFontDefault(),
-			interactionHint.Hint,
+			interactionHint.Message,
 			Vec2{0, -0.5 * float64(textHeight)},
 			Vec2{0, 0},
 			0,

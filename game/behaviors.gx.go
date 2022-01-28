@@ -107,15 +107,14 @@ type ElementTypeId int
 const (
 	CarbonElement   ElementTypeId = 0
 	SiliconElement  ElementTypeId = 1
-	NumElementTypes               = 2
+	FuelElement     ElementTypeId = 2
+	NumElementTypes               = 3
 )
 
 type ElementType struct {
-	Name string
-
+	Name          string
 	IconImageName string
-
-	iconTexture rl.Texture
+	iconTexture   rl.Texture
 }
 
 var elementTypes = func() [NumElementTypes]ElementType {
@@ -126,6 +125,10 @@ var elementTypes = func() [NumElementTypes]ElementType {
 	}
 	result[SiliconElement] = ElementType{
 		Name:          "silicon",
+		IconImageName: "icon_element_silicon.png",
+	}
+	result[FuelElement] = ElementType{
+		Name:          "fuel",
 		IconImageName: "icon_element_silicon.png",
 	}
 	return result
@@ -252,13 +255,14 @@ type ResourceDamaged struct {
 
 type InteractionHint struct {
 	Interactable   bool
-	Hint           string
+	Message        string
 	VerticalOffset float64 `default:"-4"`
 }
 
 type Refiner struct {
 	Behavior
 
-	CarbonAmount int
-	FuelAmount   int
+	CarbonAmount           int
+	FuelAmount             int
+	TimeTillNextRefinement float64
 }
