@@ -290,3 +290,7 @@ type Refiner struct {
 	FuelAmount             int
 	TimeTillNextRefinement float64
 }
+
+type Launchpad struct {
+	Behavior
+}

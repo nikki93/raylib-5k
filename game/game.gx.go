@@ -242,7 +242,7 @@ func initGame() {
 				},
 			},
 			Player{
-				//ElementAmounts: [NumElementTypes]int{100, 200},
+				ElementAmounts: [NumElementTypes]int{3000, 3000, 3000, 3000},
 			},
 		)
 		edit.Camera().Target = playerPos
@@ -696,6 +696,8 @@ func updateGame(dt float64) {
 				}
 				if resourceType.Name == "building_refiner" {
 					AddComponent(buildingEnt, Refiner{})
+				} else if resourceType.Name == "building_launchpad" {
+					AddComponent(buildingEnt, Launchpad{})
 				}
 			} else {
 				// TODO: Play "can't build" sound
@@ -766,6 +768,31 @@ func updateGame(dt float64) {
 				}
 			} else {
 				RemoveComponent[InteractionHint](refinerEnt)
+			}
+		})
+	})
+
+	// Update launchpads
+	Each(func(launchpadEnt Entity, launchpad *Launchpad, resource *Resource, launchpadLay *Layout) {
+		// Interaction
+		Each(func(playerEnt Entity, player *Player, playerLay *Layout) {
+			minDist := 2.0
+			if playerLay.Pos.Subtract(launchpadLay.Pos).LengthSqr() < minDist*minDist {
+				if player.ElementAmounts[FuelElement] > 0 {
+					hint := AddComponent(launchpadEnt, InteractionHint{})
+					hint.Interactable = true
+					hint.Message = "launch"
+
+					if rl.IsKeyPressed(rl.KEY_E) {
+						// TODO: Launch!
+					}
+				} else {
+					hint := AddComponent(launchpadEnt, InteractionHint{})
+					hint.Interactable = false
+					hint.Message = "need fuel to launch"
+				}
+			} else {
+				RemoveComponent[InteractionHint](launchpadEnt)
 			}
 		})
 	})
