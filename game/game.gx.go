@@ -361,6 +361,8 @@ func updateGame(dt float64) {
 
 	// Horizontal controls
 	Each(func(ent Entity, player *Player, up *Up, vel *Velocity) {
+		// TODO: Flying
+
 		appliedControls := false
 		if rl.IsKeyDown(rl.KEY_A) || rl.IsKeyDown(rl.KEY_LEFT) {
 			dir := Vec2{up.Up.Y, -up.Up.X}
@@ -385,6 +387,8 @@ func updateGame(dt float64) {
 
 	// Jump controls
 	Each(func(ent Entity, player *Player, up *Up, vel *Velocity) {
+		// TODO: Flying
+
 		if rl.IsKeyPressed(rl.KEY_W) || rl.IsKeyPressed(rl.KEY_UP) {
 			if player.JumpsRemaining > 0 && gameTime-player.lastJumpTime > playerJumpCooldown {
 				tangentVel := vel.Vel.Subtract(up.Up.Scale(vel.Vel.DotProduct(up.Up)))
@@ -418,6 +422,7 @@ func updateGame(dt float64) {
 		lay.Pos = lay.Pos.Add(vel.Vel.Scale(deltaTime))
 
 		// Handle collisons
+		// TODO: Flying -- shape?
 		if collisionShape := GetComponent[CollisionShape](ent); collisionShape != nil {
 			Each(func(planetEnt Entity, planet *Planet, planetLay *Layout) {
 				nVerts := len(planet.Verts)
@@ -454,6 +459,8 @@ func updateGame(dt float64) {
 								player.JumpsRemaining = 2
 							}
 						}
+
+						// TODO: Flying -- stop flying?
 					}
 				}
 			})
@@ -503,7 +510,7 @@ func updateGame(dt float64) {
 
 	// Update beam
 	Each(func(playerEnt Entity, player *Player, lay *Layout) {
-		if rl.IsMouseButtonDown(rl.MOUSE_BUTTON_LEFT) && !player.BuildUIMouseOver {
+		if !player.Flying && rl.IsMouseButtonDown(rl.MOUSE_BUTTON_LEFT) && !player.BuildUIMouseOver {
 			start := lay.Pos
 			reticlePos := rl.GetScreenToWorld2D(rl.GetMousePosition(), gameCamera)
 			reticleDelta := reticlePos.Subtract(start)
@@ -648,6 +655,12 @@ func updateGame(dt float64) {
 
 	// Update build UI
 	Each(func(ent Entity, player *Player) {
+		// Can't build when flying
+		if player.Flying {
+			player.BuildUIEnabled = false
+			return
+		}
+
 		// Toggle with right click
 		if rl.IsMouseButtonPressed(rl.MOUSE_BUTTON_RIGHT) {
 			player.BuildUIEnabled = !player.BuildUIEnabled
@@ -735,7 +748,7 @@ func updateGame(dt float64) {
 		// Interaction
 		Each(func(playerEnt Entity, player *Player, playerLay *Layout) {
 			minDist := 2.0
-			if playerLay.Pos.Subtract(refinerLay.Pos).LengthSqr() < minDist*minDist {
+			if !player.Flying && playerLay.Pos.Subtract(refinerLay.Pos).LengthSqr() < minDist*minDist {
 				if refiner.FuelAmount > 0 {
 					hint := AddComponent(refinerEnt, InteractionHint{})
 					hint.Interactable = true
@@ -777,14 +790,16 @@ func updateGame(dt float64) {
 		// Interaction
 		Each(func(playerEnt Entity, player *Player, playerLay *Layout) {
 			minDist := 2.0
-			if playerLay.Pos.Subtract(launchpadLay.Pos).LengthSqr() < minDist*minDist {
+			if !player.Flying && playerLay.Pos.Subtract(launchpadLay.Pos).LengthSqr() < minDist*minDist {
 				if player.ElementAmounts[FuelElement] > 0 {
-					hint := AddComponent(launchpadEnt, InteractionHint{})
-					hint.Interactable = true
-					hint.Message = "launch"
+					if !player.Flying {
+						hint := AddComponent(launchpadEnt, InteractionHint{})
+						hint.Interactable = true
+						hint.Message = "launch"
 
-					if rl.IsKeyPressed(rl.KEY_E) {
-						// TODO: Launch!
+						if rl.IsKeyPressed(rl.KEY_E) {
+							player.Flying = true
+						}
 					}
 				} else {
 					hint := AddComponent(launchpadEnt, InteractionHint{})
@@ -875,6 +890,7 @@ var whiteTexture = rl.LoadTextureFromImage(rl.GenImageColor(1, 1, rl.Color{0xff,
 var bitsTextureBasic = rl.LoadTexture(getAssetPath("planet_surface_bits_basic.png"))
 
 var playerTexture = rl.LoadTexture(getAssetPath("player.png"))
+var playerShipTexture = rl.LoadTexture(getAssetPath("player_ship.png"))
 
 var beamSheetTexture = func() rl.Texture {
 	result := rl.LoadTexture(getAssetPath("player_beam.png"))
@@ -1012,8 +1028,12 @@ func drawGame() {
 		rl.Translatef(lay.Pos.X, lay.Pos.Y, 0)
 		rl.Rotatef(lay.Rot*180/Pi, 0, 0, 1)
 
-		texWidth := float64(playerTexture.Width)
-		texHeight := float64(playerTexture.Height)
+		tex := playerTexture
+		if player.Flying {
+			tex = playerShipTexture
+		}
+		texWidth := float64(tex.Width)
+		texHeight := float64(tex.Height)
 		texSource := rl.Rectangle{
 			X:      0,
 			Y:      0,
@@ -1027,10 +1047,10 @@ func drawGame() {
 			Width:  playerSize.X,
 			Height: destHeight,
 		}
-		if player.FlipH {
+		if !player.Flying && player.FlipH {
 			texSource.Width = -texSource.Width
 		}
-		rl.DrawTexturePro(playerTexture, texSource, texDest, Vec2{0, 0}, 0, rl.White)
+		rl.DrawTexturePro(tex, texSource, texDest, Vec2{0, 0}, 0, rl.White)
 
 		rl.PopMatrix()
 	})

@@ -96,6 +96,8 @@ type Player struct {
 	BuildUIPos            Vec2
 	BuildUIMouseOver      bool
 	BuildUISelectedTypeId ResourceTypeId `default:"-1"`
+
+	Flying bool
 }
 
 //
