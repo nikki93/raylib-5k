@@ -48,6 +48,8 @@ var beamDamage = 1
 
 var music = rl.LoadMusicStream(getAssetPath("music_1.ogg"))
 
+var laserSound = rl.LoadMusicStream(getAssetPath("sfx_laser_on.ogg")) // Music so it loops
+
 //
 // Init
 //
@@ -59,8 +61,6 @@ func unitRandom() float64 {
 type FrequencyBand struct {
 	Frequency, Amplitude float64
 }
-
-var bitsTextureBasic = rl.LoadTexture(getAssetPath("planet_surface_bits_basic.png"))
 
 func createPlanet(pos Vec2, radius float64) Entity {
 	ent := CreateEntity(
@@ -584,9 +584,15 @@ func updateGame(dt float64) {
 			delta := player.BeamEnd.Subtract(lay.Pos)
 			playerDir := Vec2{Cos(lay.Rot), Sin(lay.Rot)}
 			player.FlipH = playerDir.DotProduct(delta) < 0
+
+			// Play sound
+			if !rl.IsMusicStreamPlaying(laserSound) {
+				rl.PlayMusicStream(laserSound)
+			}
 		} else {
 			player.BeamOn = false
 			player.BeamTimeSinceStart = 0
+			rl.StopMusicStream(laserSound)
 		}
 	})
 
@@ -663,8 +669,9 @@ func updateGame(dt float64) {
 		gameCamera.Rotation = -player.CameraRot * 180 / Pi
 	})
 
-	// Update music
+	// Update musics
 	rl.UpdateMusicStream(music)
+	rl.UpdateMusicStream(laserSound)
 }
 
 //
@@ -675,6 +682,8 @@ func updateGame(dt float64) {
 func getAssetPath(assetName string) string
 
 var whiteTexture = rl.LoadTextureFromImage(rl.GenImageColor(1, 1, rl.Color{0xff, 0xff, 0xff, 0xff}))
+
+var bitsTextureBasic = rl.LoadTexture(getAssetPath("planet_surface_bits_basic.png"))
 
 var playerTexture = rl.LoadTexture(getAssetPath("player.png"))
 
