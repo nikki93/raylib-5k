@@ -86,9 +86,10 @@ type Player struct {
 
 	ElementAmounts [NumElementTypes]int
 
-	BuildUIEnabled   bool
-	BuildUIPos       Vec2
-	BuildUIMouseOver bool
+	BuildUIEnabled        bool
+	BuildUIPos            Vec2
+	BuildUIMouseOver      bool
+	BuildUISelectedTypeId ResourceTypeId
 }
 
 //
@@ -115,11 +116,11 @@ var elementTypes = func() [NumElementTypes]ElementType {
 	result := [NumElementTypes]ElementType{}
 	result[CarbonElement] = ElementType{
 		Name:          "carbon",
-		IconImageName: "element_carbon.png",
+		IconImageName: "icon_element_carbon.png",
 	}
 	result[SiliconElement] = ElementType{
 		Name:          "silicon",
-		IconImageName: "element_silicon.png",
+		IconImageName: "icon_element_silicon.png",
 	}
 	return result
 }()
@@ -134,13 +135,17 @@ type ResourceTypeId int
 type ResourceType struct {
 	Name                   string
 	ImageName              string
+	IconImageName          string
 	VerticalOffset         float64
 	VerticalOffsetVariance float64
 
 	Health         int `default:"3"`
 	ElementAmounts []ElementAmount
 
-	texture rl.Texture
+	Buildable bool
+
+	texture     rl.Texture
+	iconTexture rl.Texture
 }
 
 var resourceTypes = [...]ResourceType{
@@ -194,6 +199,17 @@ var resourceTypes = [...]ResourceType{
 		ElementAmounts: []ElementAmount{
 			{TypeId: SiliconElement, Amount: 6},
 		},
+	},
+
+	{
+		Name:          "building_refiner",
+		ImageName:     "resource_building_refiner.png",
+		IconImageName: "icon_building_refiner.png",
+		Health:        50,
+		ElementAmounts: []ElementAmount{
+			{TypeId: SiliconElement, Amount: 100},
+		},
+		Buildable: true,
 	},
 }
 

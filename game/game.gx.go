@@ -206,6 +206,9 @@ func initGame() {
 	}
 	for _, resourceType := range resourceTypes {
 		resourceType.texture = rl.LoadTexture(getAssetPath(resourceType.ImageName))
+		if resourceType.IconImageName != "" {
+			resourceType.iconTexture = rl.LoadTexture(getAssetPath(resourceType.IconImageName))
+		}
 	}
 
 	// Scene
@@ -1001,16 +1004,28 @@ func drawGame() {
 			player.BuildUIMouseOver = mouseFramePos.X >= 0 && mouseFramePos.Y >= 0 &&
 				mouseFramePos.X <= frameWidth && mouseFramePos.Y <= (frameHeight-8)
 
-			if rl.IsMouseButtonPressed(rl.MOUSE_BUTTON_LEFT) && !player.BuildUIMouseOver {
-				player.BuildUIEnabled = false
-				player.BuildUIMouseOver = false
+			iconFrameMargin := 3.0
+			iconSpacing := 3.0
+			iconPos := Vec2{iconFrameMargin, iconFrameMargin}
+			for typeId, resourceType := range resourceTypes {
+				if resourceType.Buildable {
+					tex := resourceType.iconTexture
+					iconSize := float64(tex.Width)
+					rl.DrawTextureEx(tex, iconPos, 0, 1, rl.White)
+
+					if mouseFramePos.X >= iconPos.X && mouseFramePos.Y >= iconPos.Y &&
+						mouseFramePos.X <= iconSize && mouseFramePos.Y <= iconSize &&
+						rl.IsMouseButtonPressed(rl.MOUSE_BUTTON_LEFT) {
+						player.BuildUISelectedTypeId = ResourceTypeId(typeId)
+					}
+
+					iconPos.X += iconSize + iconSpacing
+				}
 			}
 
-			iconFrameMargin := 3.0
-			iconPos := Vec2{iconFrameMargin, iconFrameMargin}
-			tex := elementTypes[1].iconTexture
-			rl.DrawTextureEx(tex, iconPos, 0, 1, rl.White)
-			str.Display("%f %f", iconPos.X, iconPos.Y)
+			if rl.IsMouseButtonPressed(rl.MOUSE_BUTTON_LEFT) {
+				player.BuildUIEnabled = false
+			}
 
 			rl.PopMatrix()
 		}
