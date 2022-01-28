@@ -235,6 +235,25 @@ var resourceTypes = [...]ResourceType{
 			{-0.5 * 3, -0.8},
 		},
 	},
+	{
+		Name:          "building_launchpad",
+		ImageName:     "resource_building_refiner.png",
+		NumFrames:     2,
+		IconImageName: "icon_building_refiner.png",
+		Health:        50,
+		ElementAmounts: []ElementAmount{
+			{TypeId: CarbonElement, Amount: 128},
+			{TypeId: SiliconElement, Amount: 249},
+			{TypeId: AntimatterElement, Amount: 2},
+		},
+		Buildable: true,
+		CollisionShapeVerts: []Vec2{
+			{-0.5 * 3, -2},
+			{0.5 * 3, -2},
+			{0.5 * 3, -0.8},
+			{-0.5 * 3, -0.8},
+		},
+	},
 }
 
 type Resource struct {

@@ -1140,7 +1140,7 @@ func drawGame() {
 					rl.DrawTextureEx(tex, iconPos, 0, 1, rl.White)
 
 					if mouseFramePos.X >= iconPos.X && mouseFramePos.Y >= iconPos.Y &&
-						mouseFramePos.X <= iconSize && mouseFramePos.Y <= iconSize &&
+						mouseFramePos.X <= iconPos.X+iconSize && mouseFramePos.Y <= iconPos.Y+iconSize &&
 						rl.IsMouseButtonPressed(rl.MOUSE_BUTTON_LEFT) {
 						player.BuildUISelectedTypeId = ResourceTypeId(typeId)
 					}
