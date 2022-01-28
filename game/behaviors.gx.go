@@ -53,12 +53,11 @@ type Planet struct {
 type Up struct {
 	Behavior
 
-	Up            Vec2
-	GroundNormals []Vec2
-
+	Up             Vec2
 	AutoUprightDir Vec2
 
-	lastGroundTime float64
+	grounded         bool
+	lastGroundedTime float64
 }
 
 type Gravity struct {
@@ -71,6 +70,15 @@ type CollisionShape struct {
 	Behavior
 
 	Verts []Vec2
+}
+
+type CollisionNormal struct {
+	Normal Vec2
+	Ground bool
+}
+
+type CollisionNormals struct {
+	Normals []CollisionNormal
 }
 
 type Player struct {

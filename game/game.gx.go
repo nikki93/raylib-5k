@@ -336,7 +336,10 @@ func updateGame(dt float64) {
 		gameCameraSize = gameCameraBaseSize.Scale(gameCameraZoom)
 	}
 
-	// Update up direction and clear ground normals
+	// Clear collision normals
+	ClearComponent[CollisionNormals]()
+
+	// Update up direction and grounded state
 	Each(func(ent Entity, up *Up, lay *Layout) {
 		minSqDist := -1.0
 		minDelta := Vec2{0, 0}
@@ -354,8 +357,8 @@ func updateGame(dt float64) {
 		if minSqDist > 0 {
 			dir := minDelta.Scale(1 / Sqrt(minSqDist))
 			up.Up = dir.Negate().Normalize()
-			up.GroundNormals = []Vec2{}
 		}
+		up.grounded = false
 	})
 
 	// Regular controls
@@ -475,35 +478,51 @@ func updateGame(dt float64) {
 						AddComponent(ent, ApplySurfaceFriction{})
 
 						// Track normal
-						if up != nil && in.Normal.DotProduct(up.Up) > 0.2 {
-							up.GroundNormals = append(up.GroundNormals, in.Normal)
-							up.lastGroundTime = gameTime
-							if player := GetComponent[Player](ent); player != nil && player.JumpsRemaining <= 0 {
-								player.JumpsRemaining = 2
-							}
+						collisionNormals := AddComponent(ent, CollisionNormals{})
+						ground := up != nil && in.Normal.DotProduct(up.Up) > 0.2
+						collisionNormals.Normals = append(collisionNormals.Normals, CollisionNormal{
+							Normal: in.Normal,
+							Ground: ground,
+						})
+						if ground {
+							up.grounded = true
+							up.lastGroundedTime = gameTime
 						}
 
-						// TODO: Flying -- stop flying?
 					}
 				}
 			})
 		}
 	})
 
+	// Donate jumps if grounded
+	Each(func(ent Entity, player *Player, up *Up) {
+		if up.grounded {
+			player.JumpsRemaining = 2
+		}
+
+		// TODO: Flying -- stop flying?
+	})
+
 	// Update auto-upright
 	Each(func(ent Entity, up *Up, lay *Layout) {
 		target := Vec2{0, 0}
 		rate := 28.0
-		if len(up.GroundNormals) == 0 {
-			if gameTime-up.lastGroundTime < 0.3 {
+		if !up.grounded {
+			if gameTime-up.lastGroundedTime < 0.3 {
 				rate = 7.0
 			}
 			target = up.Up
 		} else {
-			for _, groundNormal := range up.GroundNormals {
-				target = target.Add(groundNormal)
+			collisionNormals := GetComponent[CollisionNormals](ent)
+			count := 0
+			for _, normal := range collisionNormals.Normals {
+				if normal.Ground {
+					target = target.Add(normal.Normal)
+					count++
+				}
 			}
-			target = target.Scale(1 / float64(len(up.GroundNormals)))
+			target = target.Scale(1 / float64(count))
 		}
 		smoothing := 1 - Pow(2, -rate*deltaTime)
 		up.AutoUprightDir = up.AutoUprightDir.Add(target.Subtract(up.AutoUprightDir).Scale(smoothing)).Normalize()
@@ -744,7 +763,7 @@ func updateGame(dt float64) {
 
 	// Stop moving resources that have fallen to the ground
 	Each(func(ent Entity, vel *Velocity, resource *Resource, up *Up) {
-		if len(up.GroundNormals) > 0 {
+		if up.grounded {
 			rl.PlaySound(resourceHitGroundSound)
 			RemoveComponent[Up](ent)
 			RemoveComponent[Gravity](ent)
