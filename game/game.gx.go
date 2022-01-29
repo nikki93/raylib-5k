@@ -1395,12 +1395,15 @@ func drawGame() {
 				scale = 1 + Pow(Max(0, 0.35*(stretch-1)), 2)
 
 				rl.PushMatrix()
-				rl.Scalef(Pow(stretch-1, 3), 0.4, 1)
+				rl.Scalef(Pow(stretch-0.8, 4), 0.4, 1)
 				rl.DrawTextureEx(primaryStarTexture, texSize.Scale(-0.5), 0, 2*spriteScale, rl.White)
 				rl.PopMatrix()
 			}
 		})
 		rl.DrawTextureEx(primaryStarTexture, texSize.Scale(-0.5).Scale(scale), 0, 2*spriteScale*scale, rl.White)
+		if scale > 2 {
+			rl.DrawCircleV(Vec2{0, 0}, 0.5*texSize.X*scale, rl.Color{0xad, 0x77, 0x57, 0xff})
+		}
 
 		//rl.Translatef(0, -0.55*texSize.Y, 0)
 		//
