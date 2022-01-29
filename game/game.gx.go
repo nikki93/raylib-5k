@@ -451,11 +451,13 @@ func initGame() {
 		})
 
 		// Player
-		playerPos := Vec2{0, homePlanetPos.Y - homePlanetRadius - 0.5*playerSize.Y - 5}
+		playerPos := Vec2{-26.66, 82.36}
+		playerRot := -2.723
 		playerPolySize := playerSize.Subtract(Vec2{2 * planetSegmentThickness, 2.14 * planetSegmentThickness})
 		CreateEntity(
 			Layout{
 				Pos: playerPos,
+				Rot: playerRot,
 			},
 			Velocity{},
 			Up{},
@@ -469,6 +471,8 @@ func initGame() {
 				},
 			},
 			Player{
+				CameraPos: playerPos,
+				CameraRot: playerRot,
 				//ElementAmounts: [NumElementTypes]int{3000, 3000, 3000, 3000},
 			},
 		)
@@ -990,9 +994,9 @@ func updateGame(dt float64) {
 						Verts: resourceType.CollisionShapeVerts,
 					})
 				}
-				if resourceType.Name == "building_refiner" {
+				if resourceType.Name == "refiner" {
 					AddComponent(buildingEnt, Refiner{})
-				} else if resourceType.Name == "building_launchpad" {
+				} else if resourceType.Name == "launchpad" {
 					AddComponent(buildingEnt, Launchpad{})
 				}
 			} else {
