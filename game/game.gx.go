@@ -78,16 +78,22 @@ type FrequencyBand struct {
 	Frequency, Amplitude float64
 }
 
-func generatePlanetTerrain(ent Entity) {
+type GeneratePlanetTerrainParams struct {
+	FrequencyBands []FrequencyBand
+}
+
+func generatePlanetTerrain(ent Entity, params GeneratePlanetTerrainParams) {
 	planet := GetComponent[Planet](ent)
 
 	// Generation parameters
 	segmentLength := 1.5 * playerSize.X
 	resolution := 2 * Pi * planet.BaseRadius / segmentLength
-	frequencyBands := [...]FrequencyBand{
-		{Frequency: 0.003, Amplitude: 0.2 * planet.BaseRadius},
-		{Frequency: 0.015, Amplitude: 0.015 * planet.BaseRadius},
-		{Frequency: 0.060, Amplitude: 0.015 * planet.BaseRadius},
+	if len(params.FrequencyBands) == 0 {
+		params.FrequencyBands = []FrequencyBand{
+			{Frequency: 0.003, Amplitude: 0.2 * planet.BaseRadius},
+			{Frequency: 0.015, Amplitude: 0.015 * planet.BaseRadius},
+			{Frequency: 0.060, Amplitude: 0.015 * planet.BaseRadius},
+		}
 	}
 
 	// Generate heights and vertices
@@ -95,7 +101,7 @@ func generatePlanetTerrain(ent Entity) {
 	for angle := 0.0; angle < 2*Pi; angle += angleStep {
 		// Height
 		height := planet.BaseRadius
-		for _, band := range frequencyBands {
+		for _, band := range params.FrequencyBands {
 			height += band.Amplitude * Noise1(resolution*band.Frequency*angle)
 		}
 
@@ -226,7 +232,7 @@ func initGame() {
 				AtmosphereColor:  rl.Color{0x10, 0x14, 0x1f, 0xff},
 			},
 		)
-		generatePlanetTerrain(homePlanetEnt)
+		generatePlanetTerrain(homePlanetEnt, GeneratePlanetTerrainParams{})
 		homePlanet := GetComponent[Planet](homePlanetEnt)
 		generateResources(GenerateResourcesParams{
 			TypeName: "fungus_tiny",
@@ -292,7 +298,7 @@ func initGame() {
 				AtmosphereColor:  homePlanet.AtmosphereColor,
 			},
 		)
-		generatePlanetTerrain(homeSibling1PlanetEnt)
+		generatePlanetTerrain(homeSibling1PlanetEnt, GeneratePlanetTerrainParams{})
 		generateResources(GenerateResourcesParams{
 			TypeName: "fungus_tiny",
 			Planet:   homeSibling1PlanetEnt,
@@ -337,7 +343,7 @@ func initGame() {
 				AtmosphereColor:  homePlanet.AtmosphereColor,
 			},
 		)
-		generatePlanetTerrain(homeSibling2PlanetEnt)
+		generatePlanetTerrain(homeSibling2PlanetEnt, GeneratePlanetTerrainParams{})
 		generateResources(GenerateResourcesParams{
 			TypeName: "fungus_tiny",
 			Planet:   homeSibling2PlanetEnt,
@@ -373,7 +379,14 @@ func initGame() {
 				AtmosphereColor:  rl.Color{0x10, 0x14, 0x1f, 0xff},
 			},
 		)
-		generatePlanetTerrain(endingPlanetEnt)
+		generatePlanetTerrain(endingPlanetEnt, GeneratePlanetTerrainParams{
+			FrequencyBands: []FrequencyBand{
+				{Frequency: 0.003, Amplitude: 0.28 * endingPlanetRadius},
+				{Frequency: 0.012, Amplitude: 0.095 * endingPlanetRadius},
+				{Frequency: 0.055, Amplitude: 0.020 * endingPlanetRadius},
+				{Frequency: 0.102, Amplitude: 0.012 * endingPlanetRadius},
+			},
+		})
 
 		// Player
 		playerPos := Vec2{0, homePlanetPos.Y - homePlanetRadius - 0.5*playerSize.Y - 5}
