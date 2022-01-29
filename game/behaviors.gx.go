@@ -298,8 +298,9 @@ type Resource struct {
 
 	TypeId ResourceTypeId
 
-	Frame int
-	FlipH bool
+	DrawOrder int
+	Frame     int
+	FlipH     bool
 
 	Health int
 }

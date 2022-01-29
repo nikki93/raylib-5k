@@ -127,6 +127,25 @@ func generatePlanetTerrain(ent Entity, params GeneratePlanetTerrainParams) {
 	planet.Verts[0] = planet.Verts[0].Lerp(lastVert.Lerp(secondVert, 0.5), 0.5)
 }
 
+var nextResourceDrawOrder = 0
+
+func createResource(typeId ResourceTypeId, pos Vec2, rot float64, flipH bool) Entity {
+	ent := CreateEntity(
+		Layout{
+			Pos: pos,
+			Rot: rot,
+		},
+		Resource{
+			TypeId:    typeId,
+			DrawOrder: nextResourceDrawOrder,
+			FlipH:     flipH,
+			Health:    resourceTypes[typeId].Health,
+		},
+	)
+	nextResourceDrawOrder++
+	return ent
+}
+
 type GenerateResourcesParams struct {
 	TypeName       string
 	TypeId         ResourceTypeId
@@ -179,17 +198,7 @@ func generateResources(params GenerateResourcesParams) {
 				verticalOffsetDir := Vec2{rotDir.Y, -rotDir.X}
 				pos = pos.Add(verticalOffsetDir.Scale(resourceType.VerticalOffset + verticalOffsetDelta))
 
-				CreateEntity(
-					Layout{
-						Pos: pos,
-						Rot: rot,
-					},
-					Resource{
-						TypeId: params.TypeId,
-						FlipH:  unitRandom() < 0.5,
-						Health: resourceType.Health,
-					},
-				)
+				createResource(params.TypeId, pos, rot, unitRandom() < 0.5)
 			}
 		}
 	}
@@ -241,34 +250,6 @@ func initGame() {
 		generatePlanetTerrain(homePlanetEnt, GeneratePlanetTerrainParams{})
 		homePlanet := GetComponent[Planet](homePlanetEnt)
 		generateResources(GenerateResourcesParams{
-			TypeName: "fungus_tiny",
-			Planet:   homePlanetEnt,
-			FrequencyBands: []FrequencyBand{
-				{Frequency: 80, Amplitude: 0.5},
-				{Frequency: 16, Amplitude: 0.5},
-			},
-			Thinning: 0.6,
-		})
-		generateResources(GenerateResourcesParams{
-			TypeName: "sprout_tiny",
-			Planet:   homePlanetEnt,
-			FrequencyBands: []FrequencyBand{
-				{Frequency: 80, Amplitude: 0.5},
-				{Frequency: 16, Amplitude: 0.5},
-			},
-			Exponent: 2,
-		})
-		generateResources(GenerateResourcesParams{
-			TypeName: "fungus_giant",
-			Planet:   homePlanetEnt,
-			FrequencyBands: []FrequencyBand{
-				{Frequency: 80, Amplitude: 0.5},
-				{Frequency: 16, Amplitude: 0.5},
-			},
-			Exponent: 1,
-			Thinning: 0.02,
-		})
-		generateResources(GenerateResourcesParams{
 			TypeName: "rock_large",
 			Planet:   homePlanetEnt,
 			FrequencyBands: []FrequencyBand{
@@ -288,6 +269,34 @@ func initGame() {
 			Exponent: 1,
 			Thinning: 0.015,
 		})
+		generateResources(GenerateResourcesParams{
+			TypeName: "fungus_giant",
+			Planet:   homePlanetEnt,
+			FrequencyBands: []FrequencyBand{
+				{Frequency: 80, Amplitude: 0.5},
+				{Frequency: 16, Amplitude: 0.5},
+			},
+			Exponent: 1,
+			Thinning: 0.02,
+		})
+		generateResources(GenerateResourcesParams{
+			TypeName: "fungus_tiny",
+			Planet:   homePlanetEnt,
+			FrequencyBands: []FrequencyBand{
+				{Frequency: 80, Amplitude: 0.5},
+				{Frequency: 16, Amplitude: 0.5},
+			},
+			Thinning: 0.6,
+		})
+		generateResources(GenerateResourcesParams{
+			TypeName: "sprout_tiny",
+			Planet:   homePlanetEnt,
+			FrequencyBands: []FrequencyBand{
+				{Frequency: 80, Amplitude: 0.5},
+				{Frequency: 16, Amplitude: 0.5},
+			},
+			Exponent: 2,
+		})
 
 		// Fungal planet sibling 1 (medium size)
 		homeSibling1PlanetPos := Vec2{100, 24}
@@ -306,6 +315,16 @@ func initGame() {
 		)
 		generatePlanetTerrain(homeSibling1PlanetEnt, GeneratePlanetTerrainParams{})
 		generateResources(GenerateResourcesParams{
+			TypeName: "rock_medium",
+			Planet:   homeSibling1PlanetEnt,
+			FrequencyBands: []FrequencyBand{
+				{Frequency: 60, Amplitude: 0.5},
+				{Frequency: 3, Amplitude: 0.4},
+			},
+			Exponent: 1,
+			Thinning: 0.015,
+		})
+		generateResources(GenerateResourcesParams{
 			TypeName: "fungus_tiny",
 			Planet:   homeSibling1PlanetEnt,
 			FrequencyBands: []FrequencyBand{
@@ -322,16 +341,6 @@ func initGame() {
 				{Frequency: 16, Amplitude: 0.5},
 			},
 			Exponent: 2,
-		})
-		generateResources(GenerateResourcesParams{
-			TypeName: "rock_medium",
-			Planet:   homeSibling1PlanetEnt,
-			FrequencyBands: []FrequencyBand{
-				{Frequency: 60, Amplitude: 0.5},
-				{Frequency: 3, Amplitude: 0.4},
-			},
-			Exponent: 1,
-			Thinning: 0.015,
 		})
 
 		// Fungal planet sibling 2 (very small)
@@ -372,28 +381,17 @@ func initGame() {
 
 		// Fungal planet antiplants
 		antiplantResourceTypeId := resourceTypeIdForName("antiplant")
-		antiplantResourceType := &resourceTypes[antiplantResourceTypeId]
-		CreateEntity(
-			Layout{
-				Pos: Vec2{-39.2, -24.1},
-				Rot: -0.56,
-			},
-			Resource{
-				TypeId: antiplantResourceTypeId,
-				FlipH:  unitRandom() < 0.5,
-				Health: antiplantResourceType.Health,
-			},
+		createResource(
+			antiplantResourceTypeId,
+			Vec2{-42.84, -21.56},
+			-0.7,
+			unitRandom() < 0.5,
 		)
-		CreateEntity(
-			Layout{
-				Pos: Vec2{118.2, 18.42},
-				Rot: 1.35,
-			},
-			Resource{
-				TypeId: antiplantResourceTypeId,
-				FlipH:  unitRandom() < 0.5,
-				Health: antiplantResourceType.Health,
-			},
+		createResource(
+			antiplantResourceTypeId,
+			Vec2{118.2, 18.42},
+			1.35,
+			unitRandom() < 0.5,
 		)
 
 		// Ending planet
@@ -420,16 +418,6 @@ func initGame() {
 			},
 		})
 		generateResources(GenerateResourcesParams{
-			TypeName: "antiplant",
-			Planet:   endingPlanetEnt,
-			FrequencyBands: []FrequencyBand{
-				{Frequency: 60, Amplitude: 0.5},
-				{Frequency: 3, Amplitude: 0.4},
-			},
-			Exponent: 1,
-			Thinning: 0.015,
-		})
-		generateResources(GenerateResourcesParams{
 			TypeName: "rock_large",
 			Planet:   endingPlanetEnt,
 			FrequencyBands: []FrequencyBand{
@@ -448,6 +436,16 @@ func initGame() {
 			},
 			Exponent: 3,
 			Thinning: 0.02,
+		})
+		generateResources(GenerateResourcesParams{
+			TypeName: "antiplant",
+			Planet:   endingPlanetEnt,
+			FrequencyBands: []FrequencyBand{
+				{Frequency: 60, Amplitude: 0.5},
+				{Frequency: 3, Amplitude: 0.4},
+			},
+			Exponent: 1,
+			Thinning: 0.015,
 		})
 
 		// Player
@@ -976,19 +974,15 @@ func updateGame(dt float64) {
 				for _, requiredElementAmount := range resourceType.ElementAmounts {
 					player.ElementAmounts[requiredElementAmount.TypeId] -= requiredElementAmount.Amount
 				}
-				buildingEnt := CreateEntity(
-					Layout{
-						Pos: player.BuildUIPos,
-						Rot: -gameCamera.Rotation * Pi / 180,
-					},
-					Resource{
-						TypeId: resourceTypeId,
-						Health: resourceType.Health,
-					},
-					Velocity{},
-					Up{},
-					Gravity{},
+				buildingEnt := createResource(
+					resourceTypeId,
+					player.BuildUIPos,
+					-gameCamera.Rotation*Pi/180,
+					false,
 				)
+				AddComponent(buildingEnt, Velocity{})
+				AddComponent(buildingEnt, Up{})
+				AddComponent(buildingEnt, Gravity{})
 				if len(resourceType.CollisionShapeVerts) > 0 {
 					AddComponent(buildingEnt, CollisionShape{
 						Verts: resourceType.CollisionShapeVerts,
@@ -1229,6 +1223,9 @@ func drawGame() {
 	})
 
 	// Resources
+	SortComponent(func(a *Resource, b *Resource) bool {
+		return a.DrawOrder < b.DrawOrder
+	})
 	Each(func(ent Entity, resource *Resource, lay *Layout) {
 		rl.PushMatrix()
 		rl.Translatef(lay.Pos.X, lay.Pos.Y, 0)
