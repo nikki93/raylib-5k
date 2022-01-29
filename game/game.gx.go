@@ -465,8 +465,8 @@ func initGame() {
 		AddComponent(transmissionTowerEnt, TransmissionTower{})
 
 		// Player
-		playerPos := Vec2{-9.77, -251.381 - 8}
-		//playerPos := Vec2{-26.66, 82.36}
+		//playerPos := Vec2{-9.77, -251.381 - 8} // At transmission tower!
+		playerPos := Vec2{-26.66, 82.36}
 		playerRot := -2.723
 		playerPolySize := playerSize.Subtract(Vec2{2 * planetSegmentThickness, 2.14 * planetSegmentThickness})
 		playerEnt := CreateEntity(
@@ -1355,6 +1355,20 @@ func drawGame() {
 	Each(func(ent Entity, planet *Planet, lay *Layout) {
 		rl.DrawCircleV(lay.Pos, planet.AtmosphereRadius, planet.AtmosphereColor)
 	})
+
+	// Sun
+	{
+		rl.PushMatrix()
+		screenCenter := Vec2{float64(rl.GetScreenWidth()), float64(rl.GetScreenHeight())}.Scale(0.5)
+		worldCameraCenter := rl.GetScreenToWorld2D(screenCenter, gameCamera).Scale(0.98)
+		rl.Translatef(worldCameraCenter.X, worldCameraCenter.Y, 0)
+		//rl.Rotatef(-gameCamera.Rotation, 0, 0, 1)
+		rl.Scalef(gameCameraZoom, gameCameraZoom, 1)
+
+		rl.DrawCircleV(Vec2{-5, 3}.Scale(1/0.98), 1, rl.Color{0xc0, 0x94, 0x73, 0xff})
+
+		rl.PopMatrix()
+	}
 
 	// Resources
 	SortComponent(func(a *Resource, b *Resource) bool {
