@@ -281,7 +281,7 @@ var resourceTypes = [...]ResourceType{
 		DestructionSoundName: "sfx_resource_destroy_rock.ogg",
 		Health:               50,
 		ElementAmounts: []ElementAmount{
-			{TypeId: SiliconElement, Amount: 100},
+			{TypeId: SiliconElement, Amount: 40},
 		},
 		Buildable: true,
 		CollisionShapeVerts: []Vec2{
@@ -299,8 +299,8 @@ var resourceTypes = [...]ResourceType{
 		DestructionSoundName: "sfx_resource_destroy_rock.ogg",
 		Health:               50,
 		ElementAmounts: []ElementAmount{
-			{TypeId: CarbonElement, Amount: 128},
-			{TypeId: SiliconElement, Amount: 256},
+			{TypeId: CarbonElement, Amount: 64},
+			{TypeId: SiliconElement, Amount: 100},
 			{TypeId: AntimatterElement, Amount: 2},
 		},
 		Buildable: true,

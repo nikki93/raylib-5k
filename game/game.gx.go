@@ -35,7 +35,7 @@ var playerHorizontalControlsAccel = 17.0
 var playerMinimumHorizontalSpeedForFriction = 12.0
 var playerJumpCooldown = 0.1
 
-var playerLiftoffFuelRequired = 50
+var playerLiftoffFuelRequired = 40
 var playerFlyingLiftoffInitialAccel = 3.2
 var playerFlyingLiftoffJerk = 5.0
 var playerFlyingMaxAccel = 4.0
@@ -54,9 +54,9 @@ var beamDamagePeriod = 0.2
 var beamDamage = 1
 
 var refinerCarbonPerFuel = 5
-var refinerCarbonCapacity = 200
+var refinerCarbonCapacity = 100
 var refinerRefinmentPeriod = 5.0
-var refinerFuelPerRefinement = 5
+var refinerFuelPerRefinement = 2
 
 var transmissionTowerAntimatterRequired = 5
 var transmissionTowerSiliconRequired = 20
