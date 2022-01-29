@@ -75,6 +75,9 @@ var hitSound2 = rl.LoadSound(getAssetPath("sfx_hit_2.wav"))
 
 var resourceHitGroundSound = rl.LoadSound(getAssetPath("sfx_vehicle_collision.ogg"))
 
+var buildingSucceeded = rl.LoadSound(getAssetPath("sfx_building_succeeded.ogg"))
+var buildingFailed = rl.LoadSound(getAssetPath("sfx_building_failed.ogg"))
+
 //
 // Init
 //
@@ -480,10 +483,11 @@ func initGameplayScene() {
 	)
 	edit.Camera().Target = playerPos
 	player := GetComponent[Player](playerEnt)
-	player.ElementAmounts[CarbonElement] = 3000
-	player.ElementAmounts[SiliconElement] = 3000
-	player.ElementAmounts[FuelElement] = 3000
-	player.ElementAmounts[AntimatterElement] = 3000
+	player.ElementAmounts[CarbonElement] = 0
+	//player.ElementAmounts[CarbonElement] = 3000
+	//player.ElementAmounts[SiliconElement] = 3000
+	//player.ElementAmounts[FuelElement] = 3000
+	//player.ElementAmounts[AntimatterElement] = 3000
 
 	if editAllowed {
 		edit.SaveSnapshot("initialize scene")
@@ -1121,7 +1125,8 @@ func updateGame(dt float64) {
 					AddComponent(buildingEnt, Launchpad{})
 				}
 			} else {
-				// TODO: Play "can't build" sound
+				rl.SetSoundVolume(buildingFailed, 0.5)
+				rl.PlaySound(buildingFailed)
 			}
 		}
 	})
@@ -1129,6 +1134,7 @@ func updateGame(dt float64) {
 	// Stop moving resources that have fallen to the ground
 	Each(func(ent Entity, vel *Velocity, resource *Resource, up *Up) {
 		if up.grounded {
+			rl.SetSoundVolume(resourceHitGroundSound, 0.8)
 			rl.PlaySound(resourceHitGroundSound)
 			RemoveComponent[Up](ent)
 			RemoveComponent[Gravity](ent)
