@@ -105,6 +105,8 @@ var liftoffSound = rl.LoadSound(getAssetPath("sfx_liftoff.ogg"))
 
 //var flyingAccelerationSound = rl.LoadMusicStream(getAssetPath("sfx_flying_acceleration.ogg"))
 
+var supernovaSound = rl.LoadSound(getAssetPath("sfx_supernova.ogg"))
+
 //
 // Init
 //
@@ -1344,6 +1346,9 @@ func updateGame(dt float64) {
 			bloomEnabled = true
 			factor := Abs(0.35*player.TimeToSupernova) + 1
 			bloomBrightness = factor * factor
+			if !rl.IsSoundPlaying(supernovaSound) {
+				rl.PlaySound(supernovaSound)
+			}
 		}
 		if player.TimeToSupernova <= -7 {
 			restartGameplay = true
