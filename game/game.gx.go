@@ -214,18 +214,119 @@ func initGame() {
 		// Home planet
 		homePlanetPos := Vec2{0, 24}
 		homePlanetRadius := 64.0
-		homePlanet := CreateEntity(
+		homePlanetEnt := CreateEntity(
 			Layout{
 				Pos: homePlanetPos,
 			},
 			Planet{
 				BaseRadius:       homePlanetRadius,
 				AtmosphereRadius: 1.5 * homePlanetRadius,
-				Color:            rl.Color{0x15, 0x1d, 0x28, 0xff},
+				InnerColor:       rl.Color{0x15, 0x1d, 0x28, 0xff},
+				BitsColor:        rl.Color{0x4d, 0x2b, 0x32, 0xff},
 				AtmosphereColor:  rl.Color{0x10, 0x14, 0x1f, 0xff},
 			},
 		)
-		generatePlanetTerrain(homePlanet)
+		generatePlanetTerrain(homePlanetEnt)
+		homePlanet := GetComponent[Planet](homePlanetEnt)
+
+		// Resources on home planet
+		generateResources(GenerateResourcesParams{
+			TypeName: "fungus_tiny",
+			Planet:   homePlanetEnt,
+			FrequencyBands: []FrequencyBand{
+				{Frequency: 80, Amplitude: 0.5},
+				{Frequency: 16, Amplitude: 0.5},
+			},
+			Thinning: 0.6,
+		})
+		generateResources(GenerateResourcesParams{
+			TypeName: "sprout_tiny",
+			Planet:   homePlanetEnt,
+			FrequencyBands: []FrequencyBand{
+				{Frequency: 80, Amplitude: 0.5},
+				{Frequency: 16, Amplitude: 0.5},
+			},
+			Exponent: 2,
+		})
+		generateResources(GenerateResourcesParams{
+			TypeName: "fungus_giant",
+			Planet:   homePlanetEnt,
+			FrequencyBands: []FrequencyBand{
+				{Frequency: 80, Amplitude: 0.5},
+				{Frequency: 16, Amplitude: 0.5},
+			},
+			Exponent: 1,
+			Thinning: 0.02,
+		})
+		generateResources(GenerateResourcesParams{
+			TypeName: "rock_large",
+			Planet:   homePlanetEnt,
+			FrequencyBands: []FrequencyBand{
+				{Frequency: 60, Amplitude: 0.5},
+				{Frequency: 3, Amplitude: 0.2},
+			},
+			Exponent: 1,
+			Thinning: 0.001,
+		})
+		generateResources(GenerateResourcesParams{
+			TypeName: "rock_medium",
+			Planet:   homePlanetEnt,
+			FrequencyBands: []FrequencyBand{
+				{Frequency: 60, Amplitude: 0.5},
+				{Frequency: 3, Amplitude: 0.4},
+			},
+			Exponent: 1,
+			Thinning: 0.015,
+		})
+
+		// Home sibling planets
+		homeSibling1PlanetPos := Vec2{100, 24}
+		homeSibling1PlanetRadius := 0.3 * homePlanetRadius
+		homeSibling1PlanetEnt := CreateEntity(
+			Layout{
+				Pos: homeSibling1PlanetPos,
+			},
+			Planet{
+				BaseRadius:       homeSibling1PlanetRadius,
+				AtmosphereRadius: 1.5 * homeSibling1PlanetRadius,
+				InnerColor:       homePlanet.InnerColor,
+				BitsColor:        homePlanet.BitsColor,
+				AtmosphereColor:  homePlanet.AtmosphereColor,
+			},
+		)
+		generatePlanetTerrain(homeSibling1PlanetEnt)
+		homeSibling2PlanetPos := Vec2{80, 53}
+		homeSibling2PlanetRadius := 0.1 * homePlanetRadius
+		homeSibling2PlanetEnt := CreateEntity(
+			Layout{
+				Pos: homeSibling2PlanetPos,
+			},
+			Planet{
+				BaseRadius:       homeSibling2PlanetRadius,
+				AtmosphereRadius: 1.5 * homeSibling2PlanetRadius,
+				InnerColor:       homePlanet.InnerColor,
+				BitsColor:        homePlanet.BitsColor,
+				AtmosphereColor:  homePlanet.AtmosphereColor,
+			},
+		)
+		generatePlanetTerrain(homeSibling2PlanetEnt)
+
+		// Ending planet
+		endingPlanetPos := Vec2{0, -200}
+		endingPlanetRadius := 0.8 * homePlanetRadius
+		endingPlanetEnt := CreateEntity(
+			Layout{
+				Pos: endingPlanetPos,
+			},
+			Planet{
+				BaseRadius:       endingPlanetRadius,
+				AtmosphereRadius: 1.5 * endingPlanetRadius,
+				InnerColor:       rl.Color{0x24, 0x15, 0x27, 0xff},
+				BitsColor:        rl.Color{0x7a, 0x36, 0x7b, 0xff},
+				AtmosphereColor:  rl.Color{0x10, 0x14, 0x1f, 0xff},
+			},
+		)
+		generatePlanetTerrain(endingPlanetEnt)
 
 		// Player
 		playerPos := Vec2{0, homePlanetPos.Y - homePlanetRadius - 0.5*playerSize.Y - 5}
@@ -250,56 +351,6 @@ func initGame() {
 			},
 		)
 		edit.Camera().Target = playerPos
-
-		// Resources on home planet
-		generateResources(GenerateResourcesParams{
-			TypeName: "fungus_tiny",
-			Planet:   homePlanet,
-			FrequencyBands: []FrequencyBand{
-				{Frequency: 80, Amplitude: 0.5},
-				{Frequency: 16, Amplitude: 0.5},
-			},
-			Thinning: 0.6,
-		})
-		generateResources(GenerateResourcesParams{
-			TypeName: "sprout_tiny",
-			Planet:   homePlanet,
-			FrequencyBands: []FrequencyBand{
-				{Frequency: 80, Amplitude: 0.5},
-				{Frequency: 16, Amplitude: 0.5},
-			},
-			Exponent: 2,
-		})
-		generateResources(GenerateResourcesParams{
-			TypeName: "fungus_giant",
-			Planet:   homePlanet,
-			FrequencyBands: []FrequencyBand{
-				{Frequency: 80, Amplitude: 0.5},
-				{Frequency: 16, Amplitude: 0.5},
-			},
-			Exponent: 1,
-			Thinning: 0.02,
-		})
-		generateResources(GenerateResourcesParams{
-			TypeName: "rock_large",
-			Planet:   homePlanet,
-			FrequencyBands: []FrequencyBand{
-				{Frequency: 60, Amplitude: 0.5},
-				{Frequency: 3, Amplitude: 0.2},
-			},
-			Exponent: 1,
-			Thinning: 0.001,
-		})
-		generateResources(GenerateResourcesParams{
-			TypeName: "rock_medium",
-			Planet:   homePlanet,
-			FrequencyBands: []FrequencyBand{
-				{Frequency: 60, Amplitude: 0.5},
-				{Frequency: 3, Amplitude: 0.4},
-			},
-			Exponent: 1,
-			Thinning: 0.015,
-		})
 
 		edit.SaveSnapshot("initialize scene")
 	}
@@ -1189,7 +1240,7 @@ func drawGame() {
 		rl.Begin(rl.Quads)
 		for vertIndex, vertPos := range planet.Verts {
 			drawTriangleToSegment := func(a, b Vec2) {
-				rl.Color4ub(planet.Color.R, planet.Color.G, planet.Color.B, planet.Color.A)
+				rl.Color4ub(planet.InnerColor.R, planet.InnerColor.G, planet.InnerColor.B, planet.InnerColor.A)
 				rl.Vertex2f(0, 0)
 				rl.Vertex2f(0, 0)
 				rl.Vertex2f(b.X, b.Y)
@@ -1228,7 +1279,7 @@ func drawGame() {
 				bitTexDest.Y = pos.Y
 
 				rl.DrawRectangleV(Vec2{}, Vec2{}, rl.Color{}) // <-- Fixes a bug with `DrawTexturePro` below...
-				rl.DrawTexturePro(bitTex, bitTexSource, bitTexDest, bitTexOrigin, bit.Rot, rl.Color{0x4d, 0x2b, 0x32, 0xff})
+				rl.DrawTexturePro(bitTex, bitTexSource, bitTexDest, bitTexOrigin, bit.Rot, planet.BitsColor)
 			}
 		}
 
@@ -1294,7 +1345,6 @@ func drawGame() {
 				Rotate(gameCamera.Rotation * Pi / 180).
 				Scale(1 / scale).
 				Add(frameOffset)
-			rl.DrawCircleV(mouseFramePos, 1, rl.Red)
 			player.BuildUIMouseOver = mouseFramePos.X >= 0 && mouseFramePos.Y >= 0 &&
 				mouseFramePos.X <= frameWidth && mouseFramePos.Y <= (frameHeight-8)
 

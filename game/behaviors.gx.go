@@ -53,7 +53,8 @@ type Planet struct {
 	BaseRadius       float64
 	AtmosphereRadius float64
 
-	Color           rl.Color
+	InnerColor      rl.Color
+	BitsColor       rl.Color
 	AtmosphereColor rl.Color
 
 	Verts []Vec2
