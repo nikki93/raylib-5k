@@ -244,6 +244,18 @@ var resourceTypes = [...]ResourceType{
 	},
 
 	{
+		Name:                   "antiplant",
+		ImageName:              "resource_antiplant.png",
+		VerticalOffset:         -0.4,
+		VerticalOffsetVariance: -0.2,
+		Health:                 20,
+		ElementAmounts: []ElementAmount{
+			{TypeId: CarbonElement, Amount: 8},
+			{TypeId: AntimatterElement, Amount: 1},
+		},
+	},
+
+	{
 		Name:          "building_refiner",
 		ImageName:     "resource_building_refiner.png",
 		NumFrames:     2,

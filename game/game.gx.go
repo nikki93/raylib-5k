@@ -364,6 +364,32 @@ func initGame() {
 			Thinning: 0.8,
 		})
 
+		// Fungal planet antiplants
+		antiplantResourceTypeId := resourceTypeIdForName("antiplant")
+		antiplantResourceType := &resourceTypes[antiplantResourceTypeId]
+		CreateEntity(
+			Layout{
+				Pos: Vec2{-39.2, -24.1},
+				Rot: -0.56,
+			},
+			Resource{
+				TypeId: antiplantResourceTypeId,
+				FlipH:  unitRandom() < 0.5,
+				Health: antiplantResourceType.Health,
+			},
+		)
+		CreateEntity(
+			Layout{
+				Pos: Vec2{118.2, 18.42},
+				Rot: 1.35,
+			},
+			Resource{
+				TypeId: antiplantResourceTypeId,
+				FlipH:  unitRandom() < 0.5,
+				Health: antiplantResourceType.Health,
+			},
+		)
+
 		// Ending planet
 		endingPlanetPos := Vec2{0, -200}
 		endingPlanetRadius := 0.8 * homePlanetRadius
@@ -800,20 +826,26 @@ func updateGame(dt float64) {
 						// Consume elements from it
 						resourceType := &resourceTypes[resource.TypeId]
 						for _, elementAmount := range resourceType.ElementAmounts {
-							damagePerAmount := resourceType.Health / Max(1, elementAmount.Amount/2)
-							if damagePerAmount > 0 {
-								amountGained := prevHealth/damagePerAmount - resource.Health/damagePerAmount
-								player.ElementAmounts[elementAmount.TypeId] += amountGained
+							if elementAmount.Amount == 1 {
 								if resource.Health == 0 {
-									remainingAmount := elementAmount.Amount - resourceType.Health/damagePerAmount
-									player.ElementAmounts[elementAmount.TypeId] += remainingAmount
+									player.ElementAmounts[elementAmount.TypeId] += elementAmount.Amount
 								}
 							} else {
-								amountPerDamage := (elementAmount.Amount / resourceType.Health) / 2
-								player.ElementAmounts[elementAmount.TypeId] += damageDone * amountPerDamage
-								if resource.Health == 0 {
-									remainingAmount := elementAmount.Amount - (amountPerDamage * resourceType.Health)
-									player.ElementAmounts[elementAmount.TypeId] += remainingAmount
+								damagePerAmount := resourceType.Health / (elementAmount.Amount / 2)
+								if damagePerAmount > 0 {
+									amountGained := prevHealth/damagePerAmount - resource.Health/damagePerAmount
+									player.ElementAmounts[elementAmount.TypeId] += amountGained
+									if resource.Health == 0 {
+										remainingAmount := elementAmount.Amount - resourceType.Health/damagePerAmount
+										player.ElementAmounts[elementAmount.TypeId] += remainingAmount
+									}
+								} else {
+									amountPerDamage := (elementAmount.Amount / resourceType.Health) / 2
+									player.ElementAmounts[elementAmount.TypeId] += damageDone * amountPerDamage
+									if resource.Health == 0 {
+										remainingAmount := elementAmount.Amount - (amountPerDamage * resourceType.Health)
+										player.ElementAmounts[elementAmount.TypeId] += remainingAmount
+									}
 								}
 							}
 						}
