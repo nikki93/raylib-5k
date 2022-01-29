@@ -56,6 +56,9 @@ var refinerCarbonCapacity = 200
 var refinerRefinmentPeriod = 5.0
 var refinerFuelPerRefinement = 5
 
+var transmissionTowerAntimatterRequired = 5
+var transmissionTowerSiliconRequired = 20
+
 //
 // Sounds
 //
@@ -453,15 +456,17 @@ func initGame() {
 			Thinning: 0.015,
 		})
 		transmissionTowerResourceTypeId := resourceTypeIdForName("transmission_tower")
-		createResource(
+		transmissionTowerEnt := createResource(
 			transmissionTowerResourceTypeId,
 			Vec2{-9.77, -251.381},
 			-0.21,
 			false,
 		)
+		AddComponent(transmissionTowerEnt, TransmissionTower{})
 
 		// Player
-		playerPos := Vec2{-26.66, 82.36}
+		playerPos := Vec2{-9.77, -251.381 - 8}
+		//playerPos := Vec2{-26.66, 82.36}
 		playerRot := -2.723
 		playerPolySize := playerSize.Subtract(Vec2{2 * planetSegmentThickness, 2.14 * planetSegmentThickness})
 		playerEnt := CreateEntity(
@@ -507,20 +512,29 @@ func updateGame(dt float64) {
 	gameTime += dt
 	deltaTime = dt
 
-	// Toggle zoom
-	if rl.IsKeyPressed(rl.KEY_Z) {
-		if gameCameraZoomTarget == 0.7 {
-			gameCameraZoomTarget = 1.2
+	// Update camera zoom
+	Each(func(ent Entity, player *Player) {
+		if player.Transmitting {
+			// Slow zoom out
+			gameCameraZoom += 0.2 * deltaTime
+			gameCameraSize = gameCameraBaseSize.Scale(gameCameraZoom)
 		} else {
-			gameCameraZoomTarget = 0.7
+			// Toggle zoom
+			if rl.IsKeyPressed(rl.KEY_Z) {
+				if gameCameraZoomTarget == 0.7 {
+					gameCameraZoomTarget = 1.2
+				} else {
+					gameCameraZoomTarget = 0.7
+				}
+			}
+
+			// Smooth to target zoom
+			rate := 14.0
+			smoothing := 1 - Pow(2, -rate*deltaTime)
+			gameCameraZoom = gameCameraZoom + smoothing*(gameCameraZoomTarget-gameCameraZoom)
+			gameCameraSize = gameCameraBaseSize.Scale(gameCameraZoom)
 		}
-	}
-	{
-		rate := 14.0
-		smoothing := 1 - Pow(2, -rate*deltaTime)
-		gameCameraZoom = gameCameraZoom + smoothing*(gameCameraZoomTarget-gameCameraZoom)
-		gameCameraSize = gameCameraBaseSize.Scale(gameCameraZoom)
-	}
+	})
 
 	// Clear collision normals
 	ClearComponent[CollisionNormals]()
@@ -1088,36 +1102,34 @@ func updateGame(dt float64) {
 	})
 
 	// Update launchpads
-	Each(func(launchpadEnt Entity, launchpad *Launchpad, resource *Resource, launchpadLay *Layout) {
+	Each(func(launchpadEnt Entity, launchpad *Launchpad, launchpadLay *Layout) {
 		// Interaction
 		Each(func(playerEnt Entity, player *Player, playerLay *Layout) {
 			minDist := 2.0
 			if !player.Flying && playerLay.Pos.Subtract(launchpadLay.Pos).LengthSqr() < minDist*minDist {
 				if player.ElementAmounts[FuelElement] >= playerLiftoffFuelRequired {
-					if !player.Flying {
-						hint := AddComponent(launchpadEnt, InteractionHint{})
-						hint.Interactable = true
-						hint.Message = "launch"
+					hint := AddComponent(launchpadEnt, InteractionHint{})
+					hint.Interactable = true
+					hint.Message = "launch"
 
-						if rl.IsKeyPressed(rl.KEY_E) {
-							// Consume fuel
-							player.ElementAmounts[FuelElement] -= playerLiftoffFuelRequired
+					if rl.IsKeyPressed(rl.KEY_E) {
+						// Consume fuel
+						player.ElementAmounts[FuelElement] -= playerLiftoffFuelRequired
 
-							// Enter flying mode
-							RemoveComponent[Up](playerEnt)
-							player.Liftoff = true
-							player.Flying = true
-							player.FlyingAccel = playerFlyingLiftoffInitialAccel
+						// Enter flying mode
+						RemoveComponent[Up](playerEnt)
+						player.Liftoff = true
+						player.Flying = true
+						player.FlyingAccel = playerFlyingLiftoffInitialAccel
 
-							// Snap to launchpad
-							playerLay.Pos = launchpadLay.Pos.Add(Vec2{0.21, -3}.Rotate(launchpadLay.Rot))
-							playerLay.Rot = launchpadLay.Rot
-							RemoveComponent[Velocity](playerEnt)
+						// Snap to launchpad
+						playerLay.Pos = launchpadLay.Pos.Add(Vec2{0.21, -3}.Rotate(launchpadLay.Rot))
+						playerLay.Rot = launchpadLay.Rot
+						RemoveComponent[Velocity](playerEnt)
 
-							// Reduce gravity strength
-							if grav := GetComponent[Gravity](playerEnt); grav != nil {
-								grav.Strength *= playerFlyingGravityStrengthMultiplier
-							}
+						// Reduce gravity strength
+						if grav := GetComponent[Gravity](playerEnt); grav != nil {
+							grav.Strength *= playerFlyingGravityStrengthMultiplier
 						}
 					}
 				} else {
@@ -1129,6 +1141,57 @@ func updateGame(dt float64) {
 				RemoveComponent[InteractionHint](launchpadEnt)
 			}
 		})
+	})
+
+	// Update transmission tower
+	Each(func(transmissionTowerEnt Entity, transmissionTower *TransmissionTower, transmissionTowerLay *Layout) {
+		// Interaction
+		Each(func(playerEnt Entity, player *Player, playerLay *Layout) {
+			minDist := 1.0
+			if !player.Transmitting && !player.Flying &&
+				playerLay.Pos.Subtract(transmissionTowerLay.Pos).LengthSqr() < minDist*minDist {
+				if player.ElementAmounts[AntimatterElement] >= transmissionTowerAntimatterRequired &&
+					player.ElementAmounts[SiliconElement] >= transmissionTowerSiliconRequired {
+					hint := AddComponent(transmissionTowerEnt, InteractionHint{})
+					hint.Interactable = true
+					hint.Message = "transmit"
+
+					if rl.IsKeyPressed(rl.KEY_E) {
+						// Consume elements
+						player.ElementAmounts[AntimatterElement] -= transmissionTowerAntimatterRequired
+						player.ElementAmounts[SiliconElement] -= transmissionTowerSiliconRequired
+
+						// Switch to transmitting
+						player.Transmitting = true
+
+						// Snap to transmission tower
+						playerLay.Pos = transmissionTowerLay.Pos.Add(Vec2{0, -1}.Rotate(transmissionTowerLay.Rot))
+						playerLay.Rot = transmissionTowerLay.Rot
+						RemoveComponent[Velocity](playerEnt)
+						RemoveComponent[Velocity](playerEnt)
+					}
+				} else {
+					hint := AddComponent(transmissionTowerEnt, InteractionHint{})
+					hint.Interactable = false
+					hint.Message = rl.TextFormat(
+						"needs %d silicon, %d antimatter",
+						transmissionTowerSiliconRequired,
+						transmissionTowerAntimatterRequired,
+					)
+				}
+			} else {
+				RemoveComponent[InteractionHint](transmissionTowerEnt)
+			}
+		})
+	})
+
+	// Update transmission effect
+	Each(func(ent Entity, player *Player) {
+		if player.Transmitting {
+			rate := 400.0
+			smoothing := 1 - Pow(2, -rate*deltaTime)
+			player.TransmitWidthScale *= smoothing
+		}
 	})
 
 	// Update camera
@@ -1394,8 +1457,17 @@ func drawGame() {
 			Width:  texWidth,
 			Height: texHeight,
 		}
+		if player.Transmitting {
+			newTexWidth := player.TransmitWidthScale * texWidth
+			texSource.X = 0.5 * (texWidth - newTexWidth)
+			texSource.Width = newTexWidth
+			texWidth = newTexWidth
+		}
 		destWidth := texWidth * spriteScale
 		destHeight := texHeight * spriteScale
+		if player.Transmitting {
+			destHeight /= Pow(player.TransmitWidthScale, 3)
+		}
 		texDest := rl.Rectangle{
 			X:      -0.5 * destWidth,
 			Y:      0.5*playerSize.Y - destHeight,
@@ -1405,7 +1477,15 @@ func drawGame() {
 		if !player.Flying && player.FlipH {
 			texSource.Width = -texSource.Width
 		}
-		rl.DrawTexturePro(tex, texSource, texDest, Vec2{0, 0}, 0, rl.White)
+		color := rl.White
+		if player.Transmitting {
+			color = rl.Color{0x4f, 0x8f, 0xff, 0xff}
+			rl.BeginBlendMode(rl.BLEND_ADDITIVE)
+		}
+		rl.DrawTexturePro(tex, texSource, texDest, Vec2{0, 0}, 0, color)
+		if player.Transmitting {
+			rl.EndBlendMode()
+		}
 
 		rl.PopMatrix()
 	})
@@ -1471,6 +1551,10 @@ func drawGame() {
 
 	// Player HUD
 	Each(func(ent Entity, player *Player, playerLay *Layout) {
+		if player.Transmitting {
+			return
+		}
+
 		// Inventory icons
 		{
 			rl.PushMatrix()

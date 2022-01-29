@@ -125,6 +125,9 @@ type Player struct {
 
 	Flying      bool
 	FlyingAccel float64
+
+	Transmitting       bool
+	TransmitWidthScale float64 `default:"1"`
 }
 
 //
