@@ -256,13 +256,6 @@ func initGame() {
 		)
 		edit.Camera().Target = playerPos
 
-		// Smaller planet
-		mediumPlanetRadius := 0.3 * homePlanetRadius
-		createPlanet(
-			Vec2{0, homePlanetPos.Y - 1.2*homePlanetRadius - 1.2*mediumPlanetRadius},
-			mediumPlanetRadius,
-		)
-
 		// Resources on home planet
 		createResources(CreateResourcesParams{
 			TypeName: "fungus_tiny",
