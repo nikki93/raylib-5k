@@ -34,7 +34,7 @@ var playerMinimumHorizontalSpeedForFriction = 12.0
 var playerJumpCooldown = 0.1
 
 var playerFlyingLiftoffInitialAccel = 3.2
-var playerFlyingLiftoffJerk = 4.0
+var playerFlyingLiftoffJerk = 5.0
 var playerFlyingMaxAccel = 4.0
 var playerFlyingMaxSpeed = 14.0
 var playerFlyingAngAccel = 6.0
