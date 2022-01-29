@@ -23,6 +23,8 @@ var deltaTime = 0.0
 // Settings
 //
 
+var editAllowed = false
+
 var surfaceFrictionDecel = 25.0
 var atmosphereFrictionDecel = 18.0
 
@@ -220,11 +222,340 @@ func resourceTypeIdForName(name string) ResourceTypeId {
 	return ResourceTypeId(-1)
 }
 
+func initGameplayScene() {
+	rl.SetRandomSeed(1024)
+
+	// Fungal planet
+	homePlanetPos := Vec2{0, 24}
+	homePlanetRadius := 64.0
+	homePlanetEnt := CreateEntity(
+		Layout{
+			Pos: homePlanetPos,
+		},
+		Planet{
+			BaseRadius:       homePlanetRadius,
+			AtmosphereRadius: 1.5 * homePlanetRadius,
+			InnerColor:       rl.Color{0x15, 0x1d, 0x28, 0xff},
+			BitsColor:        rl.Color{0x4d, 0x2b, 0x32, 0xff},
+			AtmosphereColor:  rl.Color{0x10, 0x14, 0x1f, 0xff},
+		},
+	)
+	generatePlanetTerrain(homePlanetEnt, GeneratePlanetTerrainParams{})
+	homePlanet := GetComponent[Planet](homePlanetEnt)
+	generateResources(GenerateResourcesParams{
+		TypeName: "rock_large",
+		Planet:   homePlanetEnt,
+		FrequencyBands: []FrequencyBand{
+			{Frequency: 60, Amplitude: 0.5},
+			{Frequency: 3, Amplitude: 0.2},
+		},
+		Exponent: 1,
+		Thinning: 0.001,
+	})
+	generateResources(GenerateResourcesParams{
+		TypeName: "rock_medium",
+		Planet:   homePlanetEnt,
+		FrequencyBands: []FrequencyBand{
+			{Frequency: 60, Amplitude: 0.5},
+			{Frequency: 3, Amplitude: 0.4},
+		},
+		Exponent: 1,
+		Thinning: 0.015,
+	})
+	generateResources(GenerateResourcesParams{
+		TypeName: "fungus_giant",
+		Planet:   homePlanetEnt,
+		FrequencyBands: []FrequencyBand{
+			{Frequency: 80, Amplitude: 0.5},
+			{Frequency: 16, Amplitude: 0.5},
+		},
+		Exponent: 1,
+		Thinning: 0.02,
+	})
+	generateResources(GenerateResourcesParams{
+		TypeName: "fungus_tiny",
+		Planet:   homePlanetEnt,
+		FrequencyBands: []FrequencyBand{
+			{Frequency: 80, Amplitude: 0.5},
+			{Frequency: 16, Amplitude: 0.5},
+		},
+		Thinning: 0.6,
+	})
+	generateResources(GenerateResourcesParams{
+		TypeName: "sprout_tiny",
+		Planet:   homePlanetEnt,
+		FrequencyBands: []FrequencyBand{
+			{Frequency: 80, Amplitude: 0.5},
+			{Frequency: 16, Amplitude: 0.5},
+		},
+		Exponent: 2,
+	})
+
+	// Fungal planet sibling 1 (medium size)
+	homeSibling1PlanetPos := Vec2{100, 24}
+	homeSibling1PlanetRadius := 0.3 * homePlanetRadius
+	homeSibling1PlanetEnt := CreateEntity(
+		Layout{
+			Pos: homeSibling1PlanetPos,
+		},
+		Planet{
+			BaseRadius:       homeSibling1PlanetRadius,
+			AtmosphereRadius: 1.5 * homeSibling1PlanetRadius,
+			InnerColor:       homePlanet.InnerColor,
+			BitsColor:        homePlanet.BitsColor,
+			AtmosphereColor:  homePlanet.AtmosphereColor,
+		},
+	)
+	generatePlanetTerrain(homeSibling1PlanetEnt, GeneratePlanetTerrainParams{})
+	generateResources(GenerateResourcesParams{
+		TypeName: "rock_medium",
+		Planet:   homeSibling1PlanetEnt,
+		FrequencyBands: []FrequencyBand{
+			{Frequency: 60, Amplitude: 0.5},
+			{Frequency: 3, Amplitude: 0.4},
+		},
+		Exponent: 1,
+		Thinning: 0.015,
+	})
+	generateResources(GenerateResourcesParams{
+		TypeName: "fungus_tiny",
+		Planet:   homeSibling1PlanetEnt,
+		FrequencyBands: []FrequencyBand{
+			{Frequency: 80, Amplitude: 0.5},
+			{Frequency: 16, Amplitude: 0.5},
+		},
+		Thinning: 0.6,
+	})
+	generateResources(GenerateResourcesParams{
+		TypeName: "sprout_tiny",
+		Planet:   homeSibling1PlanetEnt,
+		FrequencyBands: []FrequencyBand{
+			{Frequency: 80, Amplitude: 0.5},
+			{Frequency: 16, Amplitude: 0.5},
+		},
+		Exponent: 2,
+	})
+
+	// Fungal planet sibling 2 (very small)
+	homeSibling2PlanetPos := Vec2{80, 53}
+	homeSibling2PlanetRadius := 0.1 * homePlanetRadius
+	homeSibling2PlanetEnt := CreateEntity(
+		Layout{
+			Pos: homeSibling2PlanetPos,
+		},
+		Planet{
+			BaseRadius:       homeSibling2PlanetRadius,
+			AtmosphereRadius: 1.5 * homeSibling2PlanetRadius,
+			InnerColor:       homePlanet.InnerColor,
+			BitsColor:        homePlanet.BitsColor,
+			AtmosphereColor:  homePlanet.AtmosphereColor,
+		},
+	)
+	generatePlanetTerrain(homeSibling2PlanetEnt, GeneratePlanetTerrainParams{})
+	generateResources(GenerateResourcesParams{
+		TypeName: "fungus_tiny",
+		Planet:   homeSibling2PlanetEnt,
+		FrequencyBands: []FrequencyBand{
+			{Frequency: 80, Amplitude: 0.5},
+			{Frequency: 16, Amplitude: 0.5},
+		},
+		Thinning: 0.6,
+	})
+	generateResources(GenerateResourcesParams{
+		TypeName: "sprout_tiny",
+		Planet:   homeSibling2PlanetEnt,
+		FrequencyBands: []FrequencyBand{
+			{Frequency: 80, Amplitude: 0.5},
+			{Frequency: 16, Amplitude: 0.5},
+		},
+		Exponent: 2,
+		Thinning: 0.8,
+	})
+
+	// Fungal planet antiplants
+	antiplantResourceTypeId := resourceTypeIdForName("antiplant")
+	createResource(
+		antiplantResourceTypeId,
+		Vec2{-42.84, -21.56},
+		-0.7,
+		unitRandom() < 0.5,
+	)
+	createResource(
+		antiplantResourceTypeId,
+		Vec2{118.2, 18.42},
+		1.35,
+		unitRandom() < 0.5,
+	)
+
+	// Ending planet
+	endingPlanetPos := Vec2{0, -200}
+	endingPlanetRadius := 0.8 * homePlanetRadius
+	endingPlanetEnt := CreateEntity(
+		Layout{
+			Pos: endingPlanetPos,
+		},
+		Planet{
+			BaseRadius:       endingPlanetRadius,
+			AtmosphereRadius: 1.5 * endingPlanetRadius,
+			InnerColor:       rl.Color{0x24, 0x15, 0x27, 0xff},
+			BitsColor:        rl.Color{0x7a, 0x36, 0x7b, 0xff},
+			AtmosphereColor:  rl.Color{0x10, 0x14, 0x1f, 0xff},
+		},
+		ArrowTarget{},
+	)
+	generatePlanetTerrain(endingPlanetEnt, GeneratePlanetTerrainParams{
+		FrequencyBands: []FrequencyBand{
+			{Frequency: 0.003, Amplitude: 0.28 * endingPlanetRadius},
+			{Frequency: 0.012, Amplitude: 0.095 * endingPlanetRadius},
+			{Frequency: 0.055, Amplitude: 0.020 * endingPlanetRadius},
+			{Frequency: 0.102, Amplitude: 0.012 * endingPlanetRadius},
+		},
+	})
+	generateResources(GenerateResourcesParams{
+		TypeName: "rock_large",
+		Planet:   endingPlanetEnt,
+		FrequencyBands: []FrequencyBand{
+			{Frequency: 30, Amplitude: 0.5},
+			{Frequency: 5, Amplitude: 0.2},
+		},
+		Exponent: 2,
+		Thinning: 0.001,
+	})
+	generateResources(GenerateResourcesParams{
+		TypeName: "rock_medium",
+		Planet:   endingPlanetEnt,
+		FrequencyBands: []FrequencyBand{
+			{Frequency: 60, Amplitude: 0.5},
+			{Frequency: 3, Amplitude: 0.4},
+		},
+		Exponent: 3,
+		Thinning: 0.02,
+	})
+	generateResources(GenerateResourcesParams{
+		TypeName: "antiplant",
+		Planet:   endingPlanetEnt,
+		FrequencyBands: []FrequencyBand{
+			{Frequency: 60, Amplitude: 0.5},
+			{Frequency: 3, Amplitude: 0.4},
+		},
+		Exponent: 1,
+		Thinning: 0.015,
+	})
+	transmissionTowerResourceTypeId := resourceTypeIdForName("transmission_tower")
+	transmissionTowerEnt := createResource(
+		transmissionTowerResourceTypeId,
+		Vec2{-9.77, -251.381},
+		-0.21,
+		false,
+	)
+	AddComponent(transmissionTowerEnt, TransmissionTower{})
+
+	// Player
+	//playerPos := Vec2{-9.77, -251.381 - 8} // At transmission tower!
+	playerPos := Vec2{-26.66, 82.36}
+	playerRot := -2.723
+	playerPolySize := playerSize.Subtract(Vec2{2 * planetSegmentThickness, 2.14 * planetSegmentThickness})
+	playerEnt := CreateEntity(
+		Layout{
+			Pos: playerPos,
+			Rot: playerRot,
+		},
+		Velocity{},
+		Up{},
+		Gravity{},
+		CollisionShape{
+			Verts: []Vec2{
+				{-0.5 * playerPolySize.X, -0.5 * playerPolySize.Y},
+				{0.5 * playerPolySize.X, -0.5 * playerPolySize.Y},
+				{0.5 * playerPolySize.X, 0.5 * playerPolySize.Y},
+				{-0.5 * playerPolySize.X, 0.5 * playerPolySize.Y},
+			},
+		},
+		Player{
+			CameraPos:       playerPos,
+			CameraRot:       playerRot,
+			TimeToSupernova: 3 * 60,
+			//TimeToSupernova: 3,
+		},
+	)
+	edit.Camera().Target = playerPos
+	player := GetComponent[Player](playerEnt)
+	player.ElementAmounts[CarbonElement] = 3000
+	player.ElementAmounts[SiliconElement] = 3000
+	player.ElementAmounts[FuelElement] = 3000
+	player.ElementAmounts[AntimatterElement] = 3000
+
+	if editAllowed {
+		edit.SaveSnapshot("initialize scene")
+	}
+}
+
+var menuActive = false
+
+func initMenuScene() {
+	menuActive = true
+
+	// Menu planet
+	menuPlanetPos := Vec2{0, 35}
+	menuPlanetRadius := 30.0
+	menuPlanetEnt := CreateEntity(
+		Layout{
+			Pos: menuPlanetPos,
+		},
+		Planet{
+			BaseRadius:       menuPlanetRadius,
+			AtmosphereRadius: 1.5 * menuPlanetRadius,
+			InnerColor:       rl.Color{0x15, 0x1d, 0x28, 0xff},
+			BitsColor:        rl.Color{0x4d, 0x2b, 0x32, 0xff},
+			AtmosphereColor:  rl.Color{0x10, 0x14, 0x1f, 0xff},
+		},
+	)
+	generatePlanetTerrain(menuPlanetEnt, GeneratePlanetTerrainParams{})
+	generateResources(GenerateResourcesParams{
+		TypeName: "rock_large",
+		Planet:   menuPlanetEnt,
+		FrequencyBands: []FrequencyBand{
+			{Frequency: 60, Amplitude: 0.5},
+			{Frequency: 3, Amplitude: 0.2},
+		},
+		Exponent: 1,
+		Thinning: 0.001,
+	})
+	generateResources(GenerateResourcesParams{
+		TypeName: "rock_medium",
+		Planet:   menuPlanetEnt,
+		FrequencyBands: []FrequencyBand{
+			{Frequency: 60, Amplitude: 0.5},
+			{Frequency: 3, Amplitude: 0.4},
+		},
+		Exponent: 1,
+		Thinning: 0.015,
+	})
+	generateResources(GenerateResourcesParams{
+		TypeName: "fungus_tiny",
+		Planet:   menuPlanetEnt,
+		FrequencyBands: []FrequencyBand{
+			{Frequency: 80, Amplitude: 0.5},
+			{Frequency: 16, Amplitude: 0.5},
+		},
+		Thinning: 0.6,
+	})
+	generateResources(GenerateResourcesParams{
+		TypeName: "sprout_tiny",
+		Planet:   menuPlanetEnt,
+		FrequencyBands: []FrequencyBand{
+			{Frequency: 80, Amplitude: 0.5},
+			{Frequency: 16, Amplitude: 0.5},
+		},
+		Exponent: 2,
+	})
+
+	// Play music
+	rl.PlayMusicStream(music1)
+}
+
 func initGame() {
 	rl.HideCursor()
-
-	// Initialize random seed
-	rl.SetRandomSeed(1024)
 
 	// Initialize element and resource textures
 	for _, elementType := range elementTypes {
@@ -237,273 +568,14 @@ func initGame() {
 		}
 	}
 
-	// Scene
-	if !edit.LoadSession() {
-		// Fungal planet
-		homePlanetPos := Vec2{0, 24}
-		homePlanetRadius := 64.0
-		homePlanetEnt := CreateEntity(
-			Layout{
-				Pos: homePlanetPos,
-			},
-			Planet{
-				BaseRadius:       homePlanetRadius,
-				AtmosphereRadius: 1.5 * homePlanetRadius,
-				InnerColor:       rl.Color{0x15, 0x1d, 0x28, 0xff},
-				BitsColor:        rl.Color{0x4d, 0x2b, 0x32, 0xff},
-				AtmosphereColor:  rl.Color{0x10, 0x14, 0x1f, 0xff},
-			},
-		)
-		generatePlanetTerrain(homePlanetEnt, GeneratePlanetTerrainParams{})
-		homePlanet := GetComponent[Planet](homePlanetEnt)
-		generateResources(GenerateResourcesParams{
-			TypeName: "rock_large",
-			Planet:   homePlanetEnt,
-			FrequencyBands: []FrequencyBand{
-				{Frequency: 60, Amplitude: 0.5},
-				{Frequency: 3, Amplitude: 0.2},
-			},
-			Exponent: 1,
-			Thinning: 0.001,
-		})
-		generateResources(GenerateResourcesParams{
-			TypeName: "rock_medium",
-			Planet:   homePlanetEnt,
-			FrequencyBands: []FrequencyBand{
-				{Frequency: 60, Amplitude: 0.5},
-				{Frequency: 3, Amplitude: 0.4},
-			},
-			Exponent: 1,
-			Thinning: 0.015,
-		})
-		generateResources(GenerateResourcesParams{
-			TypeName: "fungus_giant",
-			Planet:   homePlanetEnt,
-			FrequencyBands: []FrequencyBand{
-				{Frequency: 80, Amplitude: 0.5},
-				{Frequency: 16, Amplitude: 0.5},
-			},
-			Exponent: 1,
-			Thinning: 0.02,
-		})
-		generateResources(GenerateResourcesParams{
-			TypeName: "fungus_tiny",
-			Planet:   homePlanetEnt,
-			FrequencyBands: []FrequencyBand{
-				{Frequency: 80, Amplitude: 0.5},
-				{Frequency: 16, Amplitude: 0.5},
-			},
-			Thinning: 0.6,
-		})
-		generateResources(GenerateResourcesParams{
-			TypeName: "sprout_tiny",
-			Planet:   homePlanetEnt,
-			FrequencyBands: []FrequencyBand{
-				{Frequency: 80, Amplitude: 0.5},
-				{Frequency: 16, Amplitude: 0.5},
-			},
-			Exponent: 2,
-		})
-
-		// Fungal planet sibling 1 (medium size)
-		homeSibling1PlanetPos := Vec2{100, 24}
-		homeSibling1PlanetRadius := 0.3 * homePlanetRadius
-		homeSibling1PlanetEnt := CreateEntity(
-			Layout{
-				Pos: homeSibling1PlanetPos,
-			},
-			Planet{
-				BaseRadius:       homeSibling1PlanetRadius,
-				AtmosphereRadius: 1.5 * homeSibling1PlanetRadius,
-				InnerColor:       homePlanet.InnerColor,
-				BitsColor:        homePlanet.BitsColor,
-				AtmosphereColor:  homePlanet.AtmosphereColor,
-			},
-		)
-		generatePlanetTerrain(homeSibling1PlanetEnt, GeneratePlanetTerrainParams{})
-		generateResources(GenerateResourcesParams{
-			TypeName: "rock_medium",
-			Planet:   homeSibling1PlanetEnt,
-			FrequencyBands: []FrequencyBand{
-				{Frequency: 60, Amplitude: 0.5},
-				{Frequency: 3, Amplitude: 0.4},
-			},
-			Exponent: 1,
-			Thinning: 0.015,
-		})
-		generateResources(GenerateResourcesParams{
-			TypeName: "fungus_tiny",
-			Planet:   homeSibling1PlanetEnt,
-			FrequencyBands: []FrequencyBand{
-				{Frequency: 80, Amplitude: 0.5},
-				{Frequency: 16, Amplitude: 0.5},
-			},
-			Thinning: 0.6,
-		})
-		generateResources(GenerateResourcesParams{
-			TypeName: "sprout_tiny",
-			Planet:   homeSibling1PlanetEnt,
-			FrequencyBands: []FrequencyBand{
-				{Frequency: 80, Amplitude: 0.5},
-				{Frequency: 16, Amplitude: 0.5},
-			},
-			Exponent: 2,
-		})
-
-		// Fungal planet sibling 2 (very small)
-		homeSibling2PlanetPos := Vec2{80, 53}
-		homeSibling2PlanetRadius := 0.1 * homePlanetRadius
-		homeSibling2PlanetEnt := CreateEntity(
-			Layout{
-				Pos: homeSibling2PlanetPos,
-			},
-			Planet{
-				BaseRadius:       homeSibling2PlanetRadius,
-				AtmosphereRadius: 1.5 * homeSibling2PlanetRadius,
-				InnerColor:       homePlanet.InnerColor,
-				BitsColor:        homePlanet.BitsColor,
-				AtmosphereColor:  homePlanet.AtmosphereColor,
-			},
-		)
-		generatePlanetTerrain(homeSibling2PlanetEnt, GeneratePlanetTerrainParams{})
-		generateResources(GenerateResourcesParams{
-			TypeName: "fungus_tiny",
-			Planet:   homeSibling2PlanetEnt,
-			FrequencyBands: []FrequencyBand{
-				{Frequency: 80, Amplitude: 0.5},
-				{Frequency: 16, Amplitude: 0.5},
-			},
-			Thinning: 0.6,
-		})
-		generateResources(GenerateResourcesParams{
-			TypeName: "sprout_tiny",
-			Planet:   homeSibling2PlanetEnt,
-			FrequencyBands: []FrequencyBand{
-				{Frequency: 80, Amplitude: 0.5},
-				{Frequency: 16, Amplitude: 0.5},
-			},
-			Exponent: 2,
-			Thinning: 0.8,
-		})
-
-		// Fungal planet antiplants
-		antiplantResourceTypeId := resourceTypeIdForName("antiplant")
-		createResource(
-			antiplantResourceTypeId,
-			Vec2{-42.84, -21.56},
-			-0.7,
-			unitRandom() < 0.5,
-		)
-		createResource(
-			antiplantResourceTypeId,
-			Vec2{118.2, 18.42},
-			1.35,
-			unitRandom() < 0.5,
-		)
-
-		// Ending planet
-		endingPlanetPos := Vec2{0, -200}
-		endingPlanetRadius := 0.8 * homePlanetRadius
-		endingPlanetEnt := CreateEntity(
-			Layout{
-				Pos: endingPlanetPos,
-			},
-			Planet{
-				BaseRadius:       endingPlanetRadius,
-				AtmosphereRadius: 1.5 * endingPlanetRadius,
-				InnerColor:       rl.Color{0x24, 0x15, 0x27, 0xff},
-				BitsColor:        rl.Color{0x7a, 0x36, 0x7b, 0xff},
-				AtmosphereColor:  rl.Color{0x10, 0x14, 0x1f, 0xff},
-			},
-			ArrowTarget{},
-		)
-		generatePlanetTerrain(endingPlanetEnt, GeneratePlanetTerrainParams{
-			FrequencyBands: []FrequencyBand{
-				{Frequency: 0.003, Amplitude: 0.28 * endingPlanetRadius},
-				{Frequency: 0.012, Amplitude: 0.095 * endingPlanetRadius},
-				{Frequency: 0.055, Amplitude: 0.020 * endingPlanetRadius},
-				{Frequency: 0.102, Amplitude: 0.012 * endingPlanetRadius},
-			},
-		})
-		generateResources(GenerateResourcesParams{
-			TypeName: "rock_large",
-			Planet:   endingPlanetEnt,
-			FrequencyBands: []FrequencyBand{
-				{Frequency: 30, Amplitude: 0.5},
-				{Frequency: 5, Amplitude: 0.2},
-			},
-			Exponent: 2,
-			Thinning: 0.001,
-		})
-		generateResources(GenerateResourcesParams{
-			TypeName: "rock_medium",
-			Planet:   endingPlanetEnt,
-			FrequencyBands: []FrequencyBand{
-				{Frequency: 60, Amplitude: 0.5},
-				{Frequency: 3, Amplitude: 0.4},
-			},
-			Exponent: 3,
-			Thinning: 0.02,
-		})
-		generateResources(GenerateResourcesParams{
-			TypeName: "antiplant",
-			Planet:   endingPlanetEnt,
-			FrequencyBands: []FrequencyBand{
-				{Frequency: 60, Amplitude: 0.5},
-				{Frequency: 3, Amplitude: 0.4},
-			},
-			Exponent: 1,
-			Thinning: 0.015,
-		})
-		transmissionTowerResourceTypeId := resourceTypeIdForName("transmission_tower")
-		transmissionTowerEnt := createResource(
-			transmissionTowerResourceTypeId,
-			Vec2{-9.77, -251.381},
-			-0.21,
-			false,
-		)
-		AddComponent(transmissionTowerEnt, TransmissionTower{})
-
-		// Player
-		//playerPos := Vec2{-9.77, -251.381 - 8} // At transmission tower!
-		playerPos := Vec2{-26.66, 82.36}
-		playerRot := -2.723
-		playerPolySize := playerSize.Subtract(Vec2{2 * planetSegmentThickness, 2.14 * planetSegmentThickness})
-		playerEnt := CreateEntity(
-			Layout{
-				Pos: playerPos,
-				Rot: playerRot,
-			},
-			Velocity{},
-			Up{},
-			Gravity{},
-			CollisionShape{
-				Verts: []Vec2{
-					{-0.5 * playerPolySize.X, -0.5 * playerPolySize.Y},
-					{0.5 * playerPolySize.X, -0.5 * playerPolySize.Y},
-					{0.5 * playerPolySize.X, 0.5 * playerPolySize.Y},
-					{-0.5 * playerPolySize.X, 0.5 * playerPolySize.Y},
-				},
-			},
-			Player{
-				CameraPos:       playerPos,
-				CameraRot:       playerRot,
-				TimeToSupernova: 3 * 60,
-				//TimeToSupernova: 3,
-			},
-		)
-		edit.Camera().Target = playerPos
-		player := GetComponent[Player](playerEnt)
-		player.ElementAmounts[CarbonElement] = 3000
-		player.ElementAmounts[SiliconElement] = 3000
-		player.ElementAmounts[FuelElement] = 3000
-		player.ElementAmounts[AntimatterElement] = 3000
-
-		edit.SaveSnapshot("initialize scene")
+	// Edit session
+	if editAllowed && edit.LoadSession() {
+		return
 	}
 
-	// Play music
-	//rl.PlayMusicStream(music2)
+	// Enter menu!
+	initMenuScene()
+	//initGameplayScene()
 }
 
 //
@@ -513,6 +585,14 @@ func initGame() {
 func updateGame(dt float64) {
 	gameTime += dt
 	deltaTime = dt
+
+	// Menu -> gameplay transition
+	if menuActive {
+		if rl.IsKeyPressed(rl.KEY_ENTER) {
+			menuActive = false
+			initGameplayScene()
+		}
+	}
 
 	// Update camera zoom
 	Each(func(ent Entity, player *Player) {
@@ -1395,7 +1475,7 @@ func drawGame() {
 				scale = 1 + Pow(Max(0, 0.35*(stretch-1)), 2)
 
 				rl.PushMatrix()
-				rl.Scalef(Pow(stretch-0.8, 4), 0.4, 1)
+				rl.Scalef(Pow(stretch-1, 4), 0.4, 1)
 				rl.DrawTextureEx(primaryStarTexture, texSize.Scale(-0.5), 0, 2*spriteScale, rl.White)
 				rl.PopMatrix()
 			}
