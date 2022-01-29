@@ -1550,6 +1550,7 @@ var globalHintMessages []GlobalHintMessage
 
 var titleTexture = rl.LoadTexture(getAssetPath("packet_lost_title.png"))
 var playButtonTexture = rl.LoadTexture(getAssetPath("play_button.png"))
+var creditsTexture = rl.LoadTexture(getAssetPath("credits.png"))
 
 var screenTexture = rl.LoadRenderTexture(rl.GetScreenWidth(), rl.GetScreenHeight())
 
@@ -2222,6 +2223,26 @@ func drawGame() {
 				}
 			}
 			rl.DrawTexturePro(playButtonTexture, texSource, texDest, Vec2{0, 0}, 0, rl.White)
+		}
+
+		// Credits
+		{
+			texWidth := float64(creditsTexture.Width)
+			texHeight := float64(creditsTexture.Height)
+
+			texSource := rl.Rectangle{
+				X:      0,
+				Y:      0,
+				Width:  texWidth,
+				Height: texHeight,
+			}
+			texDest := rl.Rectangle{
+				Width:  texWidth,
+				Height: texHeight,
+			}
+			texDest.X = 0.5 * (screenSize.X - texDest.Width)
+			texDest.Y = 0.5*(screenSize.Y-texDest.Height) + 3.5*texDest.Height
+			rl.DrawTexturePro(creditsTexture, texSource, texDest, Vec2{0, 0}, 0, rl.White)
 		}
 
 		rl.PopMatrix()
