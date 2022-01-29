@@ -35,7 +35,7 @@ var playerHorizontalControlsAccel = 17.0
 var playerMinimumHorizontalSpeedForFriction = 12.0
 var playerJumpCooldown = 0.1
 
-var playerLiftoffFuelRequired = 40
+var playerLiftoffFuelRequired = 30
 var playerFlyingLiftoffInitialAccel = 3.2
 var playerFlyingLiftoffJerk = 5.0
 var playerFlyingMaxAccel = 4.0
@@ -64,6 +64,7 @@ var transmissionTowerSiliconRequired = 20
 var musicFadeSpeed = 0.3
 
 var controlsUsed = false
+var buildUIOpened = false
 
 //
 // Sounds
@@ -518,10 +519,10 @@ func initGameplayScene() {
 	edit.Camera().Target = playerPos
 	player := GetComponent[Player](playerEnt)
 	player.ElementAmounts[CarbonElement] = 0
-	player.ElementAmounts[CarbonElement] = 3000
-	player.ElementAmounts[SiliconElement] = 3000
-	player.ElementAmounts[FuelElement] = 3000
-	player.ElementAmounts[AntimatterElement] = 3000
+	//player.ElementAmounts[CarbonElement] = 3000
+	//player.ElementAmounts[SiliconElement] = 3000
+	//player.ElementAmounts[FuelElement] = 3000
+	//player.ElementAmounts[AntimatterElement] = 3000
 
 	if editAllowed {
 		edit.SaveSnapshot("initialize scene")
@@ -650,6 +651,23 @@ func updateGame(dt float64) {
 		rotDelta := rotSpeed * deltaTime
 		gameCamera.Target = gameCamera.Target.Rotate(rotDelta)
 		gameCamera.Rotation -= rotDelta * 180 / Pi
+	}
+
+	// Hint about build menu if have resources
+	if !buildUIOpened {
+		showHint := false
+		Each(func(ent Entity, player *Player) {
+			for _, amount := range player.ElementAmounts {
+				if amount > 0 {
+					showHint = true
+				}
+			}
+		})
+		if showHint {
+			globalHintMessages = []GlobalHintMessage{
+				{Message: "right mouse button: build menu"},
+			}
+		}
 	}
 
 	// Update camera zoom
@@ -1151,6 +1169,7 @@ func updateGame(dt float64) {
 		if rl.IsMouseButtonPressed(rl.MOUSE_BUTTON_RIGHT) {
 			player.BuildUIEnabled = !player.BuildUIEnabled
 			if player.BuildUIEnabled {
+				buildUIOpened = true
 				player.BuildUIPos = rl.GetScreenToWorld2D(rl.GetMousePosition(), gameCamera)
 			}
 		}
@@ -1276,14 +1295,17 @@ func updateGame(dt float64) {
 		Each(func(playerEnt Entity, player *Player, playerLay *Layout) {
 			minDist := 2.0
 			if !player.Flying && playerLay.Pos.Subtract(launchpadLay.Pos).LengthSqr() < minDist*minDist {
-				if player.ElementAmounts[FuelElement] >= playerLiftoffFuelRequired {
+				if launchpad.Used || player.ElementAmounts[FuelElement] >= playerLiftoffFuelRequired {
 					hint := AddComponent(launchpadEnt, InteractionHint{})
 					hint.Interactable = true
 					hint.Message = "launch"
 
 					if rl.IsKeyPressed(rl.KEY_E) {
 						// Consume fuel
-						player.ElementAmounts[FuelElement] -= playerLiftoffFuelRequired
+						if !launchpad.Used {
+							player.ElementAmounts[FuelElement] -= playerLiftoffFuelRequired
+						}
+						launchpad.Used = true
 
 						// Enter flying mode
 						RemoveComponent[Up](playerEnt)
@@ -2033,6 +2055,9 @@ func drawGame() {
 						globalHintMessages = []GlobalHintMessage{}
 						globalHintMessages = append(globalHintMessages, GlobalHintMessage{
 							Message: resourceType.Name,
+						})
+						globalHintMessages = append(globalHintMessages, GlobalHintMessage{
+							Message: resourceType.Description,
 						})
 						for _, amount := range resourceType.ElementAmounts {
 							color := rl.Color{0x81, 0x97, 0x96, 0xff}

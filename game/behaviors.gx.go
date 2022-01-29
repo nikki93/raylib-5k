@@ -193,6 +193,7 @@ type ResourceType struct {
 	DestructionSoundName   string
 	VerticalOffset         float64
 	VerticalOffsetVariance float64
+	Description            string
 
 	Damageable     bool `default:"true"`
 	Health         int  `default:"3"`
@@ -284,6 +285,7 @@ var resourceTypes = [...]ResourceType{
 		NumFrames:            2,
 		IconImageName:        "icon_building_refiner.png",
 		DestructionSoundName: "sfx_resource_destroy_rock.ogg",
+		Description:          "turns carbon into fuel",
 		Health:               50,
 		ElementAmounts: []ElementAmount{
 			{TypeId: SiliconElement, Amount: 40},
@@ -302,6 +304,7 @@ var resourceTypes = [...]ResourceType{
 		NumFrames:            2,
 		IconImageName:        "icon_building_launchpad.png",
 		DestructionSoundName: "sfx_resource_destroy_rock.ogg",
+		Description:          "launch to find transmission tower",
 		Health:               50,
 		ElementAmounts: []ElementAmount{
 			{TypeId: CarbonElement, Amount: 64},
@@ -362,6 +365,8 @@ type Refiner struct {
 
 type Launchpad struct {
 	Behavior
+
+	Used bool
 }
 
 type TransmissionTower struct {
