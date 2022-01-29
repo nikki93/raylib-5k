@@ -509,7 +509,7 @@ func initGameplayScene() {
 		Player{
 			CameraPos:       playerPos,
 			CameraRot:       playerRot,
-			TimeToSupernova: 10 * 60,
+			TimeToSupernova: 7.5 * 60,
 			//TimeToSupernova: 3,
 		},
 	)
