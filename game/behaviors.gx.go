@@ -123,8 +123,9 @@ type Player struct {
 
 	Liftoff bool
 
-	Flying      bool
-	FlyingAccel float64
+	Flying        bool
+	FlyingAccel   float64
+	FlyingFlameOn bool
 
 	Transmitting       bool
 	TransmitWidthScale float64 `default:"1"`

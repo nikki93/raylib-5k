@@ -518,10 +518,10 @@ func initGameplayScene() {
 	edit.Camera().Target = playerPos
 	player := GetComponent[Player](playerEnt)
 	player.ElementAmounts[CarbonElement] = 0
-	//player.ElementAmounts[CarbonElement] = 3000
-	//player.ElementAmounts[SiliconElement] = 3000
-	//player.ElementAmounts[FuelElement] = 3000
-	//player.ElementAmounts[AntimatterElement] = 3000
+	player.ElementAmounts[CarbonElement] = 3000
+	player.ElementAmounts[SiliconElement] = 3000
+	player.ElementAmounts[FuelElement] = 3000
+	player.ElementAmounts[AntimatterElement] = 3000
 
 	if editAllowed {
 		edit.SaveSnapshot("initialize scene")
@@ -751,8 +751,10 @@ func updateGame(dt float64) {
 			return
 		}
 		angVel := AddComponent(ent, AngularVelocity{})
+		player.FlyingFlameOn = false
 
 		if rl.IsKeyDown(rl.KEY_W) || rl.IsKeyDown(rl.KEY_UP) {
+			player.FlyingFlameOn = true
 			controlsUsed = true
 			playFlyingAccelerationSound = true
 			player.FlyingAccel += Min(playerFlyingLiftoffJerk*deltaTime, playerFlyingMaxAccel)
@@ -761,6 +763,7 @@ func updateGame(dt float64) {
 			// Acceleration / slowdown
 			forwardDir := Vec2{0, -1}.Rotate(lay.Rot)
 			if rl.IsKeyDown(rl.KEY_W) || rl.IsKeyDown(rl.KEY_UP) {
+				player.FlyingFlameOn = true
 				controlsUsed = true
 				playFlyingAccelerationSound = true
 				vel.Vel = vel.Vel.Add(forwardDir.Scale(player.FlyingAccel * deltaTime))
@@ -1531,6 +1534,13 @@ var bitsTextureBasic = rl.LoadTexture(getAssetPath("planet_surface_bits_basic.pn
 var playerTexture = rl.LoadTexture(getAssetPath("player.png"))
 var playerShipTexture = rl.LoadTexture(getAssetPath("player_ship.png"))
 
+var playerShipFlameTextures = []rl.Texture{
+	rl.LoadTexture(getAssetPath("player_ship_flame1.png")),
+	rl.LoadTexture(getAssetPath("player_ship_flame2.png")),
+	rl.LoadTexture(getAssetPath("player_ship_flame3.png")),
+	rl.LoadTexture(getAssetPath("player_ship_flame4.png")),
+}
+
 var beamSheetTexture = func() rl.Texture {
 	result := rl.LoadTexture(getAssetPath("player_beam.png"))
 	rl.SetTextureWrap(result, rl.TEXTURE_WRAP_REPEAT)
@@ -1803,6 +1813,22 @@ func drawGame() {
 		if player.Transmitting {
 			color = rl.Color{0x4f, 0x8f, 0xff, 0xff}
 			rl.BeginBlendMode(rl.BLEND_ADDITIVE)
+		}
+		if player.Flying && player.FlyingFlameOn {
+			flameSource := rl.Rectangle{
+				X:      0,
+				Y:      0,
+				Width:  float64(playerShipFlameTextures[0].Width),
+				Height: float64(playerShipFlameTextures[0].Height),
+			}
+			flameDest := rl.Rectangle{
+				X:      -0.5 * destWidth,
+				Y:      0.5*playerSize.Y - destHeight,
+				Width:  flameSource.Width * spriteScale,
+				Height: flameSource.Height * spriteScale,
+			}
+			frame := Floor(gameTime*9) % len(playerShipFlameTextures)
+			rl.DrawTexturePro(playerShipFlameTextures[frame], flameSource, flameDest, Vec2{0, 0}, 0, color)
 		}
 		rl.DrawTexturePro(tex, texSource, texDest, Vec2{0, 0}, 0, color)
 		if player.Transmitting {
