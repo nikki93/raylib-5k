@@ -1320,7 +1320,26 @@ type GlobalHintMessage struct {
 
 var globalHintMessages []GlobalHintMessage
 
+var screenTexture = rl.LoadRenderTexture(rl.GetScreenWidth(), rl.GetScreenHeight())
+
 func drawGame() {
+	// Screen render texture
+	screenWidth := rl.GetScreenWidth()
+	screenHeight := rl.GetScreenHeight()
+	if screenTexture.Texture.Width != screenWidth || screenTexture.Texture.Height != screenHeight {
+		rl.UnloadRenderTexture(screenTexture)
+		screenTexture = rl.LoadRenderTexture(screenWidth, screenHeight)
+	}
+	rl.BeginTextureMode(screenTexture)
+
+	// Camera
+	if edit.Enabled() {
+		rl.BeginMode2D(*edit.Camera())
+	} else {
+		rl.BeginMode2D(gameCamera)
+	}
+
+	// Background color
 	rl.ClearBackground(rl.Color{0x09, 0x0a, 0x14, 0xff})
 
 	// Planet atmospheres
@@ -1761,4 +1780,16 @@ func drawGame() {
 		reticleTopLeft := reticlePos.Subtract(Vec2{reticleWidth, reticleHeight}.Scale(0.5))
 		rl.DrawTextureEx(reticleTexture, reticleTopLeft, 0, reticleScale, rl.Color{0x81, 0x97, 0x96, 0xff})
 	}
+
+	rl.EndMode2D()
+
+	rl.EndTextureMode()
+
+	source := rl.Rectangle{
+		X:      0,
+		Y:      0,
+		Width:  float64(screenTexture.Texture.Width),
+		Height: -float64(screenTexture.Texture.Height),
+	}
+	rl.DrawTextureRec(screenTexture.Texture, source, Vec2{0, 0}, rl.White)
 }

@@ -85,12 +85,12 @@ void frame() {
 
     gameCamera.offset = 0.5 * windowSize;
     gameCamera.zoom = float(windowSize.x) / gameCameraSize.x;
-    rl::BeginMode2D(edit.enabled ? edit.camera : gameCamera);
     drawGame();
     if (edit.enabled) {
+      rl::BeginMode2D(edit.camera);
       drawEdit();
+      rl::EndMode2D();
     }
-    rl::EndMode2D();
 
     rl::DrawText(debugDisplayBuffer, 18, 18, 30, rl::WHITE);
   }
@@ -106,8 +106,8 @@ void frame() {
 //
 
 int main() {
-  //if (!loadEditSession()) {
-    initGame();
+  // if (!loadEditSession()) {
+  initGame();
   //}
 
 #ifdef __EMSCRIPTEN__
