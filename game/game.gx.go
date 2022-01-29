@@ -1147,8 +1147,8 @@ func updateGame(dt float64) {
 				player.CameraPos = player.CameraPos.Lerp(targetPos, smoothing)
 			}
 
-			// Smooth to rotation
-			{
+			// Smooth to rotation when not flying
+			if !player.Flying {
 				targetRot := lay.Rot
 				if up := GetComponent[Up](ent); up != nil {
 					targetRot = Atan2(up.Up.X, -up.Up.Y)
