@@ -625,7 +625,7 @@ func updateGame(dt float64) {
 
 	// Menu camera rotation
 	if menuActive {
-		rotSpeed := 0.02
+		rotSpeed := 0.03
 		rotDelta := rotSpeed * deltaTime
 		gameCamera.Target = gameCamera.Target.Rotate(rotDelta)
 		gameCamera.Rotation -= rotDelta * 180 / Pi
