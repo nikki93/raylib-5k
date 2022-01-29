@@ -211,7 +211,7 @@ func initGame() {
 
 	// Scene
 	if !edit.LoadSession() {
-		// Home planet
+		// Fungal planet
 		homePlanetPos := Vec2{0, 24}
 		homePlanetRadius := 64.0
 		homePlanetEnt := CreateEntity(
@@ -228,8 +228,6 @@ func initGame() {
 		)
 		generatePlanetTerrain(homePlanetEnt)
 		homePlanet := GetComponent[Planet](homePlanetEnt)
-
-		// Resources on home planet
 		generateResources(GenerateResourcesParams{
 			TypeName: "fungus_tiny",
 			Planet:   homePlanetEnt,
@@ -279,7 +277,7 @@ func initGame() {
 			Thinning: 0.015,
 		})
 
-		// Home sibling planets
+		// Fungal planet sibling 1 (medium size)
 		homeSibling1PlanetPos := Vec2{100, 24}
 		homeSibling1PlanetRadius := 0.3 * homePlanetRadius
 		homeSibling1PlanetEnt := CreateEntity(
@@ -295,6 +293,36 @@ func initGame() {
 			},
 		)
 		generatePlanetTerrain(homeSibling1PlanetEnt)
+		generateResources(GenerateResourcesParams{
+			TypeName: "fungus_tiny",
+			Planet:   homeSibling1PlanetEnt,
+			FrequencyBands: []FrequencyBand{
+				{Frequency: 80, Amplitude: 0.5},
+				{Frequency: 16, Amplitude: 0.5},
+			},
+			Thinning: 0.6,
+		})
+		generateResources(GenerateResourcesParams{
+			TypeName: "sprout_tiny",
+			Planet:   homeSibling1PlanetEnt,
+			FrequencyBands: []FrequencyBand{
+				{Frequency: 80, Amplitude: 0.5},
+				{Frequency: 16, Amplitude: 0.5},
+			},
+			Exponent: 2,
+		})
+		generateResources(GenerateResourcesParams{
+			TypeName: "rock_medium",
+			Planet:   homeSibling1PlanetEnt,
+			FrequencyBands: []FrequencyBand{
+				{Frequency: 60, Amplitude: 0.5},
+				{Frequency: 3, Amplitude: 0.4},
+			},
+			Exponent: 1,
+			Thinning: 0.015,
+		})
+
+		// Fungal planet sibling 2 (very small)
 		homeSibling2PlanetPos := Vec2{80, 53}
 		homeSibling2PlanetRadius := 0.1 * homePlanetRadius
 		homeSibling2PlanetEnt := CreateEntity(
@@ -310,6 +338,25 @@ func initGame() {
 			},
 		)
 		generatePlanetTerrain(homeSibling2PlanetEnt)
+		generateResources(GenerateResourcesParams{
+			TypeName: "fungus_tiny",
+			Planet:   homeSibling2PlanetEnt,
+			FrequencyBands: []FrequencyBand{
+				{Frequency: 80, Amplitude: 0.5},
+				{Frequency: 16, Amplitude: 0.5},
+			},
+			Thinning: 0.6,
+		})
+		generateResources(GenerateResourcesParams{
+			TypeName: "sprout_tiny",
+			Planet:   homeSibling2PlanetEnt,
+			FrequencyBands: []FrequencyBand{
+				{Frequency: 80, Amplitude: 0.5},
+				{Frequency: 16, Amplitude: 0.5},
+			},
+			Exponent: 2,
+			Thinning: 0.8,
+		})
 
 		// Ending planet
 		endingPlanetPos := Vec2{0, -200}
