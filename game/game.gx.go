@@ -531,8 +531,16 @@ func updateGame(dt float64) {
 		if up.grounded {
 			player.JumpsRemaining = 2
 		}
+	})
 
-		// TODO: Flying -- stop flying?
+	// Eject flying if hit ground
+	Each(func(ent Entity, player *Player, collisionNormals *CollisionNormals) {
+		if player.Flying && len(collisionNormals.Normals) != 0 {
+			player.Flying = false
+			AddComponent(ent, Up{})
+			RemoveComponent[Gravity](ent) // Bring back regular gravity
+			AddComponent(ent, Gravity{})
+		}
 	})
 
 	// Update auto-upright
