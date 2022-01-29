@@ -185,6 +185,7 @@ type ResourceType struct {
 	ImageName              string
 	NumFrames              int `default:"1"`
 	IconImageName          string
+	DestructionSoundName   string
 	VerticalOffset         float64
 	VerticalOffsetVariance float64
 
@@ -196,14 +197,16 @@ type ResourceType struct {
 
 	CollisionShapeVerts []Vec2
 
-	texture     rl.Texture
-	iconTexture rl.Texture
+	texture          rl.Texture
+	iconTexture      rl.Texture
+	destructionSound rl.Sound
 }
 
 var resourceTypes = [...]ResourceType{
 	{
 		Name:                   "fungus_giant",
 		ImageName:              "resource_fungus_giant.png",
+		DestructionSoundName:   "sfx_resource_destroy_plant.ogg",
 		VerticalOffset:         -0.8,
 		VerticalOffsetVariance: -0.2,
 		Health:                 15,
@@ -214,6 +217,7 @@ var resourceTypes = [...]ResourceType{
 	{
 		Name:                   "fungus_tiny",
 		ImageName:              "resource_fungus_tiny.png",
+		DestructionSoundName:   "sfx_resource_destroy_plant.ogg",
 		VerticalOffset:         -0.3,
 		VerticalOffsetVariance: -0.08,
 		Health:                 3,
@@ -224,6 +228,7 @@ var resourceTypes = [...]ResourceType{
 	{
 		Name:                   "sprout_tiny",
 		ImageName:              "resource_sprout_tiny.png",
+		DestructionSoundName:   "sfx_resource_destroy_plant.ogg",
 		VerticalOffset:         -0.3,
 		VerticalOffsetVariance: -0.08,
 		Health:                 3,
@@ -235,6 +240,7 @@ var resourceTypes = [...]ResourceType{
 	{
 		Name:                   "rock_large",
 		ImageName:              "resource_rock_large.png",
+		DestructionSoundName:   "sfx_resource_destroy_rock.ogg",
 		VerticalOffset:         -0.8,
 		VerticalOffsetVariance: -0.2,
 		Health:                 50,
@@ -245,6 +251,7 @@ var resourceTypes = [...]ResourceType{
 	{
 		Name:                   "rock_medium",
 		ImageName:              "resource_rock_medium.png",
+		DestructionSoundName:   "sfx_resource_destroy_rock.ogg",
 		VerticalOffset:         -0.4,
 		VerticalOffsetVariance: -0.2,
 		Health:                 20,
@@ -256,6 +263,7 @@ var resourceTypes = [...]ResourceType{
 	{
 		Name:                   "antiplant",
 		ImageName:              "resource_antiplant.png",
+		DestructionSoundName:   "sfx_resource_destroy_plant.ogg",
 		VerticalOffset:         -0.4,
 		VerticalOffsetVariance: -0.2,
 		Health:                 20,
@@ -266,11 +274,12 @@ var resourceTypes = [...]ResourceType{
 	},
 
 	{
-		Name:          "refiner",
-		ImageName:     "resource_building_refiner.png",
-		NumFrames:     2,
-		IconImageName: "icon_building_refiner.png",
-		Health:        50,
+		Name:                 "refiner",
+		ImageName:            "resource_building_refiner.png",
+		NumFrames:            2,
+		IconImageName:        "icon_building_refiner.png",
+		DestructionSoundName: "sfx_resource_destroy_rock.ogg",
+		Health:               50,
 		ElementAmounts: []ElementAmount{
 			{TypeId: SiliconElement, Amount: 100},
 		},
@@ -283,11 +292,12 @@ var resourceTypes = [...]ResourceType{
 		},
 	},
 	{
-		Name:          "launchpad",
-		ImageName:     "resource_building_launchpad.png",
-		NumFrames:     2,
-		IconImageName: "icon_building_launchpad.png",
-		Health:        50,
+		Name:                 "launchpad",
+		ImageName:            "resource_building_launchpad.png",
+		NumFrames:            2,
+		IconImageName:        "icon_building_launchpad.png",
+		DestructionSoundName: "sfx_resource_destroy_rock.ogg",
+		Health:               50,
 		ElementAmounts: []ElementAmount{
 			{TypeId: CarbonElement, Amount: 128},
 			{TypeId: SiliconElement, Amount: 256},

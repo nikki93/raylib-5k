@@ -565,7 +565,7 @@ func initMenuScene() {
 func initGame() {
 	rl.HideCursor()
 
-	// Initialize element and resource textures
+	// Initialize element and resource assets
 	for _, elementType := range elementTypes {
 		elementType.iconTexture = rl.LoadTexture(getAssetPath(elementType.IconImageName))
 	}
@@ -573,6 +573,10 @@ func initGame() {
 		resourceType.texture = rl.LoadTexture(getAssetPath(resourceType.ImageName))
 		if resourceType.IconImageName != "" {
 			resourceType.iconTexture = rl.LoadTexture(getAssetPath(resourceType.IconImageName))
+		}
+		if resourceType.DestructionSoundName != "" {
+			resourceType.iconTexture = rl.LoadTexture(getAssetPath(resourceType.IconImageName))
+			resourceType.destructionSound = rl.LoadSound(getAssetPath(resourceType.DestructionSoundName))
 		}
 	}
 
@@ -1020,6 +1024,7 @@ func updateGame(dt float64) {
 							// Destroy resource if it's out of health
 							if resource.Health == 0 {
 								DestroyEntity(hitResourceEnt)
+								rl.PlaySound(resourceType.destructionSound)
 							}
 
 							// Play damage sound
