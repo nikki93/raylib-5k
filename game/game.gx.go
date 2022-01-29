@@ -1283,11 +1283,12 @@ func drawGame() {
 			Width:  texWidth,
 			Height: texHeight,
 		}
+		destWidth := texWidth * spriteScale
 		destHeight := texHeight * spriteScale
 		texDest := rl.Rectangle{
-			X:      -0.5 * playerSize.X,
+			X:      -0.5 * destWidth,
 			Y:      0.5*playerSize.Y - destHeight,
-			Width:  playerSize.X,
+			Width:  destWidth,
 			Height: destHeight,
 		}
 		if !player.Flying && player.FlipH {
