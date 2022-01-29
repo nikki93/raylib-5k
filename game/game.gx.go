@@ -5,7 +5,6 @@ import (
 	. "github.com/nikki93/raylib-5k/core/entity"
 	. "github.com/nikki93/raylib-5k/core/geom"
 	"github.com/nikki93/raylib-5k/core/rl"
-	"github.com/nikki93/raylib-5k/core/str"
 )
 
 var gameCameraZoomTarget = 0.7
@@ -42,7 +41,6 @@ var playerFlyingAngAccel = 6.0
 var playerFlyingAngDecel = 16.0
 var playerFlyingMaxAngSpeed = 1.6
 
-var planetGravRadiusMultiplier = 1.38
 var planetSegmentThickness = 0.4
 
 var spriteScale = playerSize.X / float64(playerTexture.Width)
@@ -79,34 +77,23 @@ type FrequencyBand struct {
 	Frequency, Amplitude float64
 }
 
-func createPlanet(pos Vec2, radius float64) Entity {
-	ent := CreateEntity(
-		Layout{
-			Pos: pos,
-		},
-		Planet{
-			Radius: radius,
-		},
-	)
+func generatePlanetTerrain(ent Entity) {
 	planet := GetComponent[Planet](ent)
-	if planet == nil {
-		str.Print("planet generation failed?")
-	}
 
 	// Generation parameters
 	segmentLength := 1.5 * playerSize.X
-	resolution := 2 * Pi * radius / segmentLength
+	resolution := 2 * Pi * planet.Radius / segmentLength
 	frequencyBands := [...]FrequencyBand{
-		{Frequency: 0.003, Amplitude: 0.2 * radius},
-		{Frequency: 0.015, Amplitude: 0.015 * radius},
-		{Frequency: 0.060, Amplitude: 0.015 * radius},
+		{Frequency: 0.003, Amplitude: 0.2 * planet.Radius},
+		{Frequency: 0.015, Amplitude: 0.015 * planet.Radius},
+		{Frequency: 0.060, Amplitude: 0.015 * planet.Radius},
 	}
 
 	// Generate heights and vertices
 	angleStep := 2 * Pi / resolution
 	for angle := 0.0; angle < 2*Pi; angle += angleStep {
 		// Height
-		height := radius
+		height := planet.Radius
 		for _, band := range frequencyBands {
 			height += band.Amplitude * Noise1(resolution*band.Frequency*angle)
 		}
@@ -125,11 +112,9 @@ func createPlanet(pos Vec2, radius float64) Entity {
 			bit.FlipV = unitRandom() < 0.5
 		}
 	}
-
-	return ent
 }
 
-type CreateResourcesParams struct {
+type GenerateResourcesParams struct {
 	TypeName       string
 	TypeId         ResourceTypeId
 	Planet         Entity
@@ -139,7 +124,7 @@ type CreateResourcesParams struct {
 	Thinning       float64 `default:"1"`
 }
 
-func createResources(params CreateResourcesParams) {
+func generateResources(params GenerateResourcesParams) {
 	if params.TypeName != "" {
 		params.TypeId = resourceTypeIdForName(params.TypeName)
 	}
@@ -171,9 +156,7 @@ func createResources(params CreateResourcesParams) {
 			probability = Pow(probability, params.Exponent)
 			probability *= params.Thinning * 0.2
 
-			roll := unitRandom()
-
-			if roll < probability {
+			if unitRandom() < probability {
 				upDir := pos.Normalize()
 				dir := upDir.Lerp(edgeDir, 0.8)
 				rot := Atan2(dir.X, -dir.Y) + Pi/9*(unitRandom()-0.5)
@@ -230,7 +213,16 @@ func initGame() {
 		// Home planet
 		homePlanetPos := Vec2{0, 24}
 		homePlanetRadius := 64.0
-		homePlanet := createPlanet(homePlanetPos, homePlanetRadius)
+		homePlanet := CreateEntity(
+			Layout{
+				Pos: homePlanetPos,
+			},
+			Planet{
+				Radius:           homePlanetRadius,
+				AtmosphereRadius: 1.4 * homePlanetRadius,
+			},
+		)
+		generatePlanetTerrain(homePlanet)
 
 		// Player
 		playerPos := Vec2{0, homePlanetPos.Y - homePlanetRadius - 0.5*playerSize.Y - 5}
@@ -257,7 +249,7 @@ func initGame() {
 		edit.Camera().Target = playerPos
 
 		// Resources on home planet
-		createResources(CreateResourcesParams{
+		generateResources(GenerateResourcesParams{
 			TypeName: "fungus_tiny",
 			Planet:   homePlanet,
 			FrequencyBands: []FrequencyBand{
@@ -266,7 +258,7 @@ func initGame() {
 			},
 			Thinning: 0.6,
 		})
-		createResources(CreateResourcesParams{
+		generateResources(GenerateResourcesParams{
 			TypeName: "sprout_tiny",
 			Planet:   homePlanet,
 			FrequencyBands: []FrequencyBand{
@@ -275,7 +267,7 @@ func initGame() {
 			},
 			Exponent: 2,
 		})
-		createResources(CreateResourcesParams{
+		generateResources(GenerateResourcesParams{
 			TypeName: "fungus_giant",
 			Planet:   homePlanet,
 			FrequencyBands: []FrequencyBand{
@@ -285,7 +277,7 @@ func initGame() {
 			Exponent: 1,
 			Thinning: 0.02,
 		})
-		createResources(CreateResourcesParams{
+		generateResources(GenerateResourcesParams{
 			TypeName: "rock_large",
 			Planet:   homePlanet,
 			FrequencyBands: []FrequencyBand{
@@ -295,7 +287,7 @@ func initGame() {
 			Exponent: 1,
 			Thinning: 0.001,
 		})
-		createResources(CreateResourcesParams{
+		generateResources(GenerateResourcesParams{
 			TypeName: "rock_medium",
 			Planet:   homePlanet,
 			FrequencyBands: []FrequencyBand{
@@ -347,8 +339,7 @@ func updateGame(dt float64) {
 			delta := planetLay.Pos.Subtract(lay.Pos)
 			sqDist := delta.LengthSqr()
 			if minSqDist < 0 || sqDist < minSqDist {
-				gravRadius := planetGravRadiusMultiplier * planet.Radius
-				if sqDist < gravRadius*gravRadius {
+				if sqDist < planet.AtmosphereRadius*planet.AtmosphereRadius {
 					minSqDist = sqDist
 					minDelta = delta
 				}
@@ -455,10 +446,10 @@ func updateGame(dt float64) {
 	Each(func(ent Entity, grav *Gravity, vel *Velocity, lay *Layout) {
 		// Add to velocity
 		Each(func(ent Entity, planet *Planet, planetLay *Layout) {
+			// TODO: Falloff around atmosphere radius
 			delta := planetLay.Pos.Subtract(lay.Pos)
 			sqDist := delta.LengthSqr()
-			gravRadius := planetGravRadiusMultiplier * planet.Radius
-			if sqDist < gravRadius*gravRadius {
+			if sqDist < planet.AtmosphereRadius*planet.AtmosphereRadius {
 				dist := Sqrt(sqDist)
 				dir := delta.Scale(1 / dist)
 				vel.Vel = vel.Vel.Add(dir.Scale(grav.Strength * deltaTime))

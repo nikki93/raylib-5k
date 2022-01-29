@@ -50,7 +50,8 @@ type PlanetBits [numPlanetBitsPerSegment]PlanetBit
 type Planet struct {
 	Behavior
 
-	Radius float64
+	Radius           float64
+	AtmosphereRadius float64
 
 	Verts []Vec2
 	Bits  []PlanetBits
