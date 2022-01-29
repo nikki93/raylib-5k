@@ -34,12 +34,13 @@ var playerHorizontalControlsAccel = 17.0
 var playerMinimumHorizontalSpeedForFriction = 12.0
 var playerJumpCooldown = 0.1
 
-var playerFlyingLiftoffAccelAccel = 12.0
-var playerFlyingMaxAccel = 18.0
-var playerFlyingMaxSpeed = 20.0
+var playerFlyingLiftoffInitialAccel = 8.0
+var playerFlyingLiftoffJerk = 11.0
+var playerFlyingMaxAccel = 11.0
+var playerFlyingMaxSpeed = 16.0
 var playerFlyingAngAccel = 8.0
 var playerFlyingAngDecel = 20.0
-var playerFlyingMaxAngSpeed = 1.0
+var playerFlyingMaxAngSpeed = 2.0
 
 var planetGravRadiusMultiplier = 1.38
 var planetSegmentThickness = 0.4
@@ -408,45 +409,53 @@ func updateGame(dt float64) {
 	})
 
 	// Flying controls
-	Each(func(ent Entity, player *Player, vel *Velocity, lay *Layout) {
+	Each(func(ent Entity, player *Player, lay *Layout) {
 		if !player.Flying {
 			return
 		}
 		angVel := AddComponent(ent, AngularVelocity{})
 
-		// Acceleration / slowdown
-		forwardDir := Vec2{0, -1}.Rotate(lay.Rot)
 		if rl.IsKeyDown(rl.KEY_W) || rl.IsKeyDown(rl.KEY_UP) {
-			player.FlyingAccel += Min(playerFlyingLiftoffAccelAccel*deltaTime, playerFlyingMaxAccel)
-			vel.Vel = vel.Vel.Add(forwardDir.Scale(player.FlyingAccel * deltaTime))
+			player.FlyingAccel += Min(playerFlyingLiftoffJerk*deltaTime, playerFlyingMaxAccel)
 		}
-		if rl.IsKeyDown(rl.KEY_S) || rl.IsKeyDown(rl.KEY_DOWN) {
-			vel.Vel = vel.Vel.Add(forwardDir.Scale(-player.FlyingAccel * deltaTime))
-		}
+		if vel := GetComponent[Velocity](ent); vel != nil {
+			// Acceleration / slowdown
+			forwardDir := Vec2{0, -1}.Rotate(lay.Rot)
+			if rl.IsKeyDown(rl.KEY_W) || rl.IsKeyDown(rl.KEY_UP) {
+				vel.Vel = vel.Vel.Add(forwardDir.Scale(player.FlyingAccel * deltaTime))
+			}
+			if rl.IsKeyDown(rl.KEY_S) || rl.IsKeyDown(rl.KEY_DOWN) {
+				vel.Vel = vel.Vel.Add(forwardDir.Scale(-player.FlyingAccel * deltaTime))
+			}
+			if speed := vel.Vel.Length(); speed > playerFlyingMaxSpeed {
+				vel.Vel.Scale(playerFlyingMaxSpeed / speed)
+			}
 
-		// Velocity limits
-		if speed := vel.Vel.Length(); speed > playerFlyingMaxSpeed {
-			vel.Vel.Scale(playerFlyingMaxSpeed / speed)
-		}
+			// Turning
+			appliedTurning := false
+			if rl.IsKeyDown(rl.KEY_A) || rl.IsKeyDown(rl.KEY_LEFT) {
+				angVel.AngVel -= playerFlyingAngAccel * deltaTime
+				appliedTurning = true
+			}
+			if rl.IsKeyDown(rl.KEY_D) || rl.IsKeyDown(rl.KEY_RIGHT) {
+				angVel.AngVel += playerFlyingAngAccel * deltaTime
+				appliedTurning = true
+			}
 
-		// Turning
-		appliedTurning := false
-		if rl.IsKeyDown(rl.KEY_A) || rl.IsKeyDown(rl.KEY_LEFT) {
-			angVel.AngVel -= playerFlyingAngAccel * deltaTime
-			appliedTurning = true
+			// Angular velocity limits
+			angSpeed := Abs(angVel.AngVel)
+			if !appliedTurning {
+				angSpeed = Max(0, angSpeed-playerFlyingAngDecel*deltaTime)
+			}
+			angSpeed = Min(angSpeed, playerFlyingMaxAngSpeed)
+			angVel.AngVel = Sign(angVel.AngVel) * angSpeed
+		} else {
+			// Still in liftoff
+			grav := GetComponent[Gravity](ent)
+			if grav == nil || player.FlyingAccel >= 0.85*grav.Strength {
+				AddComponent(ent, Velocity{})
+			}
 		}
-		if rl.IsKeyDown(rl.KEY_D) || rl.IsKeyDown(rl.KEY_RIGHT) {
-			angVel.AngVel += playerFlyingAngAccel * deltaTime
-			appliedTurning = true
-		}
-
-		// Angular velocity limits
-		angSpeed := Abs(angVel.AngVel)
-		if !appliedTurning {
-			angSpeed = Max(0, angSpeed-playerFlyingAngDecel*deltaTime)
-		}
-		angSpeed = Min(angSpeed, playerFlyingMaxAngSpeed)
-		angVel.AngVel = Sign(angVel.AngVel) * angSpeed
 	})
 
 	// Gravity toward planets
@@ -889,9 +898,16 @@ func updateGame(dt float64) {
 						hint.Message = "launch"
 
 						if rl.IsKeyPressed(rl.KEY_E) {
+							// Enter flying mode
 							RemoveComponent[Up](playerEnt)
+							player.Liftoff = true
 							player.Flying = true
-							player.FlyingAccel = 0
+							player.FlyingAccel = playerFlyingLiftoffInitialAccel
+
+							// Snap to launchpad
+							playerLay.Pos = launchpadLay.Pos.Add(Vec2{0.21, -3}.Rotate(launchpadLay.Rot))
+							playerLay.Rot = launchpadLay.Rot
+							RemoveComponent[Velocity](playerEnt)
 						}
 					}
 				} else {
@@ -906,14 +922,18 @@ func updateGame(dt float64) {
 	})
 
 	// Update camera
-	Each(func(ent Entity, player *Player, lay *Layout, vel *Velocity) {
+	Each(func(ent Entity, player *Player, lay *Layout) {
 		upOffset := Vec2{0, 0}
 		velOffset := Vec2{0, 0}
 		if !player.Flying {
 			// Offset look-at by smoothed velocity and up direction when not flying
 			rate := 160.0
 			smoothing := 1 - Pow(2, -rate*deltaTime)
-			player.SmoothedVel = player.SmoothedVel.Lerp(vel.Vel, smoothing)
+			currVel := Vec2{0, 0}
+			if vel := GetComponent[Velocity](ent); vel != nil {
+				currVel = vel.Vel
+			}
+			player.SmoothedVel = player.SmoothedVel.Lerp(currVel, smoothing)
 			velOffset = player.SmoothedVel.Scale(0.4 * gameCameraZoom)
 			if up := GetComponent[Up](ent); up != nil {
 				upOffset = up.Up.Scale(0.7)
