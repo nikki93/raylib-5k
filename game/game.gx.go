@@ -959,6 +959,9 @@ func updateGame(dt float64) {
 
 	// Update beam
 	Each(func(playerEnt Entity, player *Player, lay *Layout) {
+		if player.TimeToSupernova <= 0 {
+			return
+		}
 		if !player.Flying && rl.IsMouseButtonDown(rl.MOUSE_BUTTON_LEFT) && !player.BuildUIMouseOver {
 			start := lay.Pos
 			reticlePos := rl.GetScreenToWorld2D(rl.GetMousePosition(), gameCamera)
