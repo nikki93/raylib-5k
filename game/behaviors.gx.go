@@ -128,6 +128,8 @@ type Player struct {
 
 	Transmitting       bool
 	TransmitWidthScale float64 `default:"1"`
+
+	TimeToSupernova float64
 }
 
 //

@@ -486,8 +486,9 @@ func initGame() {
 				},
 			},
 			Player{
-				CameraPos: playerPos,
-				CameraRot: playerRot,
+				CameraPos:       playerPos,
+				CameraRot:       playerRot,
+				TimeToSupernova: 3 * 60,
 			},
 		)
 		edit.Camera().Target = playerPos
@@ -1194,6 +1195,14 @@ func updateGame(dt float64) {
 		}
 	})
 
+	// Update supernova timer
+	Each(func(ent Entity, player *Player) {
+		player.TimeToSupernova -= deltaTime
+		if player.TimeToSupernova <= 0 {
+			// TODO: Lose!
+		}
+	})
+
 	// Update camera
 	Each(func(ent Entity, player *Player, lay *Layout) {
 		upOffset := Vec2{0, 0}
@@ -1209,7 +1218,7 @@ func updateGame(dt float64) {
 			player.SmoothedVel = player.SmoothedVel.Lerp(currVel, smoothing)
 			velOffset = player.SmoothedVel.Scale(0.4 * gameCameraZoom)
 			if up := GetComponent[Up](ent); up != nil {
-				upOffset = up.Up.Scale(0.7)
+				upOffset = up.Up.Scale(0.9)
 				upVelOffset := up.Up.Scale(velOffset.DotProduct(up.Up))
 				velOffset = velOffset.Subtract(upVelOffset).Add(upVelOffset.Scale(0.1))
 			}
@@ -1676,20 +1685,25 @@ func drawGame() {
 			iconScreenMargin := 0.5 * iconSize
 			rl.Translatef(0, iconScreenMargin+1.5, 0)
 
+			totalSeconds := Floor(player.TimeToSupernova + 1)
+			displaySeconds := totalSeconds % 60
+			displayMinutes := totalSeconds / 60
+			text := rl.TextFormat("%02d:%02d", displayMinutes, displaySeconds)
+
 			//fontSize := iconSize
 			fontSize := 10.0 * 2
-			darkGray := rl.Color{0x39, 0x4a, 0x50, 0xff}
-			text := "01:49"
 			textSize := rl.MeasureTextEx(countdownFont, text, fontSize, 1.0)
+
+			color := rl.Color{0x39, 0x4a, 0x50, 0xff}
 			rl.DrawTextPro(
 				countdownFont,
-				"01:49",
+				text,
 				Vec2{-0.5 * textSize.X, 0},
 				Vec2{0, 0},
 				0,
 				fontSize,
 				1.0,
-				darkGray,
+				color,
 			)
 
 			rl.PopMatrix()
