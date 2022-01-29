@@ -259,7 +259,7 @@ var resourceTypes = [...]ResourceType{
 		Name:          "building_launchpad",
 		ImageName:     "resource_building_launchpad.png",
 		NumFrames:     2,
-		IconImageName: "icon_building_refiner.png",
+		IconImageName: "icon_building_launchpad.png",
 		Health:        50,
 		ElementAmounts: []ElementAmount{
 			{TypeId: CarbonElement, Amount: 128},
