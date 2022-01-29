@@ -1829,14 +1829,20 @@ func drawGame() {
 
 		// Inventory icons
 		{
+			screenSize := Vec2{408.0, 230.0}
+
 			rl.PushMatrix()
 			worldCameraTopLeft := rl.GetScreenToWorld2D(Vec2{0, 0}, gameCamera)
 			rl.Translatef(worldCameraTopLeft.X, worldCameraTopLeft.Y, 0)
 			rl.Rotatef(-gameCamera.Rotation, 0, 0, 1)
 			rl.Scalef(2*gameCameraZoom*spriteScale, 2*gameCameraZoom*spriteScale, 1)
 
+			mousePos := rl.GetMousePosition().
+				Divide(Vec2{float64(rl.GetScreenWidth()), float64(rl.GetScreenHeight())}).
+				Multiply(screenSize)
+
 			iconSize := float64(elementTypes[0].iconTexture.Width)
-			fontSize := 0.4 * iconSize
+			fontSize := 0.5 * iconSize
 			iconScreenMargin := 0.5 * iconSize
 			iconPos := Vec2{iconScreenMargin, iconScreenMargin}
 			for typeId, amount := range player.ElementAmounts {
@@ -1857,6 +1863,13 @@ func drawGame() {
 					1.0,
 					rl.Color{0x81, 0x97, 0x96, 0xff},
 				)
+
+				if mousePos.X >= iconPos.X && mousePos.Y >= iconPos.Y &&
+					mousePos.X <= iconPos.X+iconSize && mousePos.Y <= iconPos.Y+iconSize {
+					globalHintMessages = []GlobalHintMessage{
+						{Message: elementType.Name},
+					}
+				}
 
 				iconPos.X += 1.375 * iconSize
 			}
@@ -2038,7 +2051,7 @@ func drawGame() {
 		rl.Scalef(2*gameCameraZoom*spriteScale, 2*gameCameraZoom*spriteScale, 1)
 
 		iconSize := float64(elementTypes[0].iconTexture.Width) // Same as inventory HUD
-		fontSize := 0.4 * iconSize
+		fontSize := 0.5 * iconSize
 		iconScreenMargin := 0.5 * iconSize
 		rl.Translatef(-iconScreenMargin, iconScreenMargin, 0)
 
