@@ -469,7 +469,7 @@ func initGame() {
 				},
 			},
 			Player{
-				ElementAmounts: [NumElementTypes]int{3000, 3000, 3000, 3000},
+				//ElementAmounts: [NumElementTypes]int{3000, 3000, 3000, 3000},
 			},
 		)
 		edit.Camera().Target = playerPos
@@ -1192,6 +1192,9 @@ func updateGame(dt float64) {
 //gx:extern getAssetPath
 func getAssetPath(assetName string) string
 
+//gx:extern (const char *)
+func cString(s string) string
+
 var whiteTexture = func() rl.Texture {
 	image := rl.GenImageColor(1, 1, rl.Color{0xff, 0xff, 0xff, 0xff})
 	result := rl.LoadTextureFromImage(image)
@@ -1224,6 +1227,13 @@ var arrowTexture = rl.LoadTexture(getAssetPath("arrow.png"))
 var buildUIFrameTexture = rl.LoadTexture(getAssetPath("build_interface.png"))
 
 var interactionHintTexture = rl.LoadTexture(getAssetPath("interaction_hint.png"))
+
+type GlobalHintMessage struct {
+	Message string
+	Color   rl.Color `default:"{ 0x81, 0x97, 0x96, 0xff }"`
+}
+
+var globalHintMessages []GlobalHintMessage
 
 func drawGame() {
 	rl.ClearBackground(rl.Color{0x09, 0x0a, 0x14, 0xff})
@@ -1437,7 +1447,7 @@ func drawGame() {
 		rl.PopMatrix()
 	})
 
-	// HUD
+	// Player HUD
 	Each(func(ent Entity, player *Player, playerLay *Layout) {
 		// Inventory icons
 		{
@@ -1448,6 +1458,7 @@ func drawGame() {
 			rl.Scalef(2*gameCameraZoom*spriteScale, 2*gameCameraZoom*spriteScale, 1)
 
 			iconSize := float64(elementTypes[0].iconTexture.Width)
+			fontSize := 0.4 * iconSize
 			iconScreenMargin := 0.5 * iconSize
 			iconPos := Vec2{iconScreenMargin, iconScreenMargin}
 			for typeId, amount := range player.ElementAmounts {
@@ -1458,7 +1469,6 @@ func drawGame() {
 				rl.DrawTextureEx(elementFrameTexture, iconPos.SubtractValue(1), 0, 1, rl.White)
 
 				textPos := iconPos.Add(Vec2{0, 1.25 * iconSize})
-				fontSize := 0.4 * iconSize
 				rl.DrawTextPro(
 					rl.GetFontDefault(),
 					rl.TextFormat("%d", amount),
@@ -1509,9 +1519,25 @@ func drawGame() {
 					rl.DrawTextureEx(tex, iconPos, 0, 1, rl.White)
 
 					if mouseFramePos.X >= iconPos.X && mouseFramePos.Y >= iconPos.Y &&
-						mouseFramePos.X <= iconPos.X+iconSize && mouseFramePos.Y <= iconPos.Y+iconSize &&
-						rl.IsMouseButtonPressed(rl.MOUSE_BUTTON_LEFT) {
-						player.BuildUISelectedTypeId = ResourceTypeId(typeId)
+						mouseFramePos.X <= iconPos.X+iconSize && mouseFramePos.Y <= iconPos.Y+iconSize {
+						if rl.IsMouseButtonPressed(rl.MOUSE_BUTTON_LEFT) {
+							player.BuildUISelectedTypeId = ResourceTypeId(typeId)
+						}
+						resourceType := &resourceTypes[typeId]
+						globalHintMessages = []GlobalHintMessage{}
+						globalHintMessages = append(globalHintMessages, GlobalHintMessage{
+							Message: resourceType.Name,
+						})
+						for _, amount := range resourceType.ElementAmounts {
+							color := rl.Color{0x81, 0x97, 0x96, 0xff}
+							if amount.Amount > player.ElementAmounts[amount.TypeId] {
+								color = rl.Color{0xa5, 0x30, 0x30, 0xff}
+							}
+							globalHintMessages = append(globalHintMessages, GlobalHintMessage{
+								Message: string(rl.TextFormat("%d %s", amount.Amount, cString(elementTypes[amount.TypeId].Name))),
+								Color:   color,
+							})
+						}
 					}
 
 					iconPos.X += iconSize + iconSpacing
@@ -1585,6 +1611,40 @@ func drawGame() {
 
 		rl.PopMatrix()
 	})
+
+	// Global hint
+	if len(globalHintMessages) != 0 {
+		rl.PushMatrix()
+		worldCameraTopRight := rl.GetScreenToWorld2D(Vec2{float64(rl.GetScreenWidth()), 0}, gameCamera)
+		rl.Translatef(worldCameraTopRight.X, worldCameraTopRight.Y, 0)
+		rl.Rotatef(-gameCamera.Rotation, 0, 0, 1)
+		rl.Scalef(2*gameCameraZoom*spriteScale, 2*gameCameraZoom*spriteScale, 1)
+
+		iconSize := float64(elementTypes[0].iconTexture.Width) // Same as inventory HUD
+		fontSize := 0.4 * iconSize
+		iconScreenMargin := 0.5 * iconSize
+		rl.Translatef(-iconScreenMargin, iconScreenMargin, 0)
+
+		textY := 0.0
+		for _, message := range globalHintMessages {
+			textSize := rl.MeasureTextEx(rl.GetFontDefault(), message.Message, fontSize, 1.0)
+			rl.DrawTextPro(
+				rl.GetFontDefault(),
+				message.Message,
+				Vec2{-textSize.X, textY},
+				Vec2{0, 0},
+				0,
+				fontSize,
+				1.0,
+				message.Color,
+			)
+			textY += textSize.Y
+		}
+
+		rl.PopMatrix()
+
+		globalHintMessages = []GlobalHintMessage{}
+	}
 
 	// Reticle
 	{

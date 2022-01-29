@@ -260,7 +260,7 @@ var resourceTypes = [...]ResourceType{
 	},
 
 	{
-		Name:          "building_refiner",
+		Name:          "refiner",
 		ImageName:     "resource_building_refiner.png",
 		NumFrames:     2,
 		IconImageName: "icon_building_refiner.png",
@@ -277,14 +277,14 @@ var resourceTypes = [...]ResourceType{
 		},
 	},
 	{
-		Name:          "building_launchpad",
+		Name:          "launchpad",
 		ImageName:     "resource_building_launchpad.png",
 		NumFrames:     2,
 		IconImageName: "icon_building_launchpad.png",
 		Health:        50,
 		ElementAmounts: []ElementAmount{
 			{TypeId: CarbonElement, Amount: 128},
-			{TypeId: SiliconElement, Amount: 249},
+			{TypeId: SiliconElement, Amount: 256},
 			{TypeId: AntimatterElement, Amount: 2},
 		},
 		Buildable: true,
