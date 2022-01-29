@@ -36,11 +36,11 @@ var playerJumpCooldown = 0.1
 
 var playerFlyingLiftoffInitialAccel = 8.0
 var playerFlyingLiftoffJerk = 11.0
-var playerFlyingMaxAccel = 11.0
-var playerFlyingMaxSpeed = 16.0
-var playerFlyingAngAccel = 8.0
-var playerFlyingAngDecel = 20.0
-var playerFlyingMaxAngSpeed = 2.0
+var playerFlyingMaxAccel = 7.0
+var playerFlyingMaxSpeed = 14.0
+var playerFlyingAngAccel = 6.0
+var playerFlyingAngDecel = 16.0
+var playerFlyingMaxAngSpeed = 1.6
 
 var planetGravRadiusMultiplier = 1.38
 var planetSegmentThickness = 0.4
