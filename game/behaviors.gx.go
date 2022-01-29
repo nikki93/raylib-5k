@@ -92,6 +92,10 @@ type CollisionNormals struct {
 	Normals []CollisionNormal
 }
 
+type ArrowTarget struct {
+	Behavior
+}
+
 type Player struct {
 	Behavior
 

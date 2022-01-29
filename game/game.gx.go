@@ -408,6 +408,7 @@ func initGame() {
 				BitsColor:        rl.Color{0x7a, 0x36, 0x7b, 0xff},
 				AtmosphereColor:  rl.Color{0x10, 0x14, 0x1f, 0xff},
 			},
+			ArrowTarget{},
 		)
 		generatePlanetTerrain(endingPlanetEnt, GeneratePlanetTerrainParams{
 			FrequencyBands: []FrequencyBand{
@@ -1210,6 +1211,8 @@ var reticleTexture = rl.LoadTexture(getAssetPath("cursor.png"))
 
 var elementFrameTexture = rl.LoadTexture(getAssetPath("element_frame.png"))
 
+var arrowTexture = rl.LoadTexture(getAssetPath("arrow.png"))
+
 var buildUIFrameTexture = rl.LoadTexture(getAssetPath("build_interface.png"))
 
 var interactionHintTexture = rl.LoadTexture(getAssetPath("interaction_hint.png"))
@@ -1427,7 +1430,7 @@ func drawGame() {
 	})
 
 	// HUD
-	Each(func(ent Entity, player *Player) {
+	Each(func(ent Entity, player *Player, playerLay *Layout) {
 		// Inventory icons
 		{
 			rl.PushMatrix()
@@ -1510,6 +1513,30 @@ func drawGame() {
 			if rl.IsMouseButtonPressed(rl.MOUSE_BUTTON_LEFT) {
 				player.BuildUIEnabled = false
 			}
+
+			rl.PopMatrix()
+		}
+
+		// Arrow to ending planet
+		if player.Flying {
+			rl.PushMatrix()
+			worldCameraBottomLeft := rl.GetScreenToWorld2D(Vec2{0, float64(rl.GetScreenHeight())}, gameCamera)
+			rl.Translatef(worldCameraBottomLeft.X, worldCameraBottomLeft.Y, 0)
+			rl.Rotatef(-gameCamera.Rotation, 0, 0, 1)
+			rl.Scalef(2*gameCameraZoom*spriteScale, 2*gameCameraZoom*spriteScale, 1)
+
+			arrowSize := float64(arrowTexture.Width)
+			rl.Translatef(arrowSize, -arrowSize, 0)
+
+			targetPos := Vec2{0, 0}
+			Each(func(ent Entity, arrowTarget *ArrowTarget, targetLay *Layout) {
+				targetPos = targetLay.Pos
+			})
+			targetDelta := targetPos.Subtract(playerLay.Pos)
+			targetAngle := Atan2(targetDelta.X, -targetDelta.Y)
+			rl.Rotatef((targetAngle-player.CameraRot)*180/Pi, 0, 0, 1)
+
+			rl.DrawTextureEx(arrowTexture, Vec2{-0.5 * arrowSize, -0.5 * arrowSize}, 0, 1, rl.White)
 
 			rl.PopMatrix()
 		}
