@@ -261,7 +261,7 @@ func initGameplayScene() {
 		},
 		Planet{
 			BaseRadius:       homePlanetRadius,
-			AtmosphereRadius: 1.5 * homePlanetRadius,
+			AtmosphereRadius: 1.8 * homePlanetRadius,
 			InnerColor:       rl.Color{0x15, 0x1d, 0x28, 0xff},
 			BitsColor:        rl.Color{0x4d, 0x2b, 0x32, 0xff},
 			AtmosphereColor:  rl.Color{0x10, 0x14, 0x1f, 0xff},
