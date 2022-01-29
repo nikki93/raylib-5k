@@ -95,8 +95,10 @@ var hitSound2 = rl.LoadSound(getAssetPath("sfx_hit_2.wav"))
 
 var resourceHitGroundSound = rl.LoadSound(getAssetPath("sfx_vehicle_collision.ogg"))
 
-var buildingSucceeded = rl.LoadSound(getAssetPath("sfx_building_succeeded.ogg"))
-var buildingFailed = rl.LoadSound(getAssetPath("sfx_building_failed.ogg"))
+var buildingSucceededSound = rl.LoadSound(getAssetPath("sfx_building_succeeded.ogg"))
+var buildingFailedSound = rl.LoadSound(getAssetPath("sfx_building_failed.ogg"))
+
+var winSound = rl.LoadSound(getAssetPath("win.ogg"))
 
 //
 // Init
@@ -1152,8 +1154,8 @@ func updateGame(dt float64) {
 					AddComponent(buildingEnt, Launchpad{})
 				}
 			} else {
-				rl.SetSoundVolume(buildingFailed, 0.5)
-				rl.PlaySound(buildingFailed)
+				rl.SetSoundVolume(buildingFailedSound, 0.5)
+				rl.PlaySound(buildingFailedSound)
 			}
 		}
 	})
@@ -1294,6 +1296,11 @@ func updateGame(dt float64) {
 						playerLay.Rot = transmissionTowerLay.Rot
 						RemoveComponent[Velocity](playerEnt)
 						RemoveComponent[Velocity](playerEnt)
+
+						// Win!
+						musicActiveTrackIndex = 0
+						rl.SetSoundVolume(winSound, 0.4)
+						rl.PlaySound(winSound)
 					}
 				} else {
 					hint := AddComponent(transmissionTowerEnt, InteractionHint{})
@@ -1334,6 +1341,9 @@ func updateGame(dt float64) {
 
 	// Ending planet music when entering its atmosphere
 	Each(func(ent Entity, player *Player, lay *Layout) {
+		if player.Transmitting {
+			return
+		}
 		Each(func(ent Entity, endingPlanet *EndingPlanet, planet *Planet, planetLay *Layout) {
 			delta := planetLay.Pos.Subtract(lay.Pos)
 			sqDist := delta.LengthSqr()
@@ -1434,7 +1444,7 @@ func updateGame(dt float64) {
 			if track.volume > 0 {
 				track.volume = Max(0, track.volume-musicFadeSpeed*deltaTime)
 			}
-			if track.volume <= 0 && !rl.IsMusicStreamPlaying(track.music) {
+			if track.volume <= 0 && rl.IsMusicStreamPlaying(track.music) {
 				rl.StopMusicStream(track.music)
 			}
 		}
