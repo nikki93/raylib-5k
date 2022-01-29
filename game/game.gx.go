@@ -61,12 +61,32 @@ var refinerFuelPerRefinement = 2
 var transmissionTowerAntimatterRequired = 5
 var transmissionTowerSiliconRequired = 20
 
+var musicFadeSpeed = 0.3
+
 //
 // Sounds
 //
 
-var music1 = rl.LoadMusicStream(getAssetPath("music_1.ogg"))
-var music2 = rl.LoadMusicStream(getAssetPath("music_2.ogg"))
+type MusicTrack struct {
+	music     rl.Music
+	volume    float64
+	maxVolume float64 `default:"0.5"`
+}
+
+var musicTracks = []MusicTrack{
+	{
+		music: rl.LoadMusicStream(getAssetPath("music_menu.ogg")),
+	},
+	{
+		music: rl.LoadMusicStream(getAssetPath("music_1.ogg")),
+	},
+	{
+		music:     rl.LoadMusicStream(getAssetPath("music_2.ogg")),
+		maxVolume: 0.7,
+	},
+}
+
+var musicActiveTrackIndex = 0
 
 var laserSound = rl.LoadMusicStream(getAssetPath("sfx_laser_on.ogg")) // Music so it loops
 
@@ -226,6 +246,8 @@ func resourceTypeIdForName(name string) ResourceTypeId {
 }
 
 func initGameplayScene() {
+	musicActiveTrackIndex = 1
+
 	rl.SetRandomSeed(1024)
 
 	// Fungal planet
@@ -405,6 +427,7 @@ func initGameplayScene() {
 			AtmosphereColor:  rl.Color{0x10, 0x14, 0x1f, 0xff},
 		},
 		ArrowTarget{},
+		EndingPlanet{},
 	)
 	generatePlanetTerrain(endingPlanetEnt, GeneratePlanetTerrainParams{
 		FrequencyBands: []FrequencyBand{
@@ -497,6 +520,8 @@ func initGameplayScene() {
 var menuActive = false
 
 func initMenuScene() {
+	musicActiveTrackIndex = 0
+
 	menuActive = true
 
 	// Menu planet
@@ -557,9 +582,6 @@ func initMenuScene() {
 	// Camera
 	gameCamera.Target = Vec2{0, 36}
 	gameCamera.Rotation = 180
-
-	// Play music
-	rl.PlayMusicStream(music1)
 }
 
 func initGame() {
@@ -747,6 +769,7 @@ func updateGame(dt float64) {
 			// Still in liftoff
 			grav := GetComponent[Gravity](ent)
 			if grav == nil || player.FlyingAccel >= 0.85*grav.Strength {
+				musicActiveTrackIndex = -1
 				AddComponent(ent, Velocity{})
 			}
 		}
@@ -1309,6 +1332,17 @@ func updateGame(dt float64) {
 		}
 	})
 
+	// Ending planet music when entering its atmosphere
+	Each(func(ent Entity, player *Player, lay *Layout) {
+		Each(func(ent Entity, endingPlanet *EndingPlanet, planet *Planet, planetLay *Layout) {
+			delta := planetLay.Pos.Subtract(lay.Pos)
+			sqDist := delta.LengthSqr()
+			if sqDist < planet.AtmosphereRadius*planet.AtmosphereRadius {
+				musicActiveTrackIndex = 2
+			}
+		})
+	})
+
 	// Update camera
 	Each(func(ent Entity, player *Player, lay *Layout) {
 		upOffset := Vec2{0, 0}
@@ -1387,11 +1421,28 @@ func updateGame(dt float64) {
 		initGameplayScene()
 	}
 
-	// Update musics
-	rl.SetMusicVolume(music1, 0.5)
-	rl.SetMusicVolume(music2, 0.5)
-	rl.UpdateMusicStream(music1)
-	rl.UpdateMusicStream(music2)
+	// Update music tracks
+	for index, track := range musicTracks {
+		if index == musicActiveTrackIndex {
+			if !rl.IsMusicStreamPlaying(track.music) {
+				rl.PlayMusicStream(track.music)
+			}
+			if track.volume < track.maxVolume {
+				track.volume = Min(track.volume+musicFadeSpeed*deltaTime, track.maxVolume)
+			}
+		} else {
+			if track.volume > 0 {
+				track.volume = Max(0, track.volume-musicFadeSpeed*deltaTime)
+			}
+			if track.volume <= 0 && !rl.IsMusicStreamPlaying(track.music) {
+				rl.StopMusicStream(track.music)
+			}
+		}
+		rl.SetMusicVolume(track.music, track.volume)
+		rl.UpdateMusicStream(track.music)
+	}
+
+	// One extra music for this sound that we want to loop...
 	rl.UpdateMusicStream(laserSound)
 }
 

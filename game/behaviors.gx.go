@@ -132,6 +132,10 @@ type Player struct {
 	TimeToSupernova float64
 }
 
+type EndingPlanet struct {
+	Behavior
+}
+
 //
 // Resource
 //
