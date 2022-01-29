@@ -100,6 +100,11 @@ var buildingFailedSound = rl.LoadSound(getAssetPath("sfx_building_failed.ogg"))
 
 var winSound = rl.LoadSound(getAssetPath("win.ogg"))
 
+//var liftoffChargeSound = rl.LoadSound(getAssetPath("sfx_liftoff_charge.ogg"))
+var liftoffSound = rl.LoadSound(getAssetPath("sfx_liftoff.ogg"))
+
+//var flyingAccelerationSound = rl.LoadMusicStream(getAssetPath("sfx_flying_acceleration.ogg"))
+
 //
 // Init
 //
@@ -720,6 +725,7 @@ func updateGame(dt float64) {
 	})
 
 	// Flying controls
+	playFlyingAccelerationSound := false
 	Each(func(ent Entity, player *Player, lay *Layout) {
 		if !player.Flying {
 			return
@@ -727,15 +733,18 @@ func updateGame(dt float64) {
 		angVel := AddComponent(ent, AngularVelocity{})
 
 		if rl.IsKeyDown(rl.KEY_W) || rl.IsKeyDown(rl.KEY_UP) {
+			playFlyingAccelerationSound = true
 			player.FlyingAccel += Min(playerFlyingLiftoffJerk*deltaTime, playerFlyingMaxAccel)
 		}
 		if vel := GetComponent[Velocity](ent); vel != nil {
 			// Acceleration / slowdown
 			forwardDir := Vec2{0, -1}.Rotate(lay.Rot)
 			if rl.IsKeyDown(rl.KEY_W) || rl.IsKeyDown(rl.KEY_UP) {
+				playFlyingAccelerationSound = true
 				vel.Vel = vel.Vel.Add(forwardDir.Scale(player.FlyingAccel * deltaTime))
 			}
 			if rl.IsKeyDown(rl.KEY_S) || rl.IsKeyDown(rl.KEY_DOWN) {
+				playFlyingAccelerationSound = true
 				vel.Vel = vel.Vel.Add(forwardDir.Scale(-player.FlyingAccel * deltaTime))
 			}
 			if speed := vel.Vel.Length(); speed > playerFlyingMaxSpeed {
@@ -769,9 +778,15 @@ func updateGame(dt float64) {
 			if grav == nil || player.FlyingAccel >= 0.85*grav.Strength {
 				musicActiveTrackIndex = -1
 				AddComponent(ent, Velocity{})
+				rl.PlaySound(liftoffSound)
 			}
 		}
 	})
+	if playFlyingAccelerationSound {
+		//rl.PlayMusicStream(flyingAccelerationSound)
+	} else {
+		//rl.StopMusicStream(flyingAccelerationSound)
+	}
 
 	// Gravity toward planets
 	Each(func(ent Entity, grav *Gravity, vel *Velocity, lay *Layout) {
@@ -1448,8 +1463,9 @@ func updateGame(dt float64) {
 		rl.UpdateMusicStream(track.music)
 	}
 
-	// One extra music for this sound that we want to loop...
+	// Sounds that we want to loop
 	rl.UpdateMusicStream(laserSound)
+	//rl.UpdateMusicStream(flyingAccelerationSound)
 }
 
 //
