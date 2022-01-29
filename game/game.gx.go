@@ -1192,7 +1192,12 @@ func updateGame(dt float64) {
 //gx:extern getAssetPath
 func getAssetPath(assetName string) string
 
-var whiteTexture = rl.LoadTextureFromImage(rl.GenImageColor(1, 1, rl.Color{0xff, 0xff, 0xff, 0xff}))
+var whiteTexture = func() rl.Texture {
+	image := rl.GenImageColor(1, 1, rl.Color{0xff, 0xff, 0xff, 0xff})
+	result := rl.LoadTextureFromImage(image)
+	rl.UnloadImage(image)
+	return result
+}()
 
 var bitsTextureBasic = rl.LoadTexture(getAssetPath("planet_surface_bits_basic.png"))
 
