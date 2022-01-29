@@ -617,22 +617,18 @@ func initGame() {
 // Update
 //
 
+var restartGameplay = false
+
 func updateGame(dt float64) {
 	gameTime += dt
 	deltaTime = dt
-	restartGameplay := false
 
-	// Menu -> gameplay transition
+	// Menu camera rotation
 	if menuActive {
 		rotSpeed := 0.02
 		rotDelta := rotSpeed * deltaTime
 		gameCamera.Target = gameCamera.Target.Rotate(rotDelta)
 		gameCamera.Rotation -= rotDelta * 180 / Pi
-
-		if rl.IsKeyPressed(rl.KEY_ENTER) {
-			menuActive = false
-			restartGameplay = true
-		}
 	}
 
 	// Update camera zoom
@@ -1516,6 +1512,9 @@ type GlobalHintMessage struct {
 
 var globalHintMessages []GlobalHintMessage
 
+var titleTexture = rl.LoadTexture(getAssetPath("packet_lost_title.png"))
+var playButtonTexture = rl.LoadTexture(getAssetPath("play_button.png"))
+
 var screenTexture = rl.LoadRenderTexture(rl.GetScreenWidth(), rl.GetScreenHeight())
 
 var bloomEnabled = false
@@ -2062,6 +2061,75 @@ func drawGame() {
 		rl.PopMatrix()
 
 		globalHintMessages = []GlobalHintMessage{}
+	}
+
+	// Main menu
+	if menuActive {
+		screenSize := Vec2{408.0, 230.0}
+
+		rl.PushMatrix()
+		worldCameraTopLeft := rl.GetScreenToWorld2D(Vec2{0, 0}, gameCamera)
+		rl.Translatef(worldCameraTopLeft.X, worldCameraTopLeft.Y, 0)
+		rl.Rotatef(-gameCamera.Rotation, 0, 0, 1)
+		rl.Scalef(2*gameCameraZoom*spriteScale, 2*gameCameraZoom*spriteScale, 1)
+
+		mousePos := rl.GetMousePosition().
+			Divide(Vec2{float64(rl.GetScreenWidth()), float64(rl.GetScreenHeight())}).
+			Multiply(screenSize)
+
+		// Title
+		{
+			texWidth := float64(titleTexture.Width)
+			texHeight := float64(titleTexture.Height)
+
+			texSource := rl.Rectangle{
+				X:      0,
+				Y:      0,
+				Width:  texWidth,
+				Height: texHeight,
+			}
+			texDest := rl.Rectangle{
+				Width:  texWidth,
+				Height: texHeight,
+			}
+			texDest.X = 0.5 * (screenSize.X - texDest.Width)
+			texDest.Y = 0.5*(screenSize.Y-texDest.Height) - 1.2*texDest.Height
+			rl.DrawTexturePro(titleTexture, texSource, texDest, Vec2{0, 0}, 0, rl.White)
+		}
+
+		// Play button
+		{
+			texWidth := float64(playButtonTexture.Width)
+			texHeight := float64(playButtonTexture.Height)
+
+			texSource := rl.Rectangle{
+				X:      0,
+				Y:      0,
+				Width:  texWidth,
+				Height: texHeight / 3,
+			}
+			texDest := rl.Rectangle{
+				Width:  texWidth,
+				Height: texHeight / 3,
+			}
+			texDest.X = 0.5 * (screenSize.X - texDest.Width)
+			texDest.Y = 0.5*(screenSize.Y-texDest.Height) + 0.1*texHeight
+			if mousePos.X >= texDest.X && mousePos.Y >= texDest.Y &&
+				mousePos.X <= texDest.X+texDest.Width && mousePos.Y <= texDest.Y+texDest.Height {
+				if rl.IsMouseButtonDown(rl.MOUSE_BUTTON_LEFT) {
+					texSource.Y = texSource.Height
+				} else {
+					texSource.Y = 2 * texSource.Height
+				}
+				if rl.IsMouseButtonReleased(rl.MOUSE_BUTTON_LEFT) {
+					menuActive = false
+					restartGameplay = true
+				}
+			}
+			rl.DrawTexturePro(playButtonTexture, texSource, texDest, Vec2{0, 0}, 0, rl.White)
+		}
+
+		rl.PopMatrix()
 	}
 
 	// Reticle
