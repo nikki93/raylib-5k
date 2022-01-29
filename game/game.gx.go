@@ -449,6 +449,13 @@ func initGame() {
 			Exponent: 1,
 			Thinning: 0.015,
 		})
+		transmissionTowerResourceTypeId := resourceTypeIdForName("transmission_tower")
+		createResource(
+			transmissionTowerResourceTypeId,
+			Vec2{-9.77, -251.381},
+			-0.21,
+			false,
+		)
 
 		// Player
 		playerPos := Vec2{-26.66, 82.36}

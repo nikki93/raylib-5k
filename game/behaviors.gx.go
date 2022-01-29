@@ -183,6 +183,7 @@ type ResourceType struct {
 	VerticalOffset         float64
 	VerticalOffsetVariance float64
 
+	Damageable     bool
 	Health         int `default:"3"`
 	ElementAmounts []ElementAmount
 
@@ -294,6 +295,12 @@ var resourceTypes = [...]ResourceType{
 			{0.5 * 3, -1.2},
 			{-0.5 * 3, -1.2},
 		},
+	},
+
+	{
+		Name:       "transmission_tower",
+		ImageName:  "resource_transmission_tower.png",
+		Damageable: false,
 	},
 }
 
