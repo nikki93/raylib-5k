@@ -508,7 +508,6 @@ func updateGame(dt float64) {
 							up.grounded = true
 							up.lastGroundedTime = gameTime
 						}
-
 					}
 				}
 			})
