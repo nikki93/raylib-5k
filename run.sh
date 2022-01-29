@@ -198,16 +198,23 @@ case "$1" in
   web-serve-release)
     npx http-server -p 9002 -c-1 build/web-release
     ;;
-  web-publish)
-    ./run.sh web-release-fast
-    rsync -avP build/web-release-fast/{index.*,$PROJECT_NAME.*} dh_bedxci@dreamhotel.xyz:dreamhotel.xyz/raylib-5k
-    ;;
   itch-publish)
     ./run.sh web-release-fast
     cd build/web-release-fast
     gsed -i 's/new URLSearch/true || new URLSearch/g' index.js
     zip itch-publish.zip -r index.* $PROJECT_NAME.*
     mv itch-publish.zip ../..
+    ;;
+  web-publish)
+    ./run.sh web-release-fast
+    cd build/web-release-fast
+    gsed -i 's/new URLSearch/true || new URLSearch/g' index.js
+    cd -
+    rm -rf docs/*
+    cp build/web-release-fast/{index.*,$PROJECT_NAME.*} docs/
+    git add docs
+    git commit -m 'web publish'
+    git push origin master
     ;;
 
   # Electron
