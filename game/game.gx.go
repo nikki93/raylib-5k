@@ -589,6 +589,7 @@ func initGame() {
 func updateGame(dt float64) {
 	gameTime += dt
 	deltaTime = dt
+	restartGameplay := false
 
 	// Menu -> gameplay transition
 	if menuActive {
@@ -599,10 +600,7 @@ func updateGame(dt float64) {
 
 		if rl.IsKeyPressed(rl.KEY_ENTER) {
 			menuActive = false
-			Each(func(ent Entity) {
-				DestroyEntity(ent)
-			})
-			initGameplayScene()
+			restartGameplay = true
 		}
 	}
 
@@ -1296,6 +1294,9 @@ func updateGame(dt float64) {
 			factor := Abs(0.35*player.TimeToSupernova) + 1
 			bloomBrightness = factor * factor
 		}
+		if player.TimeToSupernova <= -7 {
+			restartGameplay = true
+		}
 	})
 
 	// Update camera
@@ -1365,6 +1366,16 @@ func updateGame(dt float64) {
 		}
 		gameCamera.Rotation = -player.CameraRot * 180 / Pi
 	})
+
+	// Check for gameplay restart request
+	if restartGameplay {
+		restartGameplay = false
+		bloomEnabled = false
+		Each(func(ent Entity) {
+			DestroyEntity(ent)
+		})
+		initGameplayScene()
+	}
 
 	// Update musics
 	rl.SetMusicVolume(music1, 0.5)
