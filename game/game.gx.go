@@ -33,13 +33,14 @@ var playerHorizontalControlsAccel = 17.0
 var playerMinimumHorizontalSpeedForFriction = 12.0
 var playerJumpCooldown = 0.1
 
-var playerFlyingLiftoffInitialAccel = 8.0
-var playerFlyingLiftoffJerk = 11.0
-var playerFlyingMaxAccel = 7.0
-var playerFlyingMaxSpeed = 14.0
+var playerFlyingLiftoffInitialAccel = 3.0
+var playerFlyingLiftoffJerk = 6.0
+var playerFlyingMaxAccel = 5.0
+var playerFlyingMaxSpeed = 12.0
 var playerFlyingAngAccel = 6.0
 var playerFlyingAngDecel = 16.0
 var playerFlyingMaxAngSpeed = 1.6
+var playerFlyingGravityStrengthMultiplier = 0.3
 
 var planetSegmentThickness = 0.4
 
@@ -219,7 +220,7 @@ func initGame() {
 			},
 			Planet{
 				BaseRadius:       homePlanetRadius,
-				AtmosphereRadius: 2 * homePlanetRadius,
+				AtmosphereRadius: 1.5 * homePlanetRadius,
 				Color:            rl.Color{0x15, 0x1d, 0x28, 0xff},
 				AtmosphereColor:  rl.Color{0x10, 0x14, 0x1f, 0xff},
 			},
@@ -414,7 +415,7 @@ func updateGame(dt float64) {
 				vel.Vel = vel.Vel.Add(forwardDir.Scale(-player.FlyingAccel * deltaTime))
 			}
 			if speed := vel.Vel.Length(); speed > playerFlyingMaxSpeed {
-				vel.Vel.Scale(playerFlyingMaxSpeed / speed)
+				vel.Vel = vel.Vel.Scale(playerFlyingMaxSpeed / speed)
 			}
 
 			// Turning
@@ -438,7 +439,7 @@ func updateGame(dt float64) {
 		} else {
 			// Still in liftoff
 			grav := GetComponent[Gravity](ent)
-			if grav == nil || player.FlyingAccel >= 0.85*grav.Strength {
+			if grav == nil || player.FlyingAccel >= grav.Strength {
 				AddComponent(ent, Velocity{})
 			}
 		}
@@ -894,6 +895,11 @@ func updateGame(dt float64) {
 							playerLay.Pos = launchpadLay.Pos.Add(Vec2{0.21, -3}.Rotate(launchpadLay.Rot))
 							playerLay.Rot = launchpadLay.Rot
 							RemoveComponent[Velocity](playerEnt)
+
+							// Reduce gravity strength
+							if grav := GetComponent[Gravity](playerEnt); grav != nil {
+								grav.Strength *= playerFlyingGravityStrengthMultiplier
+							}
 						}
 					}
 				} else {
