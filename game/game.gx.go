@@ -486,10 +486,10 @@ func initGame() {
 				},
 			},
 			Player{
-				CameraPos: playerPos,
-				CameraRot: playerRot,
-				//TimeToSupernova: 3 * 60,
-				TimeToSupernova: 3,
+				CameraPos:       playerPos,
+				CameraRot:       playerRot,
+				TimeToSupernova: 3 * 60,
+				//TimeToSupernova: 3,
 			},
 		)
 		edit.Camera().Target = playerPos
