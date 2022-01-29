@@ -593,6 +593,18 @@ func initMenuScene() {
 	gameCamera.Rotation = 180
 }
 
+var storyActive = false
+
+var storyTextures = []rl.Texture{
+	rl.LoadTexture(getAssetPath("story1.png")),
+	rl.LoadTexture(getAssetPath("story2.png")),
+	rl.LoadTexture(getAssetPath("story3.png")),
+	rl.LoadTexture(getAssetPath("story4.png")),
+	rl.LoadTexture(getAssetPath("story5.png")),
+}
+
+var storyIndex = 0
+
 func initGame() {
 	rl.HideCursor()
 
@@ -2100,6 +2112,48 @@ func drawGame() {
 		globalHintMessages = []GlobalHintMessage{}
 	}
 
+	// Story
+	if storyActive {
+		screenSize := Vec2{408.0, 230.0}
+
+		rl.PushMatrix()
+		worldCameraTopLeft := rl.GetScreenToWorld2D(Vec2{0, 0}, gameCamera)
+		rl.Translatef(worldCameraTopLeft.X, worldCameraTopLeft.Y, 0)
+		rl.Rotatef(-gameCamera.Rotation, 0, 0, 1)
+		rl.Scalef(2*gameCameraZoom*spriteScale, 2*gameCameraZoom*spriteScale, 1)
+
+		// Story card
+		{
+			tex := storyTextures[storyIndex]
+			texWidth := float64(tex.Width)
+			texHeight := float64(tex.Height)
+
+			texSource := rl.Rectangle{
+				X:      0,
+				Y:      0,
+				Width:  texWidth,
+				Height: texHeight,
+			}
+			texDest := rl.Rectangle{
+				Width:  texWidth,
+				Height: texHeight,
+			}
+			texDest.X = 0.5 * (screenSize.X - texDest.Width)
+			texDest.Y = 0.5 * (screenSize.Y - texDest.Height)
+			if rl.IsMouseButtonReleased(rl.MOUSE_BUTTON_LEFT) {
+				if storyIndex+1 < len(storyTextures) {
+					storyIndex++
+				} else {
+					storyActive = false
+					restartGameplay = true
+				}
+			}
+			rl.DrawTexturePro(tex, texSource, texDest, Vec2{0, 0}, 0, rl.White)
+		}
+
+		rl.PopMatrix()
+	}
+
 	// Main menu
 	if menuActive {
 		screenSize := Vec2{408.0, 230.0}
@@ -2159,8 +2213,12 @@ func drawGame() {
 					texSource.Y = 2 * texSource.Height
 				}
 				if rl.IsMouseButtonReleased(rl.MOUSE_BUTTON_LEFT) {
+					musicActiveTrackIndex = -1
 					menuActive = false
-					restartGameplay = true
+					Each(func(ent Entity) {
+						DestroyEntity(ent)
+					})
+					storyActive = true
 				}
 			}
 			rl.DrawTexturePro(playButtonTexture, texSource, texDest, Vec2{0, 0}, 0, rl.White)
