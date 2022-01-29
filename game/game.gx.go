@@ -1277,6 +1277,9 @@ func updateGame(dt float64) {
 //gx:extern getAssetPath
 func getAssetPath(assetName string) string
 
+//gx:extern nullptr
+var nilString = ""
+
 //gx:extern (const char *)
 func cString(s string) string
 
@@ -1322,17 +1325,23 @@ var globalHintMessages []GlobalHintMessage
 
 var screenTexture = rl.LoadRenderTexture(rl.GetScreenWidth(), rl.GetScreenHeight())
 
-func drawGame() {
-	// Screen render texture
-	screenWidth := rl.GetScreenWidth()
-	screenHeight := rl.GetScreenHeight()
-	if screenTexture.Texture.Width != screenWidth || screenTexture.Texture.Height != screenHeight {
-		rl.UnloadRenderTexture(screenTexture)
-		screenTexture = rl.LoadRenderTexture(screenWidth, screenHeight)
-	}
-	rl.BeginTextureMode(screenTexture)
+var bloomEnabled = false
+var bloomBrightness = 1.0
+var bloomShader = rl.LoadShader(nilString, getAssetPath("bloom.frag"))
 
-	// Camera
+func drawGame() {
+	// Begin bloom if enabled
+	if bloomEnabled {
+		screenWidth := rl.GetScreenWidth()
+		screenHeight := rl.GetScreenHeight()
+		if screenTexture.Texture.Width != screenWidth || screenTexture.Texture.Height != screenHeight {
+			rl.UnloadRenderTexture(screenTexture)
+			screenTexture = rl.LoadRenderTexture(screenWidth, screenHeight)
+		}
+		rl.BeginTextureMode(screenTexture)
+	}
+
+	// Begin camera
 	if edit.Enabled() {
 		rl.BeginMode2D(*edit.Camera())
 	} else {
@@ -1781,15 +1790,22 @@ func drawGame() {
 		rl.DrawTextureEx(reticleTexture, reticleTopLeft, 0, reticleScale, rl.Color{0x81, 0x97, 0x96, 0xff})
 	}
 
+	// End camera
 	rl.EndMode2D()
 
-	rl.EndTextureMode()
-
-	source := rl.Rectangle{
-		X:      0,
-		Y:      0,
-		Width:  float64(screenTexture.Texture.Width),
-		Height: -float64(screenTexture.Texture.Height),
+	// End bloom if enabled
+	if bloomEnabled {
+		rl.EndTextureMode()
+		source := rl.Rectangle{
+			X:      0,
+			Y:      0,
+			Width:  float64(screenTexture.Texture.Width),
+			Height: -float64(screenTexture.Texture.Height),
+		}
+		rl.BeginShaderMode(bloomShader)
+		rl.SetShaderValue(bloomShader, rl.GetShaderLocation(bloomShader, "brightness"),
+			&bloomBrightness, rl.SHADER_ATTRIB_FLOAT)
+		rl.DrawTextureRec(screenTexture.Texture, source, Vec2{0, 0}, rl.Red)
+		rl.EndShaderMode()
 	}
-	rl.DrawTextureRec(screenTexture.Texture, source, Vec2{0, 0}, rl.White)
 }
