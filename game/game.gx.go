@@ -33,10 +33,10 @@ var playerHorizontalControlsAccel = 17.0
 var playerMinimumHorizontalSpeedForFriction = 12.0
 var playerJumpCooldown = 0.1
 
-var playerFlyingLiftoffInitialAccel = 3.0
-var playerFlyingLiftoffJerk = 6.0
-var playerFlyingMaxAccel = 5.0
-var playerFlyingMaxSpeed = 12.0
+var playerFlyingLiftoffInitialAccel = 3.2
+var playerFlyingLiftoffJerk = 4.0
+var playerFlyingMaxAccel = 4.0
+var playerFlyingMaxSpeed = 14.0
 var playerFlyingAngAccel = 6.0
 var playerFlyingAngDecel = 16.0
 var playerFlyingMaxAngSpeed = 1.6
@@ -590,6 +590,9 @@ func updateGame(dt float64) {
 			if speed := vel.Vel.Length(); speed > playerFlyingMaxSpeed {
 				vel.Vel = vel.Vel.Scale(playerFlyingMaxSpeed / speed)
 			}
+			rate := 400.0
+			smoothing := 1 - Pow(2, -rate*deltaTime)
+			vel.Vel = vel.Vel.Scale(smoothing)
 
 			// Turning
 			appliedTurning := false
@@ -612,7 +615,7 @@ func updateGame(dt float64) {
 		} else {
 			// Still in liftoff
 			grav := GetComponent[Gravity](ent)
-			if grav == nil || player.FlyingAccel >= grav.Strength {
+			if grav == nil || player.FlyingAccel >= 0.85*grav.Strength {
 				AddComponent(ent, Velocity{})
 			}
 		}
