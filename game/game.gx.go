@@ -486,9 +486,10 @@ func initGame() {
 				},
 			},
 			Player{
-				CameraPos:       playerPos,
-				CameraRot:       playerRot,
-				TimeToSupernova: 3 * 60,
+				CameraPos: playerPos,
+				CameraRot: playerRot,
+				//TimeToSupernova: 3 * 60,
+				TimeToSupernova: 3,
 			},
 		)
 		edit.Camera().Target = playerPos
@@ -1199,7 +1200,9 @@ func updateGame(dt float64) {
 	Each(func(ent Entity, player *Player) {
 		player.TimeToSupernova -= deltaTime
 		if player.TimeToSupernova <= 0 {
-			// TODO: Lose!
+			bloomEnabled = true
+			factor := Abs(0.35*player.TimeToSupernova) + 1
+			bloomBrightness = factor * factor
 		}
 	})
 
@@ -1385,7 +1388,19 @@ func drawGame() {
 
 		rl.Rotatef(-gameCamera.Rotation, 0, 0, 1)
 		texSize := Vec2{float64(primaryStarTexture.Width), float64(primaryStarTexture.Height)}.Scale(2 * spriteScale)
-		rl.DrawTextureEx(primaryStarTexture, texSize.Scale(-0.5), 0, 2*spriteScale, rl.White)
+		scale := 1.0
+		Each(func(ent Entity, player *Player) {
+			if player.TimeToSupernova <= -1 {
+				stretch := Abs(player.TimeToSupernova)
+				scale = 1 + Pow(Max(0, 0.35*(stretch-1)), 2)
+
+				rl.PushMatrix()
+				rl.Scalef(Pow(stretch-1, 3), 0.4, 1)
+				rl.DrawTextureEx(primaryStarTexture, texSize.Scale(-0.5), 0, 2*spriteScale, rl.White)
+				rl.PopMatrix()
+			}
+		})
+		rl.DrawTextureEx(primaryStarTexture, texSize.Scale(-0.5).Scale(scale), 0, 2*spriteScale*scale, rl.White)
 
 		//rl.Translatef(0, -0.55*texSize.Y, 0)
 		//
@@ -1685,7 +1700,7 @@ func drawGame() {
 			iconScreenMargin := 0.5 * iconSize
 			rl.Translatef(0, iconScreenMargin+1.5, 0)
 
-			totalSeconds := Floor(player.TimeToSupernova + 1)
+			totalSeconds := Max(0, Floor(player.TimeToSupernova+1))
 			displaySeconds := totalSeconds % 60
 			displayMinutes := totalSeconds / 60
 			text := rl.TextFormat("%02d:%02d", displayMinutes, displaySeconds)
@@ -1695,6 +1710,9 @@ func drawGame() {
 			textSize := rl.MeasureTextEx(countdownFont, text, fontSize, 1.0)
 
 			color := rl.Color{0x39, 0x4a, 0x50, 0xff}
+			if totalSeconds <= 60 {
+				color = rl.Color{0xa5, 0x30, 0x30, 0xff}
+			}
 			rl.DrawTextPro(
 				countdownFont,
 				text,
