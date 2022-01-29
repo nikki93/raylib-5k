@@ -498,17 +498,28 @@ func updateGame(dt float64) {
 
 	// Gravity toward planets
 	Each(func(ent Entity, grav *Gravity, vel *Velocity, lay *Layout) {
-		// Add to velocity
+		first := true
+		minSurfaceDist := -1.0
+		minDist := -1.0
+		minDelta := Vec2{0, 0}
 		Each(func(ent Entity, planet *Planet, planetLay *Layout) {
 			// TODO: Falloff around atmosphere radius
 			delta := planetLay.Pos.Subtract(lay.Pos)
 			sqDist := delta.LengthSqr()
 			if sqDist < planet.AtmosphereRadius*planet.AtmosphereRadius {
 				dist := Sqrt(sqDist)
-				dir := delta.Scale(1 / dist)
-				vel.Vel = vel.Vel.Add(dir.Scale(grav.Strength * deltaTime))
+				surfaceDist := dist - planet.BaseRadius
+				if first || surfaceDist < minSurfaceDist {
+					first = false
+					minDist = dist
+					minDelta = delta
+				}
 			}
 		})
+		if minDist > 0 {
+			dir := minDelta.Scale(1 / minDist)
+			vel.Vel = vel.Vel.Add(dir.Scale(grav.Strength * deltaTime))
+		}
 	})
 
 	// Apply velocity
