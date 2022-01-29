@@ -496,7 +496,7 @@ func initMenuScene() {
 	menuActive = true
 
 	// Menu planet
-	menuPlanetPos := Vec2{0, 35}
+	menuPlanetPos := Vec2{0, 0}
 	menuPlanetRadius := 30.0
 	menuPlanetEnt := CreateEntity(
 		Layout{
@@ -504,7 +504,7 @@ func initMenuScene() {
 		},
 		Planet{
 			BaseRadius:       menuPlanetRadius,
-			AtmosphereRadius: 1.5 * menuPlanetRadius,
+			AtmosphereRadius: 3 * menuPlanetRadius,
 			InnerColor:       rl.Color{0x15, 0x1d, 0x28, 0xff},
 			BitsColor:        rl.Color{0x4d, 0x2b, 0x32, 0xff},
 			AtmosphereColor:  rl.Color{0x10, 0x14, 0x1f, 0xff},
@@ -515,7 +515,7 @@ func initMenuScene() {
 		TypeName: "rock_large",
 		Planet:   menuPlanetEnt,
 		FrequencyBands: []FrequencyBand{
-			{Frequency: 60, Amplitude: 0.5},
+			{Frequency: 60, Amplitude: 0.2},
 			{Frequency: 3, Amplitude: 0.2},
 		},
 		Exponent: 1,
@@ -525,8 +525,8 @@ func initMenuScene() {
 		TypeName: "rock_medium",
 		Planet:   menuPlanetEnt,
 		FrequencyBands: []FrequencyBand{
-			{Frequency: 60, Amplitude: 0.5},
-			{Frequency: 3, Amplitude: 0.4},
+			{Frequency: 42.6, Amplitude: 0.5},
+			{Frequency: 5, Amplitude: 0.4},
 		},
 		Exponent: 1,
 		Thinning: 0.015,
@@ -549,6 +549,10 @@ func initMenuScene() {
 		},
 		Exponent: 2,
 	})
+
+	// Camera
+	gameCamera.Target = Vec2{0, 36}
+	gameCamera.Rotation = 180
 
 	// Play music
 	rl.PlayMusicStream(music1)
@@ -588,8 +592,16 @@ func updateGame(dt float64) {
 
 	// Menu -> gameplay transition
 	if menuActive {
+		rotSpeed := 0.02
+		rotDelta := rotSpeed * deltaTime
+		gameCamera.Target = gameCamera.Target.Rotate(rotDelta)
+		gameCamera.Rotation -= rotDelta * 180 / Pi
+
 		if rl.IsKeyPressed(rl.KEY_ENTER) {
 			menuActive = false
+			Each(func(ent Entity) {
+				DestroyEntity(ent)
+			})
 			initGameplayScene()
 		}
 	}
@@ -1452,7 +1464,7 @@ func drawGame() {
 
 	// Planet atmospheres
 	Each(func(ent Entity, planet *Planet, lay *Layout) {
-		rl.DrawCircleV(lay.Pos, planet.AtmosphereRadius, planet.AtmosphereColor)
+		rl.DrawCircleSector(lay.Pos, planet.AtmosphereRadius, 0, 360, 128, planet.AtmosphereColor)
 	})
 
 	// Primary star

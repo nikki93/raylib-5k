@@ -8,7 +8,7 @@ package geom
 const Infinity = 0
 
 //gx:extern PI
-const Pi = 0
+const Pi = 3.14159265358979323846
 
 //gx:extern std::abs
 func Abs(f float64) float64
