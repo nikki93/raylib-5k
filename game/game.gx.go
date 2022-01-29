@@ -419,6 +419,36 @@ func initGame() {
 				{Frequency: 0.102, Amplitude: 0.012 * endingPlanetRadius},
 			},
 		})
+		generateResources(GenerateResourcesParams{
+			TypeName: "antiplant",
+			Planet:   endingPlanetEnt,
+			FrequencyBands: []FrequencyBand{
+				{Frequency: 60, Amplitude: 0.5},
+				{Frequency: 3, Amplitude: 0.4},
+			},
+			Exponent: 1,
+			Thinning: 0.015,
+		})
+		generateResources(GenerateResourcesParams{
+			TypeName: "rock_large",
+			Planet:   endingPlanetEnt,
+			FrequencyBands: []FrequencyBand{
+				{Frequency: 30, Amplitude: 0.5},
+				{Frequency: 5, Amplitude: 0.2},
+			},
+			Exponent: 2,
+			Thinning: 0.001,
+		})
+		generateResources(GenerateResourcesParams{
+			TypeName: "rock_medium",
+			Planet:   endingPlanetEnt,
+			FrequencyBands: []FrequencyBand{
+				{Frequency: 60, Amplitude: 0.5},
+				{Frequency: 3, Amplitude: 0.4},
+			},
+			Exponent: 3,
+			Thinning: 0.02,
+		})
 
 		// Player
 		playerPos := Vec2{0, homePlanetPos.Y - homePlanetRadius - 0.5*playerSize.Y - 5}
