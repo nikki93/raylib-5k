@@ -63,6 +63,8 @@ var transmissionTowerSiliconRequired = 20
 
 var musicFadeSpeed = 0.3
 
+var controlsUsed = false
+
 //
 // Sounds
 //
@@ -659,6 +661,7 @@ func updateGame(dt float64) {
 		} else {
 			// Toggle zoom
 			if rl.IsKeyPressed(rl.KEY_Z) {
+				controlsUsed = true
 				if gameCameraZoomTarget == 0.7 {
 					gameCameraZoomTarget = 1.2
 				} else {
@@ -708,12 +711,14 @@ func updateGame(dt float64) {
 		// Horizontal
 		appliedControls := false
 		if rl.IsKeyDown(rl.KEY_A) || rl.IsKeyDown(rl.KEY_LEFT) {
+			controlsUsed = true
 			dir := Vec2{up.Up.Y, -up.Up.X}
 			vel.Vel = vel.Vel.Add(dir.Scale(playerHorizontalControlsAccel * deltaTime))
 			player.FlipH = true
 			appliedControls = true
 		}
 		if rl.IsKeyDown(rl.KEY_D) || rl.IsKeyDown(rl.KEY_RIGHT) {
+			controlsUsed = true
 			dir := Vec2{-up.Up.Y, up.Up.X}
 			vel.Vel = vel.Vel.Add(dir.Scale(playerHorizontalControlsAccel * deltaTime))
 			player.FlipH = false
@@ -729,6 +734,7 @@ func updateGame(dt float64) {
 
 		// Jump
 		if rl.IsKeyPressed(rl.KEY_W) || rl.IsKeyPressed(rl.KEY_UP) {
+			controlsUsed = true
 			if player.JumpsRemaining > 0 && gameTime-player.lastJumpTime > playerJumpCooldown {
 				tangentVel := vel.Vel.Subtract(up.Up.Scale(vel.Vel.DotProduct(up.Up)))
 				vel.Vel = tangentVel.Add(up.Up.Scale(playerJumpStrength))
@@ -747,6 +753,7 @@ func updateGame(dt float64) {
 		angVel := AddComponent(ent, AngularVelocity{})
 
 		if rl.IsKeyDown(rl.KEY_W) || rl.IsKeyDown(rl.KEY_UP) {
+			controlsUsed = true
 			playFlyingAccelerationSound = true
 			player.FlyingAccel += Min(playerFlyingLiftoffJerk*deltaTime, playerFlyingMaxAccel)
 		}
@@ -754,10 +761,12 @@ func updateGame(dt float64) {
 			// Acceleration / slowdown
 			forwardDir := Vec2{0, -1}.Rotate(lay.Rot)
 			if rl.IsKeyDown(rl.KEY_W) || rl.IsKeyDown(rl.KEY_UP) {
+				controlsUsed = true
 				playFlyingAccelerationSound = true
 				vel.Vel = vel.Vel.Add(forwardDir.Scale(player.FlyingAccel * deltaTime))
 			}
 			if rl.IsKeyDown(rl.KEY_S) || rl.IsKeyDown(rl.KEY_DOWN) {
+				controlsUsed = true
 				playFlyingAccelerationSound = true
 				vel.Vel = vel.Vel.Add(forwardDir.Scale(-player.FlyingAccel * deltaTime))
 			}
@@ -771,10 +780,12 @@ func updateGame(dt float64) {
 			// Turning
 			appliedTurning := false
 			if rl.IsKeyDown(rl.KEY_A) || rl.IsKeyDown(rl.KEY_LEFT) {
+				controlsUsed = true
 				angVel.AngVel -= playerFlyingAngAccel * deltaTime
 				appliedTurning = true
 			}
 			if rl.IsKeyDown(rl.KEY_D) || rl.IsKeyDown(rl.KEY_RIGHT) {
+				controlsUsed = true
 				angVel.AngVel += playerFlyingAngAccel * deltaTime
 				appliedTurning = true
 			}
@@ -1558,6 +1569,8 @@ var bloomEnabled = false
 var bloomBrightness = 1.0
 var bloomShader = rl.LoadShader(nilString, getAssetPath("bloom.frag"))
 
+var controlTipTexture = rl.LoadTexture(getAssetPath("control_tip.png"))
+
 func drawGame() {
 	// Begin bloom if enabled
 	if bloomEnabled {
@@ -2038,6 +2051,36 @@ func drawGame() {
 			rl.Rotatef((targetAngle-player.CameraRot)*180/Pi, 0, 0, 1)
 
 			rl.DrawTextureEx(arrowTexture, Vec2{-0.5 * arrowSize, -0.5 * arrowSize}, 0, 1, rl.White)
+
+			rl.PopMatrix()
+		}
+
+		// Controls tip
+		if !controlsUsed {
+			screenSize := Vec2{408.0, 230.0}
+
+			rl.PushMatrix()
+			worldCameraTopLeft := rl.GetScreenToWorld2D(Vec2{0, 0}, gameCamera)
+			rl.Translatef(worldCameraTopLeft.X, worldCameraTopLeft.Y, 0)
+			rl.Rotatef(-gameCamera.Rotation, 0, 0, 1)
+			rl.Scalef(2*gameCameraZoom*spriteScale, 2*gameCameraZoom*spriteScale, 1)
+
+			texWidth := float64(controlTipTexture.Width)
+			texHeight := float64(controlTipTexture.Height)
+
+			texSource := rl.Rectangle{
+				X:      0,
+				Y:      0,
+				Width:  texWidth,
+				Height: texHeight,
+			}
+			texDest := rl.Rectangle{
+				Width:  texWidth,
+				Height: texHeight,
+			}
+			texDest.X = 0.5 * (screenSize.X - texDest.Width)
+			texDest.Y = 0.5*(screenSize.Y-texDest.Height) + 3.5*texDest.Height
+			rl.DrawTexturePro(controlTipTexture, texSource, texDest, Vec2{0, 0}, 0, rl.White)
 
 			rl.PopMatrix()
 		}
