@@ -183,8 +183,8 @@ type ResourceType struct {
 	VerticalOffset         float64
 	VerticalOffsetVariance float64
 
-	Damageable     bool
-	Health         int `default:"3"`
+	Damageable     bool `default:"true"`
+	Health         int  `default:"3"`
 	ElementAmounts []ElementAmount
 
 	Buildable bool
@@ -341,5 +341,9 @@ type Refiner struct {
 }
 
 type Launchpad struct {
+	Behavior
+}
+
+type TransmissionTower struct {
 	Behavior
 }

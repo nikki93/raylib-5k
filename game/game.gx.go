@@ -33,6 +33,7 @@ var playerHorizontalControlsAccel = 17.0
 var playerMinimumHorizontalSpeedForFriction = 12.0
 var playerJumpCooldown = 0.1
 
+var playerLiftoffFuelRequired = 50
 var playerFlyingLiftoffInitialAccel = 3.2
 var playerFlyingLiftoffJerk = 5.0
 var playerFlyingMaxAccel = 4.0
@@ -51,7 +52,9 @@ var beamDamagePeriod = 0.2
 var beamDamage = 1
 
 var refinerCarbonPerFuel = 5
+var refinerCarbonCapacity = 200
 var refinerRefinmentPeriod = 5.0
+var refinerFuelPerRefinement = 5
 
 //
 // Sounds
@@ -461,7 +464,7 @@ func initGame() {
 		playerPos := Vec2{-26.66, 82.36}
 		playerRot := -2.723
 		playerPolySize := playerSize.Subtract(Vec2{2 * planetSegmentThickness, 2.14 * planetSegmentThickness})
-		CreateEntity(
+		playerEnt := CreateEntity(
 			Layout{
 				Pos: playerPos,
 				Rot: playerRot,
@@ -480,10 +483,14 @@ func initGame() {
 			Player{
 				CameraPos: playerPos,
 				CameraRot: playerRot,
-				//ElementAmounts: [NumElementTypes]int{3000, 3000, 3000, 3000},
 			},
 		)
 		edit.Camera().Target = playerPos
+		player := GetComponent[Player](playerEnt)
+		player.ElementAmounts[CarbonElement] = 3000
+		player.ElementAmounts[SiliconElement] = 3000
+		player.ElementAmounts[FuelElement] = 3000
+		player.ElementAmounts[AntimatterElement] = 3000
 
 		edit.SaveSnapshot("initialize scene")
 	}
@@ -866,54 +873,55 @@ func updateGame(dt float64) {
 				// Check if we hit a resource
 				if hitResourceEnt != NullEntity {
 					if resource := GetComponent[Resource](hitResourceEnt); resource != nil {
-						// Damage resource a bit
-						prevHealth := resource.Health
-						resource.Health = Max(0, resource.Health-beamDamage)
-						damageDone := prevHealth - resource.Health
-						resourceDamaged := AddComponent(hitResourceEnt, ResourceDamaged{})
-						resourceDamaged.lastDamageTime = gameTime
+						if resourceType := &resourceTypes[resource.TypeId]; resourceType.Damageable {
+							// Damage resource a bit
+							prevHealth := resource.Health
+							resource.Health = Max(0, resource.Health-beamDamage)
+							damageDone := prevHealth - resource.Health
+							resourceDamaged := AddComponent(hitResourceEnt, ResourceDamaged{})
+							resourceDamaged.lastDamageTime = gameTime
 
-						// Consume elements from it
-						resourceType := &resourceTypes[resource.TypeId]
-						for _, elementAmount := range resourceType.ElementAmounts {
-							if elementAmount.Amount == 1 {
-								if resource.Health == 0 {
-									player.ElementAmounts[elementAmount.TypeId] += elementAmount.Amount
-								}
-							} else {
-								damagePerAmount := resourceType.Health / (elementAmount.Amount / 2)
-								if damagePerAmount > 0 {
-									amountGained := prevHealth/damagePerAmount - resource.Health/damagePerAmount
-									player.ElementAmounts[elementAmount.TypeId] += amountGained
+							// Consume elements from it
+							for _, elementAmount := range resourceType.ElementAmounts {
+								if elementAmount.Amount == 1 {
 									if resource.Health == 0 {
-										remainingAmount := elementAmount.Amount - resourceType.Health/damagePerAmount
-										player.ElementAmounts[elementAmount.TypeId] += remainingAmount
+										player.ElementAmounts[elementAmount.TypeId] += elementAmount.Amount
 									}
 								} else {
-									amountPerDamage := (elementAmount.Amount / resourceType.Health) / 2
-									player.ElementAmounts[elementAmount.TypeId] += damageDone * amountPerDamage
-									if resource.Health == 0 {
-										remainingAmount := elementAmount.Amount - (amountPerDamage * resourceType.Health)
-										player.ElementAmounts[elementAmount.TypeId] += remainingAmount
+									damagePerAmount := resourceType.Health / (elementAmount.Amount / 2)
+									if damagePerAmount > 0 {
+										amountGained := prevHealth/damagePerAmount - resource.Health/damagePerAmount
+										player.ElementAmounts[elementAmount.TypeId] += amountGained
+										if resource.Health == 0 {
+											remainingAmount := elementAmount.Amount - resourceType.Health/damagePerAmount
+											player.ElementAmounts[elementAmount.TypeId] += remainingAmount
+										}
+									} else {
+										amountPerDamage := (elementAmount.Amount / resourceType.Health) / 2
+										player.ElementAmounts[elementAmount.TypeId] += damageDone * amountPerDamage
+										if resource.Health == 0 {
+											remainingAmount := elementAmount.Amount - (amountPerDamage * resourceType.Health)
+											player.ElementAmounts[elementAmount.TypeId] += remainingAmount
+										}
 									}
 								}
 							}
-						}
 
-						// Destroy resource if it's out of health
-						if resource.Health == 0 {
-							DestroyEntity(hitResourceEnt)
-						}
+							// Destroy resource if it's out of health
+							if resource.Health == 0 {
+								DestroyEntity(hitResourceEnt)
+							}
 
-						// Play damage sound
-						if unitRandom() < 0.7 {
-							rl.SetSoundVolume(hitSound1, 0.9*1.8)
-							rl.SetSoundPitch(hitSound1, 0.60+0.24*unitRandom())
-							rl.PlaySound(hitSound1)
-						} else {
-							rl.SetSoundVolume(hitSound2, 0.6*1.8)
-							rl.SetSoundPitch(hitSound2, 0.60+0.28*unitRandom())
-							rl.PlaySound(hitSound2)
+							// Play damage sound
+							if unitRandom() < 0.7 {
+								rl.SetSoundVolume(hitSound1, 0.9*1.8)
+								rl.SetSoundPitch(hitSound1, 0.60+0.24*unitRandom())
+								rl.PlaySound(hitSound1)
+							} else {
+								rl.SetSoundVolume(hitSound2, 0.6*1.8)
+								rl.SetSoundPitch(hitSound2, 0.60+0.28*unitRandom())
+								rl.PlaySound(hitSound2)
+							}
 						}
 					}
 				}
@@ -1030,8 +1038,8 @@ func updateGame(dt float64) {
 			refiner.TimeTillNextRefinement -= deltaTime
 			if refiner.TimeTillNextRefinement <= 0 {
 				refiner.TimeTillNextRefinement += refinerRefinmentPeriod
-				refiner.CarbonAmount -= refinerCarbonPerFuel
-				refiner.FuelAmount += 1
+				refiner.CarbonAmount -= refinerCarbonPerFuel * refinerFuelPerRefinement
+				refiner.FuelAmount += refinerFuelPerRefinement
 			}
 		} else {
 			// Off
@@ -1052,12 +1060,12 @@ func updateGame(dt float64) {
 						player.ElementAmounts[FuelElement] += refiner.FuelAmount
 						refiner.FuelAmount = 0
 					}
-				} else if refiner.CarbonAmount < 100 {
+				} else if refiner.CarbonAmount < refinerCarbonCapacity {
 					if player.ElementAmounts[CarbonElement] > 0 {
 						hint := AddComponent(refinerEnt, InteractionHint{})
 						hint.Interactable = true
-						amountAddable := Min(player.ElementAmounts[CarbonElement], 100-refiner.CarbonAmount)
-						hint.Message = rl.TextFormat("add %d/100 carbon", amountAddable)
+						amountAddable := Min(player.ElementAmounts[CarbonElement], refinerCarbonCapacity-refiner.CarbonAmount)
+						hint.Message = rl.TextFormat("add %d/%d carbon", amountAddable, refinerCarbonCapacity)
 
 						if rl.IsKeyPressed(rl.KEY_E) {
 							refiner.CarbonAmount += amountAddable
@@ -1071,7 +1079,7 @@ func updateGame(dt float64) {
 				} else {
 					hint := AddComponent(refinerEnt, InteractionHint{})
 					hint.Interactable = false
-					hint.Message = "carbon 100/100 full"
+					hint.Message = rl.TextFormat("carbon %d/%d full", refinerCarbonCapacity, refinerCarbonCapacity)
 				}
 			} else {
 				RemoveComponent[InteractionHint](refinerEnt)
@@ -1085,13 +1093,16 @@ func updateGame(dt float64) {
 		Each(func(playerEnt Entity, player *Player, playerLay *Layout) {
 			minDist := 2.0
 			if !player.Flying && playerLay.Pos.Subtract(launchpadLay.Pos).LengthSqr() < minDist*minDist {
-				if player.ElementAmounts[FuelElement] > 0 {
+				if player.ElementAmounts[FuelElement] >= playerLiftoffFuelRequired {
 					if !player.Flying {
 						hint := AddComponent(launchpadEnt, InteractionHint{})
 						hint.Interactable = true
 						hint.Message = "launch"
 
 						if rl.IsKeyPressed(rl.KEY_E) {
+							// Consume fuel
+							player.ElementAmounts[FuelElement] -= playerLiftoffFuelRequired
+
 							// Enter flying mode
 							RemoveComponent[Up](playerEnt)
 							player.Liftoff = true
@@ -1112,7 +1123,7 @@ func updateGame(dt float64) {
 				} else {
 					hint := AddComponent(launchpadEnt, InteractionHint{})
 					hint.Interactable = false
-					hint.Message = "need fuel to launch"
+					hint.Message = rl.TextFormat("needs %d fuel to launch", playerLiftoffFuelRequired)
 				}
 			} else {
 				RemoveComponent[InteractionHint](launchpadEnt)
