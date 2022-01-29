@@ -57,7 +57,8 @@ var refinerRefinmentPeriod = 5.0
 // Sounds
 //
 
-var music = rl.LoadMusicStream(getAssetPath("music_1.ogg"))
+var music1 = rl.LoadMusicStream(getAssetPath("music_1.ogg"))
+var music2 = rl.LoadMusicStream(getAssetPath("music_2.ogg"))
 
 var laserSound = rl.LoadMusicStream(getAssetPath("sfx_laser_on.ogg")) // Music so it loops
 
@@ -477,7 +478,7 @@ func initGame() {
 	}
 
 	// Play music
-	rl.PlayMusicStream(music)
+	rl.PlayMusicStream(music2)
 }
 
 //
@@ -1177,8 +1178,10 @@ func updateGame(dt float64) {
 	})
 
 	// Update musics
-	rl.SetMusicVolume(music, 0.5)
-	rl.UpdateMusicStream(music)
+	rl.SetMusicVolume(music1, 0.5)
+	rl.SetMusicVolume(music2, 0.5)
+	rl.UpdateMusicStream(music1)
+	rl.UpdateMusicStream(music2)
 	rl.UpdateMusicStream(laserSound)
 }
 
