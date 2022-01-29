@@ -202,6 +202,13 @@ case "$1" in
     ./run.sh web-release-fast
     rsync -avP build/web-release-fast/{index.*,$PROJECT_NAME.*} dh_bedxci@dreamhotel.xyz:dreamhotel.xyz/raylib-5k
     ;;
+  itch-publish)
+    ./run.sh web-release-fast
+    cd build/web-release-fast
+    gsed -i 's/new URLSearch/true || new URLSearch/g' index.js
+    zip itch-publish.zip -r index.* $PROJECT_NAME.*
+    mv itch-publish.zip ../..
+    ;;
 
   # Electron
   electron)
