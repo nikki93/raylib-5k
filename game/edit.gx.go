@@ -39,10 +39,10 @@ func mergeGameEditBoxes() {
 	// Planets
 	Each(func(ent Entity, planet *Planet, lay *Layout) {
 		edit.MergeBox(ent, rl.Rectangle{
-			X:      lay.Pos.X - planet.Radius,
-			Y:      lay.Pos.Y - planet.Radius,
-			Width:  2 * planet.Radius,
-			Height: 2 * planet.Radius,
+			X:      lay.Pos.X - planet.BaseRadius,
+			Y:      lay.Pos.Y - planet.BaseRadius,
+			Width:  2 * planet.BaseRadius,
+			Height: 2 * planet.BaseRadius,
 		})
 	})
 

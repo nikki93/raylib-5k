@@ -82,18 +82,18 @@ func generatePlanetTerrain(ent Entity) {
 
 	// Generation parameters
 	segmentLength := 1.5 * playerSize.X
-	resolution := 2 * Pi * planet.Radius / segmentLength
+	resolution := 2 * Pi * planet.BaseRadius / segmentLength
 	frequencyBands := [...]FrequencyBand{
-		{Frequency: 0.003, Amplitude: 0.2 * planet.Radius},
-		{Frequency: 0.015, Amplitude: 0.015 * planet.Radius},
-		{Frequency: 0.060, Amplitude: 0.015 * planet.Radius},
+		{Frequency: 0.003, Amplitude: 0.2 * planet.BaseRadius},
+		{Frequency: 0.015, Amplitude: 0.015 * planet.BaseRadius},
+		{Frequency: 0.060, Amplitude: 0.015 * planet.BaseRadius},
 	}
 
 	// Generate heights and vertices
 	angleStep := 2 * Pi / resolution
 	for angle := 0.0; angle < 2*Pi; angle += angleStep {
 		// Height
-		height := planet.Radius
+		height := planet.BaseRadius
 		for _, band := range frequencyBands {
 			height += band.Amplitude * Noise1(resolution*band.Frequency*angle)
 		}
@@ -218,8 +218,10 @@ func initGame() {
 				Pos: homePlanetPos,
 			},
 			Planet{
-				Radius:           homePlanetRadius,
-				AtmosphereRadius: 1.4 * homePlanetRadius,
+				BaseRadius:       homePlanetRadius,
+				AtmosphereRadius: 2 * homePlanetRadius,
+				Color:            rl.Color{0x15, 0x1d, 0x28, 0xff},
+				AtmosphereColor:  rl.Color{0x10, 0x14, 0x1f, 0xff},
 			},
 		)
 		generatePlanetTerrain(homePlanet)
@@ -1013,7 +1015,12 @@ var buildUIFrameTexture = rl.LoadTexture(getAssetPath("build_interface.png"))
 var interactionHintTexture = rl.LoadTexture(getAssetPath("interaction_hint.png"))
 
 func drawGame() {
-	rl.ClearBackground(rl.Color{0x10, 0x14, 0x1f, 0xff})
+	rl.ClearBackground(rl.Color{0x09, 0x0a, 0x14, 0xff})
+
+	// Planet atmospheres
+	Each(func(ent Entity, planet *Planet, lay *Layout) {
+		rl.DrawCircleV(lay.Pos, planet.AtmosphereRadius, planet.AtmosphereColor)
+	})
 
 	// Resources
 	Each(func(ent Entity, resource *Resource, lay *Layout) {
@@ -1156,7 +1163,7 @@ func drawGame() {
 		rl.PopMatrix()
 	})
 
-	// Planet bits
+	// Planet terrains
 	Each(func(ent Entity, planet *Planet, lay *Layout) {
 		rl.PushMatrix()
 		rl.Translatef(lay.Pos.X, lay.Pos.Y, 0)
@@ -1169,7 +1176,7 @@ func drawGame() {
 		rl.Begin(rl.Quads)
 		for vertIndex, vertPos := range planet.Verts {
 			drawTriangleToSegment := func(a, b Vec2) {
-				rl.Color4ub(0x15, 0x1d, 0x28, 0xff)
+				rl.Color4ub(planet.Color.R, planet.Color.G, planet.Color.B, planet.Color.A)
 				rl.Vertex2f(0, 0)
 				rl.Vertex2f(0, 0)
 				rl.Vertex2f(b.X, b.Y)
@@ -1305,6 +1312,7 @@ func drawGame() {
 		}
 	})
 
+	// Interaction hint
 	Each(func(ent Entity, interactionHint *InteractionHint, lay *Layout) {
 		rl.PushMatrix()
 		hintPos := lay.Pos.Add(Vec2{0, interactionHint.VerticalOffset}.Rotate(lay.Rot))
