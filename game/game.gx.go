@@ -1290,6 +1290,8 @@ var whiteTexture = func() rl.Texture {
 	return result
 }()
 
+var primaryStarTexture = rl.LoadTexture(getAssetPath("primary_star.png"))
+
 var bitsTextureBasic = rl.LoadTexture(getAssetPath("planet_surface_bits_basic.png"))
 
 var playerTexture = rl.LoadTexture(getAssetPath("player.png"))
@@ -1356,16 +1358,20 @@ func drawGame() {
 		rl.DrawCircleV(lay.Pos, planet.AtmosphereRadius, planet.AtmosphereColor)
 	})
 
-	// Sun
+	// Primary star
 	{
 		rl.PushMatrix()
 		screenCenter := Vec2{float64(rl.GetScreenWidth()), float64(rl.GetScreenHeight())}.Scale(0.5)
 		worldCameraCenter := rl.GetScreenToWorld2D(screenCenter, gameCamera).Scale(0.98)
 		rl.Translatef(worldCameraCenter.X, worldCameraCenter.Y, 0)
-		//rl.Rotatef(-gameCamera.Rotation, 0, 0, 1)
 		rl.Scalef(gameCameraZoom, gameCameraZoom, 1)
 
-		rl.DrawCircleV(Vec2{-5, 3}.Scale(1/0.98), 1, rl.Color{0xc0, 0x94, 0x73, 0xff})
+		pos := Vec2{-5, 3}.Scale(1 / 0.98)
+		rl.Translatef(pos.X, pos.Y, 0)
+
+		rl.Rotatef(-gameCamera.Rotation, 0, 0, 1)
+		texSize := Vec2{float64(primaryStarTexture.Width), float64(primaryStarTexture.Height)}.Scale(2 * spriteScale)
+		rl.DrawTextureEx(primaryStarTexture, texSize.Scale(-0.5), 0, 2*spriteScale, rl.White)
 
 		rl.PopMatrix()
 	}
