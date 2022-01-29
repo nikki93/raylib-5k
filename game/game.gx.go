@@ -119,6 +119,12 @@ func generatePlanetTerrain(ent Entity, params GeneratePlanetTerrainParams) {
 			bit.FlipV = unitRandom() < 0.5
 		}
 	}
+
+	// Smooth out notch among last vertices
+	nVerts := len(planet.Verts)
+	lastVert := planet.Verts[nVerts-1]
+	secondVert := planet.Verts[1]
+	planet.Verts[0] = planet.Verts[0].Lerp(lastVert.Lerp(secondVert, 0.5), 0.5)
 }
 
 type GenerateResourcesParams struct {
