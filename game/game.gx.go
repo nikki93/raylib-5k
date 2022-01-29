@@ -501,7 +501,7 @@ func initGame() {
 	}
 
 	// Play music
-	rl.PlayMusicStream(music2)
+	//rl.PlayMusicStream(music2)
 }
 
 //
@@ -1291,6 +1291,11 @@ var whiteTexture = func() rl.Texture {
 }()
 
 var primaryStarTexture = rl.LoadTexture(getAssetPath("primary_star.png"))
+var countdownFont = func() rl.Font {
+	result := rl.LoadFontEx(getAssetPath("countdown.ttf"), 20, nil, 0)
+	rl.SetTextureFilter(result.Texture, rl.TEXTURE_FILTER_POINT)
+	return result
+}()
 
 var bitsTextureBasic = rl.LoadTexture(getAssetPath("planet_surface_bits_basic.png"))
 
@@ -1372,6 +1377,25 @@ func drawGame() {
 		rl.Rotatef(-gameCamera.Rotation, 0, 0, 1)
 		texSize := Vec2{float64(primaryStarTexture.Width), float64(primaryStarTexture.Height)}.Scale(2 * spriteScale)
 		rl.DrawTextureEx(primaryStarTexture, texSize.Scale(-0.5), 0, 2*spriteScale, rl.White)
+
+		//rl.Translatef(0, -0.55*texSize.Y, 0)
+		//
+		////darkRed := rl.Color{0x4d, 0x2b, 0x32, 0xff}
+		//darkGray := rl.Color{0x20, 0x2e, 0x37, 0xff}
+		//rl.Scalef(spriteScale, spriteScale, 1)
+		//text := "01:49"
+		//fontSize := 10.0 * 3
+		//textSize := rl.MeasureTextEx(countdownFont, text, fontSize, 1.0)
+		//rl.DrawTextPro(
+		//  countdownFont,
+		//  "01:49",
+		//  Vec2{-0.5 * textSize.X, -textSize.Y},
+		//  Vec2{0, 0},
+		//  0,
+		//  fontSize,
+		//  1.0,
+		//  darkGray,
+		//)
 
 		rl.PopMatrix()
 	}
@@ -1636,6 +1660,37 @@ func drawGame() {
 
 				iconPos.X += 1.375 * iconSize
 			}
+
+			rl.PopMatrix()
+		}
+
+		// Supernova countdown
+		{
+			rl.PushMatrix()
+			worldCameraTopCenter := rl.GetScreenToWorld2D(Vec2{0.5 * float64(rl.GetScreenWidth()), 0}, gameCamera)
+			rl.Translatef(worldCameraTopCenter.X, worldCameraTopCenter.Y, 0)
+			rl.Rotatef(-gameCamera.Rotation, 0, 0, 1)
+			rl.Scalef(2*gameCameraZoom*spriteScale, 2*gameCameraZoom*spriteScale, 1)
+
+			iconSize := float64(elementTypes[0].iconTexture.Width)
+			iconScreenMargin := 0.5 * iconSize
+			rl.Translatef(0, iconScreenMargin+1.5, 0)
+
+			//fontSize := iconSize
+			fontSize := 10.0 * 2
+			darkGray := rl.Color{0x39, 0x4a, 0x50, 0xff}
+			text := "01:49"
+			textSize := rl.MeasureTextEx(countdownFont, text, fontSize, 1.0)
+			rl.DrawTextPro(
+				countdownFont,
+				"01:49",
+				Vec2{-0.5 * textSize.X, 0},
+				Vec2{0, 0},
+				0,
+				fontSize,
+				1.0,
+				darkGray,
+			)
 
 			rl.PopMatrix()
 		}
