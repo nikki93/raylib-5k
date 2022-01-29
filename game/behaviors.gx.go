@@ -263,7 +263,7 @@ var resourceTypes = [...]ResourceType{
 	{
 		Name:                   "antiplant",
 		ImageName:              "resource_antiplant.png",
-		DestructionSoundName:   "sfx_resource_destroy_plant.ogg",
+		DestructionSoundName:   "sfx_resource_destroy_antimatter.ogg",
 		VerticalOffset:         -0.4,
 		VerticalOffsetVariance: -0.2,
 		Health:                 20,

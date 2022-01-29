@@ -477,7 +477,7 @@ func initGameplayScene() {
 		Player{
 			CameraPos:       playerPos,
 			CameraRot:       playerRot,
-			TimeToSupernova: 3 * 60,
+			TimeToSupernova: 10 * 60,
 			//TimeToSupernova: 3,
 		},
 	)
@@ -575,7 +575,6 @@ func initGame() {
 			resourceType.iconTexture = rl.LoadTexture(getAssetPath(resourceType.IconImageName))
 		}
 		if resourceType.DestructionSoundName != "" {
-			resourceType.iconTexture = rl.LoadTexture(getAssetPath(resourceType.IconImageName))
 			resourceType.destructionSound = rl.LoadSound(getAssetPath(resourceType.DestructionSoundName))
 		}
 	}
