@@ -156,6 +156,29 @@ inline cJSON *write(const rl::Rectangle &val) {
   return result;
 }
 
+// rl::Color
+inline void read(rl::Color &val, const cJSON *jsn) {
+  if (cJSON_IsArray(jsn) && cJSON_GetArraySize(jsn) == 4) {
+    int i = 0;
+    read(i, cJSON_GetArrayItem(jsn, 0));
+    val.r = i;
+    read(i, cJSON_GetArrayItem(jsn, 1));
+    val.g = i;
+    read(i, cJSON_GetArrayItem(jsn, 2));
+    val.b = i;
+    read(i, cJSON_GetArrayItem(jsn, 3));
+    val.a = i;
+  }
+}
+inline cJSON *write(const rl::Color &val) {
+  auto result = cJSON_CreateArray();
+  cJSON_AddItemToArray(result, cJSON_CreateNumber(val.r));
+  cJSON_AddItemToArray(result, cJSON_CreateNumber(val.g));
+  cJSON_AddItemToArray(result, cJSON_CreateNumber(val.b));
+  cJSON_AddItemToArray(result, cJSON_CreateNumber(val.a));
+  return result;
+}
+
 // rl::Camera2D
 struct ReadWriteCamera {
   Prop(Vec2, offset);
