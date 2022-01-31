@@ -31,10 +31,20 @@ div.root-container {
   height: 100%;
   display: flex;
   flex-direction: row;
+  justify-content: center;
+  align-items: center;
 }
 
 /* Main */
 div.main-container {
+  display: block;
+  width: 100vw;
+  max-width: 177.78vh;
+  /* 16/9 = 1.778 */
+  height: 56.25vw;
+  /* height:width ratio = 9/16 = .5625  */
+  max-height: 100vh;
+  background-color: black;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -52,7 +62,7 @@ div.scene-container {
 }
 div.scene-aspect-ratio {
   width: 100%;
-  padding-top: 56.25%;
+  height: 100%;
   position: relative;
 }
 canvas.scene {
