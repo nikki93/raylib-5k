@@ -491,7 +491,8 @@ func initGameplayScene() {
 	// Player
 	//playerPos := Vec2{-9.77, -251.381 - 8} // At transmission tower!
 	playerPos := Vec2{-26.66, 82.36}
-	playerRot := -2.723
+	playerRot := -2.7397
+	playerPos = playerPos.Add(Vec2{0, -0.08}.Rotate(playerRot))
 	playerPolySize := playerSize.Subtract(Vec2{2 * planetSegmentThickness, 2.14 * planetSegmentThickness})
 	playerEnt := CreateEntity(
 		Layout{
@@ -862,55 +863,86 @@ func updateGame(dt float64) {
 
 	// Apply velocity
 	Each(func(ent Entity, vel *Velocity, lay *Layout) {
-		up := GetComponent[Up](ent)
-
-		// Apply velocity
-		lay.Pos = lay.Pos.Add(vel.Vel.Scale(deltaTime))
-
-		// Handle collisons
-		// TODO: Flying -- shape?
+		delta := vel.Vel.Scale(deltaTime)
 		if collisionShape := GetComponent[CollisionShape](ent); collisionShape != nil {
-			Each(func(planetEnt Entity, planet *Planet, planetLay *Layout) {
-				nVerts := len(planet.Verts)
-				for i, localVertPos := range planet.Verts {
-					planetSegmentCapsule := Capsule{
-						A:      planetLay.Pos.Add(localVertPos),
-						B:      planetLay.Pos.Add(planet.Verts[(i+1)%nVerts]),
-						Radius: planetSegmentThickness,
-					}
+			// Have collision shape -- do a loop of stepping by a constant small distance and compute collisions at each
+			// step, bailing if we have a collision. This makes it more stable against tunneling.
+			stepDist := 0.2
 
-					// Calculate intersection
-					poly := Polygon{}
-					poly.Count = len(collisionShape.Verts)
-					for i := 0; i < poly.Count; i++ {
-						poly.Verts[i] = collisionShape.Verts[i]
-					}
-					poly.CalculateNormals()
-					in := IntersectCapsulePolygon(planetSegmentCapsule, &poly, lay.Pos, lay.Rot)
-					if in.Count > 0 {
-						// Push position out by intersection
-						lay.Pos = lay.Pos.Add(in.Normal.Scale(in.Depths[0]))
+			deltaLen := delta.Length()
+			if deltaLen <= 0 {
+				return
+			}
+			deltaDir := delta.Scale(1 / deltaLen)
 
-						// Remove component of velocity along normal
-						vel.Vel = vel.Vel.Subtract(in.Normal.Scale(vel.Vel.DotProduct(in.Normal)))
+			poly := Polygon{}
+			poly.Count = len(collisionShape.Verts)
+			for i := 0; i < poly.Count; i++ {
+				poly.Verts[i] = collisionShape.Verts[i]
+			}
+			poly.CalculateNormals()
 
-						// Mark for friction application
-						AddComponent(ent, ApplySurfaceFriction{})
+			up := GetComponent[Up](ent)
 
-						// Track normal
-						collisionNormals := AddComponent(ent, CollisionNormals{})
-						ground := up != nil && in.Normal.DotProduct(up.Up) > 0.2
-						collisionNormals.Normals = append(collisionNormals.Normals, CollisionNormal{
-							Normal: in.Normal,
-							Ground: ground,
-						})
-						if ground {
-							up.grounded = true
-							up.lastGroundedTime = gameTime
+			origPos := lay.Pos
+			dist := 0.0 // Distance from original position that we're checking
+			for {
+				collided := false // Whether we collided with something this step
+				last := false     // Whether we've reached the destination
+
+				// Step, check if that takes us beyond the destination and set to destination if so
+				dist += stepDist
+				if dist >= deltaLen {
+					dist = deltaLen
+					last = true
+				}
+				lay.Pos = origPos.Add(deltaDir.Scale(dist))
+
+				// Check for intersection with planets
+				Each(func(planetEnt Entity, planet *Planet, planetLay *Layout) {
+					nVerts := len(planet.Verts)
+					for i, localVertPos := range planet.Verts {
+						planetSegmentCapsule := Capsule{
+							A:      planetLay.Pos.Add(localVertPos),
+							B:      planetLay.Pos.Add(planet.Verts[(i+1)%nVerts]),
+							Radius: planetSegmentThickness,
+						}
+
+						// Calculate intersection
+						in := IntersectCapsulePolygon(planetSegmentCapsule, &poly, lay.Pos, lay.Rot)
+						if in.Count > 0 {
+							collided = true
+
+							// Push position out by intersection
+							lay.Pos = lay.Pos.Add(in.Normal.Scale(in.Depths[0]))
+
+							// Remove component of velocity along normal
+							vel.Vel = vel.Vel.Subtract(in.Normal.Scale(vel.Vel.DotProduct(in.Normal)))
+
+							// Mark for friction application
+							AddComponent(ent, ApplySurfaceFriction{})
+
+							// Track normal
+							collisionNormals := AddComponent(ent, CollisionNormals{})
+							ground := up != nil && in.Normal.DotProduct(up.Up) > 0.2
+							collisionNormals.Normals = append(collisionNormals.Normals, CollisionNormal{
+								Normal: in.Normal,
+								Ground: ground,
+							})
+							if ground {
+								up.grounded = true
+								up.lastGroundedTime = gameTime
+							}
 						}
 					}
+				})
+				if collided || last {
+					break
 				}
-			})
+			}
+		} else {
+			// No collision shape -- just move by velocity
+			lay.Pos = lay.Pos.Add(delta)
 		}
 	})
 
