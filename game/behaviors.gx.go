@@ -145,9 +145,9 @@ type ElementTypeId int
 
 const (
 	CarbonElement     ElementTypeId = 0
-	SiliconElement    ElementTypeId = 1
-	FuelElement       ElementTypeId = 2
-	AntimatterElement ElementTypeId = 3
+	SiliconElement                  = 1
+	FuelElement                     = 2
+	AntimatterElement               = 3
 	NumElementTypes                 = 4
 )
 
