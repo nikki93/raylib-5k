@@ -7,9 +7,6 @@
 [submodule "vendor/entt"]
 	path = vendor/entt
 	url = https://github.com/skypjack/entt.git
-[submodule "vendor/Chipmunk2D"]
-	path = vendor/Chipmunk2D
-	url = https://github.com/slembcke/Chipmunk2D.git
 [submodule "vendor/cJSON"]
 	path = vendor/cJSON
 	url = https://github.com/DaveGamble/cJSON.git

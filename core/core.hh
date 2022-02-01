@@ -15,7 +15,6 @@ using Seq = gx::Slice<T>;
 #include "core/misc.hh"
 #include "core/entity.hh"
 #include "core/rl.hh"
-#include "core/cp.hh"
 #include "core/c2.h"
 #include "core/read_write.hh"
 #include "core/ui.hh"

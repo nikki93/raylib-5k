@@ -140,17 +140,6 @@ target_sources(cjson PRIVATE vendor/cJSON/cJSON.c)
 target_include_directories(cjson PUBLIC vendor/cJSON)
 target_link_libraries(${PROJECT_NAME} PRIVATE cjson)
 
-# Chipmunk2D
-set(BUILD_DEMOS OFF CACHE BOOL "" FORCE)
-set(INSTALL_DEMOS OFF CACHE BOOL "" FORCE)
-set(BUILD_SHARED OFF CACHE BOOL "" FORCE)
-set(BUILD_STATIC ON CACHE BOOL "" FORCE)
-set(INSTALL_STATIC OFF CACHE BOOL "" FORCE)
-add_subdirectory(vendor/Chipmunk2D EXCLUDE_FROM_ALL)
-target_compile_definitions(chipmunk_static PUBLIC CP_USE_DOUBLES=0 CP_USE_CGTYPES=0)
-target_include_directories(${PROJECT_NAME} PRIVATE vendor/Chipmunk2D/include)
-target_link_libraries(${PROJECT_NAME} PRIVATE chipmunk_static)
-
 
 #
 # Assets

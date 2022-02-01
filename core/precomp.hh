@@ -24,13 +24,6 @@ namespace rl {
 // cJSON
 #include <cJSON.h>
 
-// Chipmunk2D
-namespace cp {
-#include <chipmunk/chipmunk.h>
-#include <chipmunk/chipmunk_private.h>
-#include <chipmunk/chipmunk_unsafe.h>
-}
-
 // JS import / export
 #ifdef __EMSCRIPTEN__
 #define JS_DEFINE(retType, name, ...) EM_JS(retType, name, __VA_ARGS__)
