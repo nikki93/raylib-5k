@@ -4,7 +4,7 @@
 
 # Packet Lost
 
-This is the code and assets repository for our (me, Luka and Axi) Raylib 5K jam submission, ["Packet Lost"](https://itch.io/jam/raylib-5k-gamejam/rate/1374384)! (Latest version with bugfixes playable at: [https://nikki93.github.io/raylib-5k/](https://nikki93.github.io/raylib-5k/))
+This is the code and assets repository for our (me, Luka and Axi) Raylib 5K jam submission, ["Packet Lost"](https://itch.io/jam/raylib-5k-gamejam/rate/1374384)! (Latest version with bugfixes playable (right in your browser!) at: [https://nikki93.github.io/raylib-5k/](https://nikki93.github.io/raylib-5k/))
 
 It uses my Go->C++ transpiler, called [Gx](https://github.com/nikki93/gx), along with my own little framework that includes an entity system, a scene editor and seriaization. The framework doesn't wrap Raylib at all--Raylib is used directly. The jam entry doesn't use the serialization system much since the world is procedurally generated, but the editor came in handy during development to debug and explore the resulting scene. Interesting things to look at:
 
