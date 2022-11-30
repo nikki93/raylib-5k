@@ -22,6 +22,8 @@ if [[ -f /proc/version ]]; then
     PLATFORM="win"
   fi
 fi
+TIME=""
+TIME_TOTAL=""
 CMAKE="cmake$EXE"
 CLANG_FORMAT="clang-format$EXE"
 GO="go$EXE"
@@ -52,7 +54,7 @@ case "$1" in
   # Compile commands DB (used by editor plugins)
   db)
     run-gx
-    $CMAKE -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Debug -H. -Bbuild/db -GNinja
+    $CMAKE -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Debug -H. -Bbuild/db 
     cp ./build/db/compile_commands.json .
     ;;
 
@@ -70,7 +72,7 @@ case "$1" in
   release)
     validate-glsl
     run-gx
-    $CMAKE -H. -Bbuild/release -GNinja
+    $CMAKE -H. -Bbuild/release 
     $CMAKE --build build/release
     case $PLATFORM in
       lin|macOS)
@@ -139,7 +141,7 @@ case "$1" in
   debug)
     validate-glsl
     run-gx
-    $CMAKE -DCMAKE_BUILD_TYPE=Debug -H. -Bbuild/debug -GNinja
+    $CMAKE -DCMAKE_BUILD_TYPE=Debug -H. -Bbuild/debug 
     $CMAKE --build build/debug
     case $PLATFORM in
       lin|macOS)
@@ -173,7 +175,7 @@ case "$1" in
     validate-glsl
     run-gx
     if [[ ! -d "build/web-release" ]]; then
-      $CMAKE -DWEB=ON -H. -Bbuild/web-release -GNinja
+      $CMAKE -DWEB=ON -DWEB_BUNDLE_ASSETS=ON -H. -Bbuild/web-release 
     fi
     $CMAKE --build build/web-release
     touch build/web-release/reload-trigger
@@ -185,7 +187,7 @@ case "$1" in
     validate-glsl
     run-gx
     if [[ ! -d "build/web-release-fast" ]]; then
-      $CMAKE -DWEB=ON -DWEB_BUNDLE_ASSETS=ON -DRELEASE_FAST=ON -H. -Bbuild/web-release-fast -GNinja
+      $CMAKE -DWEB=ON -DWEB_BUNDLE_ASSETS=ON -DRELEASE_FAST=ON -H. -Bbuild/web-release-fast 
     fi
     $CMAKE --build build/web-release-fast
     cp build/web-release-fast/{index.*,$PROJECT_NAME.*} app/web-release-fast

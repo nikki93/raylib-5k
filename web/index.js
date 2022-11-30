@@ -44,7 +44,7 @@ window.initElectronFS = () => {
 // Auto-reload
 //
 (() => {
-  if (window.location.href.startsWith('http://localhost')) {
+  if (true) {
     const filenames = ['reload-trigger'];
     let lastUnfocusedTime = Date.now();
     let reloading = false;

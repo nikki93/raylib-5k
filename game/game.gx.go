@@ -23,7 +23,7 @@ var deltaTime = 0.0
 // Settings
 //
 
-var editAllowed = false
+var editAllowed = true
 
 var surfaceFrictionDecel = 25.0
 var atmosphereFrictionDecel = 18.0
@@ -103,7 +103,7 @@ var buildingFailedSound = rl.LoadSound(getAssetPath("sfx_building_failed.ogg"))
 
 var winSound = rl.LoadSound(getAssetPath("win.ogg"))
 
-//var liftoffChargeSound = rl.LoadSound(getAssetPath("sfx_liftoff_charge.ogg"))
+// var liftoffChargeSound = rl.LoadSound(getAssetPath("sfx_liftoff_charge.ogg"))
 var liftoffSound = rl.LoadSound(getAssetPath("sfx_liftoff.ogg"))
 
 //var flyingAccelerationSound = rl.LoadMusicStream(getAssetPath("sfx_flying_acceleration.ogg"))
@@ -1655,7 +1655,7 @@ func drawGame() {
 	}
 
 	// Background color
-	rl.ClearBackground(rl.Color{0x09, 0x0a, 0x14, 0xff})
+	rl.ClearBackground(rl.Color{0x00, 0x0a, 0x14, 0xff})
 
 	// Planet atmospheres
 	Each(func(ent Entity, planet *Planet, lay *Layout) {
